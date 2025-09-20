@@ -3,16 +3,15 @@ import './App.css'
 import './Components/LoginForm/LoginForm.jsx'
 import { Magazine } from './Components/Magazine/Magazine.jsx'
 import { LoginForm } from './Components/LoginForm/LoginForm.jsx'
-
+import { RegistrationForm } from './Components/RegistrationForm/RegistrationForm.jsx'
 
 function App() {
 
-
   const[currentPage, setCurrentPage] = useState('login');
 
-  const pageChanger = () => {
-    setCurrentPage(prevPage => prevPage === 'magaz' ? 'login' : 'magaz');
-  }
+  const switchToLogin = () => setCurrentPage('login');
+  const switchToRegistration = () => setCurrentPage('registration');
+  const switchToMagaz = () => setCurrentPage('magaz');
 
 
   return (
@@ -20,15 +19,33 @@ function App() {
     <div className='mainApp'>
     <div className='back'></div>
     
-    {currentPage === 'login' ? (
+    {currentPage === 'login' && (
 
-      <LoginForm onEnter = {pageChanger}/>
+        <LoginForm 
 
-      ) : (
+            onSwitchToRegistration={switchToRegistration}
+            onSwitchToMagaz={switchToMagaz}
+            
+        />
+    )}
+    
+    {currentPage === 'registration' && (
 
-      <Magazine onEnter={pageChanger}/>
+        <RegistrationForm 
 
-      )}
+            onSwitchToLogin={switchToLogin}
+            onSwitchToMagaz={switchToMagaz}
+            
+        />
+    )}
+    
+    {currentPage === 'magaz' && (
+
+        <Magazine 
+
+            onSwitchToLogin={switchToLogin}
+        />
+    )}
 
     
     </div>

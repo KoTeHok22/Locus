@@ -1,12 +1,12 @@
 import '../../index.css'
 import '../RegistrationForm/RegistrationForm.jsx'
 
-function LoginForm({onSwitch, onEnter}) {
+function LoginForm({onSwitchToRegistration, onSwitchToMagaz, onEnter}) {
 
 
   const handleSumbit = (e) => {
     e.preventDefault();
-    onEnter();
+    onSwitchToMagaz();
   }
 
   return (
@@ -72,7 +72,7 @@ function LoginForm({onSwitch, onEnter}) {
             Войти
           </button>
         </form>
-        <p className='mt-4 text-xs text-gray-600 text-center'>Если у вас нет аккаунта: <button className='text-blue-600 hover:text-blue-800 font-medium' onClick={onSwitch}>Регистрация</button></p>
+        <p className='mt-4 text-xs text-gray-600 text-center'>Если у вас нет аккаунта: <button className='text-blue-600 hover:text-blue-800 font-medium' onClick={onSwitchToRegistration && onSwitchToMagaz}>Регистрация</button></p>
         <div className="mt-6 pt-4 border-t border-gray-200/50">
           <p className="text-xs text-gray-600 text-center">
             © 2025 Locus. Все права защищены.
@@ -172,7 +172,7 @@ function LoginForm({onSwitch, onEnter}) {
             </button>
           </form>
 
-        <p className='mt-4 text-xs text-gray-600 text-center'>Если у вас нет аккаунта: <button className='text-blue-600 hover:text-blue-800 font-medium' onClick={onSwitch}>Регистрация</button></p>
+        <p className='mt-4 text-xs text-gray-600 text-center'>Если у вас нет аккаунта: <button className='text-blue-600 hover:text-blue-800 font-medium' onClick={onSwitchToRegistration}>Регистрация</button></p>
 
           <div className="mt-8 pt-6 border-t border-gray-200/50">
             <p className="text-xs text-gray-600 text-center">

@@ -5,17 +5,20 @@ import '../../index.css'
 
 function LogReg(){
 
-    const [currentPage, setCurrentPage] = useState("login");
+    const [currentPage, setCurrentPage] = useState("registration");
+
+    const switchToLogin = () => setCurrentPage('login');
+    const switchToRegistration = () => setCurrentPage('registration');
 
     const changePage = () => {
-    setCurrentPage(prevPage => prevPage === 'login' ? 'registration' : 'login');
+    setCurrentPage(prevPage => prevPage === 'registration' ? 'login' : 'registration');
     };
 
     return(
 
         <div className="min-h-screen flex items-center justify-center p-4">
 
-            {currentPage === 'login' ? (<LoginForm onSwitch={changePage}/>) : (<RegistrationForm onSwitch={changePage}/>)}
+            {currentPage === 'login' ? (<LoginForm switchToRegistration={switchToRegistration}/>) : (<RegistrationForm switchToLogin={switchToLogin}/>)}
 
         </div>
 

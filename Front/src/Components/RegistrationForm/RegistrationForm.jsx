@@ -1,7 +1,7 @@
 import '../../index.css'
 
 
-function RegistrationForm({onSwitch}){
+function RegistrationForm({onSwitchToLogin}){
 
     const handleSumbit = (e) => {
         e.preventDefault();
@@ -178,7 +178,7 @@ function RegistrationForm({onSwitch}){
 
         </form>
 
-        <p className='mt-4 text-xs text-gray-600 text-center'>Если у вас есть аккаунт: <button className='text-blue-600 hover:text-blue-800 font-medium' onClick={onSwitch}>Войти</button></p>
+        <p className='mt-4 text-xs text-gray-600 text-center'>Если у вас есть аккаунт: <button className='text-blue-600 hover:text-blue-800 font-medium' onClick={onSwitchToLogin}>Войти</button></p>
 
         {/* Футер */}
         <div className="mt-6 pt-4 border-t border-gray-200">
@@ -341,7 +341,7 @@ function RegistrationForm({onSwitch}){
 
           </form>
 
-          <p className='mt-4 text-xs text-gray-600 text-center'>Если у вас есть аккаунт: <button className='text-blue-600 hover:text-blue-800 font-medium' onClick={onSwitch}>Войти</button></p>
+          <p className='mt-4 text-xs text-gray-600 text-center'>Если у вас есть аккаунт: <button className='text-blue-600 hover:text-blue-800 font-medium' onClick={onSwitchToLogin}>Войти</button></p>
             
           {/* Футер */}
           <div className="mt-8 pt-6 border-t border-gray-200">
