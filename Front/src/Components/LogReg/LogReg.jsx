@@ -8,7 +8,7 @@ function LogReg(){
     const [currentPage, setCurrentPage] = useState("login");
 
     const changePage = () => {
-    setCurrentPage(prevPage => prevPage === 'registration' ? 'login' : 'registration');
+    setCurrentPage(prevPage => prevPage === 'login' ? 'registration' : 'login');
     };
 
     return(
