@@ -26,11 +26,8 @@ function LoginForm({onSwitchToRegistration, onSwitchToMagaz}) {
 
   return (
     <div className="min-h-screen absolute flex items-center justify-center p-4">
-
-      {/* Мобильная версия */}
       
       <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-6 w-full max-w-md md:hidden relative z-10">
-        {/* Шапка для мобилки */}
         <div className="text-center mb-6">
           <div className="flex items-center justify-center mb-3">
             <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -45,7 +42,6 @@ function LoginForm({onSwitchToRegistration, onSwitchToMagaz}) {
           </p>
         </div>
 
-        {/* Заголовок формы */}
         <h2 className="text-lg font-semibold text-gray-800 mb-4 text-center">
           Вход в систему
         </h2>
@@ -56,7 +52,6 @@ function LoginForm({onSwitchToRegistration, onSwitchToMagaz}) {
           </div>
         )}
 
-        {/* Форма */}
         <form onSubmit={handleSumbit} className="space-y-3">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -108,9 +103,7 @@ function LoginForm({onSwitchToRegistration, onSwitchToMagaz}) {
         </div>
       </div>
 
-      {/* Десктопная версия */}
       <div className="hidden md:flex bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden w-full max-w-4xl relative z-10">
-        {/* Левая часть - иллюстрация/инфо */}
         <div className="w-2/5 bg-gradient-to-br from-blue-600/90 to-blue-800/90 p-8 text-white relative">
           <div className="absolute inset-0 bg-black/20"></div>
           <div className="relative z-10">
@@ -144,7 +137,6 @@ function LoginForm({onSwitchToRegistration, onSwitchToMagaz}) {
           </div>
         </div>
 
-        {/* Правая часть - форма */}
         <div className="w-3/5 p-10">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">

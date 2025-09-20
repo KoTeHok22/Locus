@@ -27,7 +27,6 @@ function RegistrationForm({onSwitchToLogin}){
         setError('');
         
         try {
-            // Validate password
             if (!validatePassword(formData.password)) {
                 throw new Error("Пароль должен содержать минимум 8 символов, включая заглавную букву и цифру");
             }
@@ -36,8 +35,6 @@ function RegistrationForm({onSwitchToLogin}){
                 throw new Error("Пароли не совпадают");
             }
             
-            // For client registration, we only need email and password
-            // In a real app, you might want to collect more information
             await authService.register(formData.email, formData.password);
             alert("Вы успешно зарегистрировались");
             onSwitchToLogin();
@@ -49,7 +46,6 @@ function RegistrationForm({onSwitchToLogin}){
     }
 
     function validatePassword(password) {
-        // At least 8 characters, contains uppercase, lowercase, and number
         if (password.length < 8) return false;
         if (!/[A-Z]/.test(password)) return false;
         if (!/[a-z]/.test(password)) return false;
@@ -61,10 +57,8 @@ function RegistrationForm({onSwitchToLogin}){
 
     <div className="min-h-screen absolute flex items-center justify-center p-4">
 
-      {/* Мобильная версия */}
       <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md md:hidden">
 
-        {/* Шапка */}
         <div className="text-center mb-6">
           <div className="flex items-center justify-center mb-3">
             <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -85,9 +79,7 @@ function RegistrationForm({onSwitchToLogin}){
           </div>
         )}
 
-        {/* Форма регистрации */}
         <form onSubmit={handleSumbit} className="space-y-3">
-          {/* Имя и Фамилия */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -119,7 +111,6 @@ function RegistrationForm({onSwitchToLogin}){
             </div>
           </div>
 
-          {/* Email */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Email*
@@ -135,7 +126,6 @@ function RegistrationForm({onSwitchToLogin}){
             />
           </div>
 
-          {/* Телефон */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Телефон
@@ -150,7 +140,6 @@ function RegistrationForm({onSwitchToLogin}){
             />
           </div>
 
-          {/* Пароль и подтверждение */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Пароль*
@@ -181,7 +170,6 @@ function RegistrationForm({onSwitchToLogin}){
             />
           </div>
 
-          {/* Чекбокс соглашения */}
           <label className="flex items-start space-x-2 text-xs text-gray-600">
             <input
               type="checkbox"
@@ -193,7 +181,6 @@ function RegistrationForm({onSwitchToLogin}){
             </span>
           </label>
 
-          {/* Кнопка регистрации */}
           <button
             type="submit"
             disabled={loading}
@@ -206,7 +193,6 @@ function RegistrationForm({onSwitchToLogin}){
 
         <p className='mt-4 text-xs text-gray-600 text-center'>Если у вас есть аккаунт: <button className='text-blue-600 hover:text-blue-800 font-medium' onClick={onSwitchToLogin}>Войти</button></p>
 
-        {/* Футер */}
         <div className="mt-6 pt-4 border-t border-gray-200">
           <p className="text-xs text-gray-500 text-center">
             © 2025 Locus. Все права защищены.
@@ -214,10 +200,8 @@ function RegistrationForm({onSwitchToLogin}){
         </div>
       </div>
 
-      {/* Десктопная версия */}
       <div className="hidden md:flex bg-white rounded-2xl shadow-xl overflow-hidden w-full max-w-4xl">
 
-        {/* Левая часть - информация */}
         <div className="w-2/5 bg-gradient-to-br from-blue-600 to-blue-800 p-8 text-white">
           <div className="flex items-center mb-6">
             <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
@@ -252,7 +236,6 @@ function RegistrationForm({onSwitchToLogin}){
           </div>
         </div>
 
-        {/* Правая часть - форма */}
         <div className="w-3/5 p-10">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
@@ -271,7 +254,6 @@ function RegistrationForm({onSwitchToLogin}){
 
           <form onSubmit={handleSumbit} className="space-y-6">
 
-            {/* Имя и Фамилия */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -303,7 +285,6 @@ function RegistrationForm({onSwitchToLogin}){
               </div>
             </div>
 
-            {/* Email */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Email*
@@ -319,7 +300,6 @@ function RegistrationForm({onSwitchToLogin}){
               />
             </div>
 
-            {/* Телефон */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Телефон
@@ -334,7 +314,6 @@ function RegistrationForm({onSwitchToLogin}){
               />
             </div>
 
-            {/* Пароль и подтверждение */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -366,7 +345,6 @@ function RegistrationForm({onSwitchToLogin}){
               </div>
             </div>
 
-            {/* Чекбокс соглашения */}
             <label className="flex items-start space-x-3 text-sm text-gray-600">
               <input
                 type="checkbox"
@@ -378,7 +356,6 @@ function RegistrationForm({onSwitchToLogin}){
               </span>
             </label>
 
-            {/* Кнопка регистрации */}
             <button
               type="submit"
               disabled={loading}
@@ -392,7 +369,6 @@ function RegistrationForm({onSwitchToLogin}){
 
           <p className='mt-4 text-xs text-gray-600 text-center'>Если у вас есть аккаунт: <button className='text-blue-600 hover:text-blue-800 font-medium' onClick={onSwitchToLogin}>Войти</button></p>
             
-          {/* Футер */}
           <div className="mt-8 pt-6 border-t border-gray-200">
             <p className="text-xs text-gray-500 text-center">
               © 2025 Locus. Все права защищены.
