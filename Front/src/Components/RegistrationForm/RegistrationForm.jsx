@@ -1,57 +1,60 @@
 import '../../index.css'
-
+import authService from '../../authService.js'
+import { useState } from 'react'
 
 function RegistrationForm({onSwitchToLogin}){
+    const [formData, setFormData] = useState({
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        password: '',
+        confirmPassword: ''
+    });
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    const handleSumbit = (e) => {
+    const handleChange = (e) => {
+        setFormData({
+            ...formData,
+            [e.target.name]: e.target.value
+        });
+    };
+
+    const handleSumbit = async (e) => {
         e.preventDefault();
+        setLoading(true);
+        setError('');
         
-        const formData = new FormData(e.target);
-        const data = Object.fromEntries(formData);
-
-        try{
-
-            passwordValidation(data);
-            onSwitch();
-            e.target.reset();
-        
-        }catch(error){
-
-            console.error(`Ошибка валидации: ${error}`);
-            alert(error.message);
-        
+        try {
+            // Validate password
+            if (!validatePassword(formData.password)) {
+                throw new Error("Пароль должен содержать минимум 8 символов, включая заглавную букву и цифру");
+            }
+            
+            if (formData.password !== formData.confirmPassword) {
+                throw new Error("Пароли не совпадают");
+            }
+            
+            // For client registration, we only need email and password
+            // In a real app, you might want to collect more information
+            await authService.register(formData.email, formData.password);
+            alert("Вы успешно зарегистрировались");
+            onSwitchToLogin();
+        } catch (error) {
+            setError(error.message);
+        } finally {
+            setLoading(false);
         }
-
-        return data;
-
     }
 
-    function passwordValidation(data){
-            
-        const pass = data?.pass;
-        const passValid = data?.passValid;
-        const passwordLength = 6;
-        
-        if (pass.length < passwordLength) {
-
-            throw new Error(`Пароль должен содержать минимум ${passwordLength} символов`);
-            
-        }else if (!/[A-Z]/.test(pass)) {
-
-            throw new Error("Пароль должен содержать хотя бы одну заглавную букву");
-
-        }else if (!/[0-9]/.test(pass)) {
-
-            throw new Error("Пароль должен содержать хотя бы одну цифру");
-
-        }else if(pass.toString() !== passValid.toString()){
-
-            throw new Error("Пароли не совпадают");
-
-        }else{
-            alert("Вы успешно зарегестрировались");
-        }
-        
+    function validatePassword(password) {
+        // At least 8 characters, contains uppercase, lowercase, and number
+        if (password.length < 8) return false;
+        if (!/[A-Z]/.test(password)) return false;
+        if (!/[a-z]/.test(password)) return false;
+        if (!/[0-9]/.test(password)) return false;
+        return true;
     }
 
     return(
@@ -76,6 +79,12 @@ function RegistrationForm({onSwitchToLogin}){
           </p>
         </div>
 
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
+
         {/* Форма регистрации */}
         <form onSubmit={handleSumbit} className="space-y-3">
           {/* Имя и Фамилия */}
@@ -86,6 +95,9 @@ function RegistrationForm({onSwitchToLogin}){
               </label>
               <input
                 type="text"
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                 placeholder="Имя"
                 required
@@ -97,6 +109,9 @@ function RegistrationForm({onSwitchToLogin}){
               </label>
               <input
                 type="text"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                 placeholder="Фамилия"
                 required
@@ -111,6 +126,9 @@ function RegistrationForm({onSwitchToLogin}){
             </label>
             <input
               type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
               placeholder="email@example.com"
               required
@@ -124,6 +142,9 @@ function RegistrationForm({onSwitchToLogin}){
             </label>
             <input
               type="tel"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
               placeholder="+7 (999) 999-99-99"
             />
@@ -135,8 +156,10 @@ function RegistrationForm({onSwitchToLogin}){
               Пароль*
             </label>
             <input
-                name='pass'
+              name="password"
               type="password"
+              value={formData.password}
+              onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
               placeholder="Не менее 8 символов"
               required
@@ -148,8 +171,10 @@ function RegistrationForm({onSwitchToLogin}){
               Подтверждение пароля*
             </label>
             <input
-                name='passValid'
+              name="confirmPassword"
               type="password"
+              value={formData.confirmPassword}
+              onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
               placeholder="Повторите пароль"
               required
@@ -171,9 +196,10 @@ function RegistrationForm({onSwitchToLogin}){
           {/* Кнопка регистрации */}
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm"
+            disabled={loading}
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm disabled:opacity-50"
           >
-            Зарегестрироваться
+            {loading ? 'Регистрация...' : 'Зарегистрироваться'}
           </button>
 
         </form>
@@ -237,6 +263,12 @@ function RegistrationForm({onSwitchToLogin}){
             </p>
           </div>
 
+          {error && (
+            <div className="mb-6 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSumbit} className="space-y-6">
 
             {/* Имя и Фамилия */}
@@ -247,6 +279,9 @@ function RegistrationForm({onSwitchToLogin}){
                 </label>
                 <input
                   type="text"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                   placeholder="Введите имя"
                   required
@@ -258,6 +293,9 @@ function RegistrationForm({onSwitchToLogin}){
                 </label>
                 <input
                   type="text"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                   placeholder="Введите фамилию"
                   required
@@ -272,6 +310,9 @@ function RegistrationForm({onSwitchToLogin}){
               </label>
               <input
                 type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                 placeholder="email@example.com"
                 required
@@ -285,6 +326,9 @@ function RegistrationForm({onSwitchToLogin}){
               </label>
               <input
                 type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                 placeholder="+7 (999) 999-99-99"
               />
@@ -297,8 +341,10 @@ function RegistrationForm({onSwitchToLogin}){
                   Пароль*
                 </label>
                 <input
-                    name='pass'
+                  name="password"
                   type="password"
+                  value={formData.password}
+                  onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                   placeholder="Минимум 8 символов"
                   required
@@ -309,8 +355,10 @@ function RegistrationForm({onSwitchToLogin}){
                   Подтверждение*
                 </label>
                 <input
-                    name='passValid'
+                  name="confirmPassword"
                   type="password"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                   placeholder="Повторите пароль"
                   required
@@ -333,9 +381,10 @@ function RegistrationForm({onSwitchToLogin}){
             {/* Кнопка регистрации */}
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              disabled={loading}
+              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
             >
-              Создать аккаунт
+              {loading ? 'Регистрация...' : 'Создать аккаунт'}
             </button>
 
 

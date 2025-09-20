@@ -1,12 +1,27 @@
 import '../../index.css'
 import '../RegistrationForm/RegistrationForm.jsx'
+import authService from '../../authService.js'
+import { useState } from 'react'
 
-function LoginForm({onSwitchToRegistration, onSwitchToMagaz, onEnter}) {
+function LoginForm({onSwitchToRegistration, onSwitchToMagaz}) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-
-  const handleSumbit = (e) => {
+  const handleSumbit = async (e) => {
     e.preventDefault();
-    onSwitchToMagaz();
+    setLoading(true);
+    setError('');
+    
+    try {
+      await authService.login(email, password);
+      onSwitchToMagaz();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -35,6 +50,12 @@ function LoginForm({onSwitchToRegistration, onSwitchToMagaz, onEnter}) {
           Вход в систему
         </h2>
 
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
+
         {/* Форма */}
         <form onSubmit={handleSumbit} className="space-y-3">
           <div>
@@ -43,8 +64,11 @@ function LoginForm({onSwitchToRegistration, onSwitchToMagaz, onEnter}) {
             </label>
             <input
               type="text"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white/80"
               placeholder="Введите ваш логин"
+              required
             />
           </div>
 
@@ -54,8 +78,11 @@ function LoginForm({onSwitchToRegistration, onSwitchToMagaz, onEnter}) {
             </label>
             <input
               type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white/80"
               placeholder="Введите ваш пароль"
+              required
             />
           </div>
 
@@ -67,12 +94,13 @@ function LoginForm({onSwitchToRegistration, onSwitchToMagaz, onEnter}) {
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 text-sm transition-colors"
+            disabled={loading}
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 text-sm transition-colors disabled:opacity-50"
           >
-            Войти
+            {loading ? 'Вход...' : 'Войти'}
           </button>
         </form>
-        <p className='mt-4 text-xs text-gray-600 text-center'>Если у вас нет аккаунта: <button className='text-blue-600 hover:text-blue-800 font-medium' onClick={onSwitchToRegistration && onSwitchToMagaz}>Регистрация</button></p>
+        <p className='mt-4 text-xs text-gray-600 text-center'>Если у вас нет аккаунта: <button className='text-blue-600 hover:text-blue-800 font-medium' onClick={onSwitchToRegistration}>Регистрация</button></p>
         <div className="mt-6 pt-4 border-t border-gray-200/50">
           <p className="text-xs text-gray-600 text-center">
             © 2025 Locus. Все права защищены.
@@ -127,6 +155,12 @@ function LoginForm({onSwitchToRegistration, onSwitchToMagaz, onEnter}) {
             </p>
           </div>
 
+          {error && (
+            <div className="mb-6 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSumbit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -134,8 +168,11 @@ function LoginForm({onSwitchToRegistration, onSwitchToMagaz, onEnter}) {
               </label>
               <input
                 type="text"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all bg-white/80"
                 placeholder="Введите ваш логин"
+                required
               />
             </div>
 
@@ -145,8 +182,11 @@ function LoginForm({onSwitchToRegistration, onSwitchToMagaz, onEnter}) {
               </label>
               <input
                 type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all bg-white/80"
                 placeholder="Введите ваш пароль"
+                required
               />
             </div>
 
@@ -166,9 +206,10 @@ function LoginForm({onSwitchToRegistration, onSwitchToMagaz, onEnter}) {
 
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              disabled={loading}
+              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
             >
-              Войти в систему
+              {loading ? 'Вход...' : 'Войти в систему'}
             </button>
           </form>
 

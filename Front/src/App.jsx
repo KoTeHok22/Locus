@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import './App.css'
-import './Components/LoginForm/LoginForm.jsx'
-import { Magazine } from './Components/Magazine/Magazine.jsx'
 import { LoginForm } from './Components/LoginForm/LoginForm.jsx'
 import { RegistrationForm } from './Components/RegistrationForm/RegistrationForm.jsx'
+import { Dashboard } from './Components/Dashboard/Dashboard.jsx'
 
 function App() {
 
@@ -11,20 +10,20 @@ function App() {
 
   const switchToLogin = () => setCurrentPage('login');
   const switchToRegistration = () => setCurrentPage('registration');
-  const switchToMagaz = () => setCurrentPage('magaz');
+  const switchToDashboard = () => setCurrentPage('dashboard');
 
 
   return (
     
     <div className='mainApp'>
-    <div className='back'></div>
+    {currentPage !== 'dashboard' && <div className='back'></div>}
     
     {currentPage === 'login' && (
 
         <LoginForm 
 
             onSwitchToRegistration={switchToRegistration}
-            onSwitchToMagaz={switchToMagaz}
+            onSwitchToMagaz={switchToDashboard}
             
         />
     )}
@@ -34,14 +33,13 @@ function App() {
         <RegistrationForm 
 
             onSwitchToLogin={switchToLogin}
-            onSwitchToMagaz={switchToMagaz}
             
         />
     )}
     
-    {currentPage === 'magaz' && (
+    {currentPage === 'dashboard' && (
 
-        <Magazine 
+        <Dashboard 
 
             onSwitchToLogin={switchToLogin}
         />
