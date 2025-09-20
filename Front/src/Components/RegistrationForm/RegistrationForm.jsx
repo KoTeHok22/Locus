@@ -12,7 +12,7 @@ function RegistrationForm({onSwitchToLogin}){
         try{
 
             passwordValidation(data);
-            onSwitch();
+            onSwitchToLogin();
             e.target.reset();
         
         }catch(error){

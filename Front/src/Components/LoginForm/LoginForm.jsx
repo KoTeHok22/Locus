@@ -6,7 +6,9 @@ function LoginForm({onSwitchToRegistration, onSwitchToMagaz, onEnter}) {
 
   const handleSumbit = (e) => {
     e.preventDefault();
+    
     onSwitchToMagaz();
+
   }
 
   return (
