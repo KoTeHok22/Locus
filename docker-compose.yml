@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  # PostgreSQL database
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: shutdown_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  # Flask backend
+  backend:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/shutdown_db
+      - JWT_SECRET_KEY=supersecretkey_change_in_production
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+
+  # React frontend
+  frontend:
+    build: ./Front
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:5000
+    depends_on:
+      - backend
+    volumes:
+      - ./Front:/app
+      - /app/node_modules
+
+volumes:
+  postgres_data:

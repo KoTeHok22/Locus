@@ -1,0 +1,11 @@
+# .dockerignore for frontend
+node_modules
+build
+dist
+.env
+.git
+.gitignore
+README.md
+.env
+.DS_Store
+npm-debug.log*
