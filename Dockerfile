@@ -13,6 +13,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         build-essential \
         libpq-dev \
+        postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements file
@@ -23,6 +24,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy project files
 COPY . .
+
+# Make wait-for-it.sh executable
+RUN chmod +x wait-for-it.sh
 
 # Expose port
 EXPOSE 5000
