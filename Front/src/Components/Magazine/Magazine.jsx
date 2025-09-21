@@ -1,6 +1,6 @@
 import '../../index.css'
 
-function Magazine ({onSwitchToLogin ,onEnter}){
+function Magazine ({ onSwitchToLogin }){
 
     return(
 

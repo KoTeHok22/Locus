@@ -10,9 +10,6 @@ function LogReg(){
     const switchToLogin = () => setCurrentPage('login');
     const switchToRegistration = () => setCurrentPage('registration');
 
-    const changePage = () => {
-    setCurrentPage(prevPage => prevPage === 'registration' ? 'login' : 'registration');
-    };
 
     return(
 
