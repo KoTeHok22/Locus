@@ -1,13 +1,20 @@
 @import "tailwindcss";
 
 #root {
-
-  margin: 0 auto;
-  padding: 2rem;
-  display: flex;
+  margin: 0;
+  padding: 0;
   height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  width: 100%;
+}
 
+/* Add animation for ping effect */
+@keyframes ping {
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.animate-ping {
+  animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
 }

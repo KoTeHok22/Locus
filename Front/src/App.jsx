@@ -5,50 +5,35 @@ import { RegistrationForm } from './Components/RegistrationForm/RegistrationForm
 import { Dashboard } from './Components/Dashboards/Dashboard.jsx'
 
 function App() {
-
-  const[currentPage, setCurrentPage] = useState('login');
+  const [currentPage, setCurrentPage] = useState('login');
 
   const switchToLogin = () => setCurrentPage('login');
   const switchToRegistration = () => setCurrentPage('registration');
   const switchToDashboard = () => setCurrentPage('dashboard');
 
-
   return (
-    
     <div className='mainApp'>
-    {currentPage !== 'dashboard' && <div className='back'></div>}
-    
-    {currentPage === 'login' && (
-
+      {currentPage !== 'dashboard' && <div className='back'></div>}
+      
+      {currentPage === 'login' && (
         <LoginForm 
-
-            onSwitchToRegistration={switchToRegistration}
-            onSwitchToMagaz={switchToDashboard}
-            
+          onSwitchToRegistration={switchToRegistration}
+          onSwitchToMagaz={switchToDashboard}
         />
-    )}
-    
-    {currentPage === 'registration' && (
-
+      )}
+      
+      {currentPage === 'registration' && (
         <RegistrationForm 
-
-            onSwitchToLogin={switchToLogin}
-            
+          onSwitchToLogin={switchToLogin}
         />
-    )}
-    
-    {currentPage === 'dashboard' && (
-
+      )}
+      
+      {currentPage === 'dashboard' && (
         <Dashboard 
-
-            onSwitchToLogin={switchToLogin}
+          onSwitchToLogin={switchToLogin}
         />
-    )}
-
-    
+      )}
     </div>
-    
-
   )
 }
 
