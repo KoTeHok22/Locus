@@ -1,5 +1,4 @@
-version: '3.8'
-
+# Убрана устаревшая директива 'version'
 services:
   # PostgreSQL database
   db:
@@ -18,9 +17,11 @@ services:
       timeout: 5s
       retries: 5
 
-  # Flask backend
+  # Flask backend (без изменений, конфигурация корректна для разработки)
   backend:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "5000:5000"
     environment:
@@ -36,15 +37,21 @@ services:
 
   # React frontend
   frontend:
-    build: ./Front
+    # Контекст сборки теперь явно указывает на папку Front
+    build:
+      context: ./Front
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
     environment:
-      - VITE_API_URL=http://backend:5000
+      # Убедитесь, что ваш React-проект (Vite/CRA) использует эту переменную
+      - VITE_API_URL=http://localhost:5000
     depends_on:
       - backend
+    # volumes остаются, чтобы обеспечить live-reload
     volumes:
       - ./Front:/app
+      # Этот volume предотвращает перезапись node_modules из локальной машины
       - /app/node_modules
 
 volumes:

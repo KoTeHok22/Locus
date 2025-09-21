@@ -1,26 +1,22 @@
-# Use Node 18 slim image as base
-FROM node:18-slim
+# Используем более новую версию Node.js, совместимую с Vite
+FROM node:20-slim
 
-# Set working directory
+# Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Copy package files
+# Копируем package.json и package-lock.json для установки зависимостей
+# Это кэширует зависимости, если они не менялись
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci
+# Устанавливаем зависимости
+RUN npm install
 
-# Copy frontend source
+# Копируем остальные файлы исходного кода
 COPY . .
 
-# Build the app
-RUN npm run build
-
-# Install serve to serve the static files
-RUN npm install -g serve
-
-# Expose port
+# Открываем порт для сервера разработки
 EXPOSE 3000
 
-# Serve the app
-CMD ["serve", "-s", "dist", "-l", "3000"]
+# Запускаем сервер для разработки на нужном порту и хосте
+# Двойное тире (--) передает флаги --host и --port напрямую в Vite
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"]
