@@ -2,7 +2,9 @@ import '../../index.css'
 import authService from '../../authService.js'
 import { useState, useEffect } from 'react'
 
-function Dashboard({onSwitchToLogin}) {
+function Dashboard({onSwitchToLogin, onSwitchToPage}) {
+
+
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');

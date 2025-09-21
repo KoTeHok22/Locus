@@ -4,6 +4,7 @@ import authService from '../../authService.js'
 import { useState } from 'react'
 
 function LoginForm({onSwitchToRegistration, onSwitchToMagaz}) {
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');

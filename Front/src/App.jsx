@@ -2,7 +2,7 @@ import { useState } from 'react'
 import './App.css'
 import { LoginForm } from './Components/LoginForm/LoginForm.jsx'
 import { RegistrationForm } from './Components/RegistrationForm/RegistrationForm.jsx'
-import { Dashboard } from './Components/Dashboard/Dashboard.jsx'
+import { Dashboard } from './Components/Dashboards/Dashboard.jsx'
 
 function App() {
 
