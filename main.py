@@ -19,7 +19,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 
-# Retry logic for database connection
+# Логика повторной попытки подключения к базе данных
 def create_tables_with_retry(max_retries=5, delay=2):
     for attempt in range(max_retries):
         try:
@@ -35,7 +35,7 @@ def create_tables_with_retry(max_retries=5, delay=2):
                 print(f"Failed to connect to database after {max_retries} attempts: {e}")
                 raise
 
-# Create tables with retry logic
+# Создание таблиц с логикой повторных попыток
 create_tables_with_retry()
 
 app.register_blueprint(auth_bp)

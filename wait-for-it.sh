@@ -1,5 +1,4 @@
 #!/bin/bash
-# Use this script to wait for the database to be ready before starting the backend
 
 set -e
 
