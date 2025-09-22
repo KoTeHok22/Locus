@@ -3,6 +3,10 @@ import authService from '../../authService.js'
 import { useState } from 'react'
 
 function RegistrationForm({onSwitchToLogin}){
+
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfPass, setShowConfPass] = useState(false);
+
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -11,6 +15,7 @@ function RegistrationForm({onSwitchToLogin}){
         password: '',
         confirmPassword: ''
     });
+
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -46,10 +51,12 @@ function RegistrationForm({onSwitchToLogin}){
     }
 
     function validatePassword(password) {
+
         if (password.length < 8) return false;
         if (!/[A-Z]/.test(password)) return false;
         if (!/[a-z]/.test(password)) return false;
         if (!/[0-9]/.test(password)) return false;
+
         return true;
     }
 
@@ -61,9 +68,7 @@ function RegistrationForm({onSwitchToLogin}){
 
         <div className="text-center mb-6">
           <div className="flex items-center justify-center mb-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">L</span>
-            </div>
+            <img src='../logo/logo.png' alt="RIP" className='w-15 h-15 bg-blue-600 rounded-lg flex items-center justify-center' />
           </div>
           <h1 className="text-xl font-bold text-gray-900 mb-1">
             Locus
@@ -144,15 +149,32 @@ function RegistrationForm({onSwitchToLogin}){
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Пароль*
             </label>
-            <input
+            <div>
+              <input
               name="password"
-              type="password"
+              type={!showPassword ? "text" : "password" }
               value={formData.password}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+              className="w-[90%] px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
               placeholder="Не менее 8 символов"
               required
             />
+
+            <button onClick={() => setShowPassword(!showPassword)} name='eye' className='w-[10%]'>
+                {showPassword ? (
+                <svg className="w-[50%] h-5px self-center" fill="none" stroke="currentColor" viewBox="0 -5 24 24">
+                  <path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.875-3.825m10.792 0a10.05 10.05 0 011.875 3.825M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path d="M2 2l20 20"/>
+                </svg>
+              ) : (
+                <svg className="w-[50%] h-5px" fill="none" stroke="currentColor" viewBox="0 -5 24 24">
+                  <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+              )}
+            </button>
+            </div>
           </div>
 
           <div>
@@ -161,24 +183,52 @@ function RegistrationForm({onSwitchToLogin}){
             </label>
             <input
               name="confirmPassword"
-              type="password"
+              type={!showConfPass ? "text" : "password"}
               value={formData.confirmPassword}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+              className="w-[90%] px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
               placeholder="Повторите пароль"
               required
             />
+
+            <button onClick={() => setShowConfPass(!showConfPass)} name='eye' className='w-[10%]'>
+                {showConfPass ? (
+                <svg className="w-[50%] h-5px self-center" fill="none" stroke="currentColor" viewBox="0 -5 24 24">
+                  <path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.875-3.825m10.792 0a10.05 10.05 0 011.875 3.825M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path d="M2 2l20 20"/>
+                </svg>
+              ) : (
+                <svg className="w-[50%] h-5px" fill="none" stroke="currentColor" viewBox="0 -5 24 24">
+                  <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+              )}
+            </button>
           </div>
 
-          <label className="flex items-start space-x-2 text-xs text-gray-600">
-            <input
-              type="checkbox"
-              className="mt-0.5 text-blue-600 rounded focus:ring-blue-500"
-              required
-            />
-            <span>
-              Я соглашаюсь с условиями использования и политикой конфиденциальности
-            </span>
+          <label className="flex flex-col items-start space-x-2 text-xs text-gray-600">
+            
+            <select name="role" className='w-[100%] text-[15px] text-center self-center focus:ring-blue-700 mb-2 mt-1 mx-0 p-2 border-2 border-blue-600 appearance-none bg-none rounded-[10px]'>
+              <option value="" selected disabled>-- Выберите роль --</option>
+              <option value="Manager">Менеджер</option>
+              <option value="Foreman">Прораб</option>
+              <option value="Inspector">Инспектор</option>
+            </select>
+            
+            <div>
+              <input
+                type="checkbox"
+                className="mr-2 mt-(-2) ml-3 text-blue-600 rounded focus:ring-blue-500"
+                required
+              />
+              
+              <span>
+                Я соглашаюсь с условиями использования и политикой конфиденциальности
+              </span>
+            </div>
+
+            
           </label>
 
           <button
@@ -204,9 +254,7 @@ function RegistrationForm({onSwitchToLogin}){
 
         <div className="w-2/5 bg-gradient-to-br from-blue-600 to-blue-800 p-8 text-white">
           <div className="flex items-center mb-6">
-            <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-2xl">L</span>
-            </div>
+            <img src='../logo/logo.png' alt="RIP" className='w-15 h-15 bg-blue-600 rounded-lg flex items-center justify-center' />
             <h1 className="text-2xl font-bold ml-4">Locus</h1>
           </div>
           
@@ -301,60 +349,90 @@ function RegistrationForm({onSwitchToLogin}){
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Телефон
-              </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Пароль*
+            </label>
+            <div>
               <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                placeholder="+7 (999) 999-99-99"
-              />
-            </div>
+              name="password"
+              type={!showPassword ? "text" : "password" }
+              value={formData.password}
+              onChange={handleChange}
+              className="w-[90%] px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+              placeholder="Не менее 8 символов"
+              required
+            />
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Пароль*
-                </label>
-                <input
-                  name="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                  placeholder="Минимум 8 символов"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Подтверждение*
-                </label>
-                <input
-                  name="confirmPassword"
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                  placeholder="Повторите пароль"
-                  required
-                />
-              </div>
+            <button onClick={() => setShowPassword(!showPassword)} name='eye' className='w-[10%]'>
+                {showPassword ? (
+                <svg className="w-[50%] h-5px self-center" fill="none" stroke="currentColor" viewBox="0 -5 24 24">
+                  <path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.875-3.825m10.792 0a10.05 10.05 0 011.875 3.825M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path d="M2 2l20 20"/>
+                </svg>
+              ) : (
+                <svg className="w-[50%] h-5px" fill="none" stroke="currentColor" viewBox="0 -5 24 24">
+                  <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+              )}
+            </button>
             </div>
+          </div>
 
-            <label className="flex items-start space-x-3 text-sm text-gray-600">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Подтверждение пароля*
+            </label>
+            <input
+              name="confirmPassword"
+              type={!showConfPass ? "text" : "password"}
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              className="w-[90%] px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+              placeholder="Повторите пароль"
+              required
+            />
+
+            <button onClick={() => setShowConfPass(!showConfPass)} name='eye' className='w-[10%]'>
+                {showConfPass ? (
+                <svg className="w-[50%] h-5px self-center" fill="none" stroke="currentColor" viewBox="0 -5 24 24">
+                  <path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.875-3.825m10.792 0a10.05 10.05 0 011.875 3.825M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path d="M2 2l20 20"/>
+                </svg>
+              ) : (
+                <svg className="w-[50%] h-5px" fill="none" stroke="currentColor" viewBox="0 -5 24 24">
+                  <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+              )}
+            </button>
+          </div>
+
+              <label className="flex flex-col items-start space-x-3 text-xs text-gray-600">
+            
+            <select name="role" className='w-[100%] text-[15px] text-center self-center focus:ring-blue-700 mb-2 mt-1 mx-0 p-2 border-2 border-blue-600 appearance-none bg-none rounded-[10px]'>
+              <option value="" selected disabled>-- Выберите роль --</option>
+              <option value="Manager">Менеджер</option>
+              <option value="Foreman">Прораб</option>
+              <option value="Inspector">Инспектор</option>
+            </select>
+            
+            <div>
               <input
                 type="checkbox"
-                className="mt-0.5 text-blue-600 rounded focus:ring-blue-500"
+                className="mr-2 mt-(-2) ml-3 text-blue-600 rounded focus:ring-blue-500"
                 required
               />
+              
               <span>
-                Я принимаю условия использования и соглашаюсь с политикой конфиденциальности
+                Я соглашаюсь с условиями использования и политикой конфиденциальности
               </span>
-            </label>
+            </div>
+
+            
+          </label>
 
             <button
               type="submit"

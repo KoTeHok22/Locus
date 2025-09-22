@@ -9,6 +9,7 @@ function LoginForm({onSwitchToRegistration, onSwitchToMagaz}) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSumbit = async (e) => {
     e.preventDefault();
@@ -31,9 +32,7 @@ function LoginForm({onSwitchToRegistration, onSwitchToMagaz}) {
       <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-6 w-full max-w-md md:hidden relative z-10">
         <div className="text-center mb-6">
           <div className="flex items-center justify-center mb-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">L</span>
-            </div>
+            <img src='../logo/logo.png' alt="RIP" className='w-15 h-15 bg-blue-600 rounded-lg flex items-center justify-center' />
           </div>
           <h1 className="text-xl font-bold text-gray-900 mb-1">
             Locus
@@ -73,13 +72,28 @@ function LoginForm({onSwitchToRegistration, onSwitchToMagaz}) {
               Пароль
             </label>
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white/80"
+              className="w-[90%] px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white/80"
               placeholder="Введите ваш пароль"
               required
             />
+
+            <button onClick={() => setShowPassword(!showPassword)} name='eye' className='w-[10%]'>
+                {showPassword ? (
+                <svg className="w-[50%] h-5px self-center" fill="none" stroke="currentColor" viewBox="0 -5 24 24">
+                  <path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.875-3.825m10.792 0a10.05 10.05 0 011.875 3.825M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path d="M2 2l20 20"/>
+                </svg>
+              ) : (
+                <svg className="w-[50%] h-5px" fill="none" stroke="currentColor" viewBox="0 -5 24 24">
+                  <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+              )}
+            </button>
           </div>
 
           <div className="text-right">
@@ -109,9 +123,7 @@ function LoginForm({onSwitchToRegistration, onSwitchToMagaz}) {
           <div className="absolute inset-0 bg-black/20"></div>
           <div className="relative z-10">
             <div className="flex items-center mb-6">
-              <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
-                <span className="text-white font-bold text-2xl">L</span>
-              </div>
+              <img src='../logo/logo-mini.ico' alt="RIP" className='w-15 h-15 bg-blue-600 rounded-lg flex items-center justify-center' />
               <h1 className="text-2xl font-bold ml-4">Locus</h1>
             </div>
             
@@ -174,13 +186,29 @@ function LoginForm({onSwitchToRegistration, onSwitchToMagaz}) {
                 Пароль
               </label>
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all bg-white/80"
+                className="w-[90%] px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all bg-white/80"
                 placeholder="Введите ваш пароль"
                 required
               />
+
+              <button onClick={() => setShowPassword(!showPassword)} name='eye' className='w-[10%]'>
+                {showPassword ? (
+                <svg className="w-[50%] h-5px self-center" fill="none" stroke="currentColor" viewBox="0 -5 24 24">
+                  <path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.875-3.825m10.792 0a10.05 10.05 0 011.875 3.825M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path d="M2 2l20 20"/>
+                </svg>
+              ) : (
+                <svg className="w-[50%] h-5px" fill="none" stroke="currentColor" viewBox="0 -5 24 24">
+                  <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+              )}
+            </button>
+
             </div>
 
             <div className="flex items-center justify-between">
