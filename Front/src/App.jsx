@@ -2,7 +2,7 @@ import { useState } from 'react'
 import './App.css'
 import { LoginForm } from './Components/LoginForm/LoginForm.jsx'
 import { RegistrationForm } from './Components/RegistrationForm/RegistrationForm.jsx'
-import { Dashboard } from './Components/Dashboards/Dashboard.jsx'
+import { Magazine } from './Components/Magazine/Magazine.jsx'
 
 function App() {
   const [currentPage, setCurrentPage] = useState('login');
@@ -13,6 +13,7 @@ function App() {
 
   return (
     <div className='mainApp'>
+      {/*
       {currentPage !== 'dashboard' && <div className='back'></div>}
       
       {currentPage === 'login' && (
@@ -33,6 +34,9 @@ function App() {
           onSwitchToLogin={switchToLogin}
         />
       )}
+      */}
+
+      <Magazine></Magazine>
     </div>
   )
 }
