@@ -6,7 +6,6 @@ function Notifications ({ isOpen, onClose, notifications: initialNotifications  
 
     const [notifications, setNotifications] = useState(initialNotifications || []);
 
-    // Обновляем уведомления при изменении пропса
         useEffect(() => {
             setNotifications(initialNotifications || []);
         }, [initialNotifications]);
@@ -31,16 +30,13 @@ function Notifications ({ isOpen, onClose, notifications: initialNotifications  
     return(
         <>
         
-            {/* Overlay */}
             <div 
                 className='fixed inset-0 z-40'
                 onClick={onClose}
             />
             
-            {/* Окно уведомлений */}
             <div className='absolute right-0 top-full mt-2 w-80 md:w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50'>
                 
-                {/* Заголовок */}
                 <div className='p-4 border-b border-gray-200 flex justify-between items-center'>
                     <div className='flex items-center space-x-2'>
                         <h3 className='font-semibold text-lg'>Уведомления</h3>
@@ -70,7 +66,6 @@ function Notifications ({ isOpen, onClose, notifications: initialNotifications  
                     </div>
                 </div>
 
-                {/* Список уведомлений */}
                 <div className='max-h-96 overflow-y-auto'>
                     {notifications.length > 0 ? (
                         notifications.map((notification) => (
@@ -109,13 +104,13 @@ function Notifications ({ isOpen, onClose, notifications: initialNotifications  
                     )}
                 </div>
 
-                {/* Футер */}
                 <div className='p-3 border-t border-gray-200 bg-gray-50 rounded-b-lg'>
                     <button className='w-full text-center text-sm text-blue-600 hover:text-blue-700 font-medium'>
                         Показать все уведомления
                     </button>
                 </div>
             </div>
+        </>
         </>
         
     )

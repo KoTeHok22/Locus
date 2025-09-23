@@ -1,4 +1,3 @@
-// components/NotificationIcon.jsx
 export function NotificationIcon({ unreadCount, onClick, className = '' }) {
     return (
         <button 

@@ -109,7 +109,30 @@ class AuthService {
 
   isAuthenticated() {
     const token = this.getToken();
-    return !!token;
+    if (!token) return false;
+    
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const currentTime = Date.now() / 1000;
+      return payload.exp > currentTime;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async verifyToken(token) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/verify-token`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      return response.ok;
+    } catch (error) {
+      return false;
+    }
   }
 
   getToken() {

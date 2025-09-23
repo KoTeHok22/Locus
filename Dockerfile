@@ -1,14 +1,14 @@
-# Use Python 3.9 slim image as base
+# Используем образ Python 3.9 slim в качестве базы
 FROM python:3.9-slim
 
-# Set working directory
+# Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Set environment variables
+# Устанавливаем переменные окружения
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Install system dependencies
+# Устанавливаем системные зависимости
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         build-essential \
@@ -16,21 +16,21 @@ RUN apt-get update \
         postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements file
+# Копируем файл зависимостей
 COPY requirements.txt .
 
-# Install Python dependencies
+# Устанавливаем зависимости Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project files
+# Копируем файлы проекта
 COPY . .
 
-# Copy and make wait-for-it.sh executable
+# Копируем и делаем исполняемым wait-for-it.sh
 COPY wait-for-it.sh .
 RUN chmod +x ./wait-for-it.sh
 
-# Expose port
+# Открываем порт
 EXPOSE 5000
 
-# Run the application
+# Запускаем приложение
 CMD ["./wait-for-it.sh", "db", "python", "main.py"]

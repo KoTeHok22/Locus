@@ -1,6 +1,6 @@
 # Убрана устаревшая директива 'version'
 services:
-  # PostgreSQL database
+  # База данных PostgreSQL
   db:
     image: postgres:13
     environment:
@@ -17,7 +17,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # Flask backend
+  # Бэкенд на Flask
   backend:
     build:
       context: .
@@ -34,10 +34,10 @@ services:
         condition: service_healthy
     volumes:
       - .:/app
-    # Ensure the script is executable
+    # Убедитесь, что скрипт является исполняемым
     command: ["./wait-for-it.sh", "db", "python", "main.py"]
 
-  # React frontend
+  # Фронтенд на React
   frontend:
     # Контекст сборки теперь явно указывает на папку Front
     build:

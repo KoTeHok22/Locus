@@ -7,11 +7,10 @@ import { DashboardSelector } from '../DashboardSelector/DasboardSelector';
 import { NotificationIcon } from '../Notification/NotificationIcon';
 import { Notifications } from '../Notification/Notifications';
 import { useNotifications } from '../Notification/useNotification';
+import authService from '../../authService.js';
 
+function Magazine({ onLogout }) {
 
-function Magazine() {
-
-    // Состояния для управления навигацией
     const [activeTab, setActiveTab] = useState('dashboard');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -29,7 +28,6 @@ function Magazine() {
         closeNotifications
     } = useNotifications(mockNotifications);
 
-    // Функция для отображения контента
     const renderContent = () => {
         switch (activeTab) {
             case 'dashboard':
@@ -49,6 +47,11 @@ function Magazine() {
         }
     };
 
+    const handleLogout = () => {
+        authService.logout();
+        if (onLogout) onLogout();
+    };
+
     const navigationItems = [
         { key: 'dashboard', label: 'Дашборд' },
         { key: 'objectList', label: 'Список объектов' },
@@ -61,21 +64,17 @@ function Magazine() {
     return (
         <div className='size-full absolute'>
 
-            {/* Header */}
             <div className='w-full h-[10%] bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6'>
                 <div className='text-xl font-bold'>Locus</div>
                 
-                {/* Правая часть header */}
                 <div className='flex items-center space-x-4'>
                     
-                    {/* Иконка уведомлений */}
                     <div className='relative'>
                         <NotificationIcon 
                             unreadCount={unreadCount}
                             onClick={toggleNotifications}
                         />
                         
-                        {/* Окно уведомлений */}
                         <Notifications 
                             isOpen={isNotificationsOpen}
                             onClose={closeNotifications}
@@ -83,7 +82,13 @@ function Magazine() {
                         />
                     </div>
 
-                    {/* Mobile menu button */}
+                    <button 
+                        onClick={handleLogout}
+                        className='hidden md:block text-sm text-gray-600 hover:text-gray-900'
+                    >
+                        Выйти
+                    </button>
+
                     <button 
                         className='md:hidden p-2 rounded-full hover:bg-gray-100' 
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -96,10 +101,8 @@ function Magazine() {
                 </div>
             </div>
 
-            {/* Main content */}
             <div className='flex h-[90%]'>
 
-                {/* Navigation - Desktop */}
                 <div className='
                     hidden md:flex md:h-full md:w-[20%] 
                     flex-col bg-gray-50 border-r border-gray-200 p-4 space-y-2
@@ -117,9 +120,15 @@ function Magazine() {
                             {item.label}
                         </button>
                     ))}
+                    
+                    <button 
+                        onClick={handleLogout}
+                        className='w-full text-left px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 mt-auto'
+                    >
+                        Выйти
+                    </button>
                 </div>
 
-                {/* Mobile Navigation Menu */}
                 {isMobileMenuOpen && (
                     <div className='
                         absolute top-[10%] left-0 right-0 bg-white border-b border-gray-200 
@@ -138,11 +147,20 @@ function Magazine() {
                                     {item.label}
                                 </button>
                             ))}
+                            
+                            <button 
+                                onClick={() => { 
+                                    handleLogout(); 
+                                    setIsMobileMenuOpen(false); 
+                                }}
+                                className='w-full text-left px-4 py-3 rounded-lg bg-gray-50 hover:bg-gray-100 border-b border-gray-200 last:border-b-0 transition-colors text-red-600'
+                            >
+                                Выйти
+                            </button>
                         </div>
                     </div>
                 )}
 
-                {/* Content Area */}
                 <div className='
                     flex-1 h-full bg-white overflow-auto
                     p-4 md:p-6

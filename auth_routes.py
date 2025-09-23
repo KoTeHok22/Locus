@@ -6,10 +6,9 @@ import os
 
 auth_bp = Blueprint('auth', __name__)
 
-# Регистрация нового клиента
 @auth_bp.route('/api/register', methods=['POST'])
 def register():
-    try:
+    try: 
         data = request.get_json()
         
         if not data or not data.get('email') or not data.get('password'):
@@ -17,6 +16,11 @@ def register():
         
         email = data['email']
         password = data['password']
+        role = data.get('role', 'client')
+        
+        available_roles = ['client', 'foreman', 'inspector']
+        if role not in available_roles:
+            return jsonify({'message': f'Роль должна быть одной из: {", ".join(available_roles)}'}), 400
         
         if not validate_email(email):
             return jsonify({'message': 'Неверный формат email'}), 400
@@ -32,7 +36,7 @@ def register():
         new_user = User(
             email=email,
             password_hash=password_hash,
-            role='client',
+            role=role,
             is_active=True
         )
         
@@ -51,7 +55,6 @@ def register():
         db.session.rollback()
         return jsonify({'message': 'Ошибка регистрации', 'error': str(e)}), 500
 
-# Вход пользователя
 @auth_bp.route('/api/login', methods=['POST'])
 def login():
     try:
@@ -82,7 +85,6 @@ def login():
     except Exception as e:
         return jsonify({'message': 'Ошибка входа', 'error': str(e)}), 500
 
-# Приглашение нового пользователя (только для клиентов)
 @auth_bp.route('/api/invite-user', methods=['POST'])
 @token_required
 @role_required('client')
@@ -134,7 +136,6 @@ def invite_user():
         db.session.rollback()
         return jsonify({'message': 'Ошибка приглашения', 'error': str(e)}), 500
 
-# Установка пароля для приглашенного пользователя
 @auth_bp.route('/api/set-password', methods=['POST'])
 def set_password():
     try:
@@ -179,7 +180,6 @@ def set_password():
         db.session.rollback()
         return jsonify({'message': 'Ошибка установки пароля', 'error': str(e)}), 500
 
-# Получение профиля текущего пользователя
 @auth_bp.route('/api/profile', methods=['GET'])
 @token_required
 def get_profile():
@@ -196,3 +196,21 @@ def get_profile():
         
     except Exception as e:
         return jsonify({'message': 'Ошибка получения профиля', 'error': str(e)}), 500
+
+@auth_bp.route('/api/verify-token', methods=['GET'])
+@token_required
+def verify_token():
+    try:
+        user_id = request.current_user['id']
+        user = User.query.get(user_id)
+        
+        if not user or not user.is_active:
+            return jsonify({'message': 'Неверный токен'}), 401
+        
+        return jsonify({
+            'message': 'Токен действителен',
+            'user': user.to_dict()
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'message': 'Ошибка проверки токена', 'error': str(e)}), 500

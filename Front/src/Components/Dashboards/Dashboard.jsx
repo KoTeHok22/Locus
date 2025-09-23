@@ -6,7 +6,6 @@ import { useState } from 'react'
 
 function Dashboard({onSwitchToLogin, onSwitchToPage}) {
     
-    {/* Здесь должна быть основная логика по dashboard */}
     
     return (
 

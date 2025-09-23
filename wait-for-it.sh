@@ -7,9 +7,9 @@ shift
 cmd="$@"
 
 until PGPASSWORD=$POSTGRES_PASSWORD psql -h "$host" -U "$POSTGRES_USER" -c '\q'; do
-  >&2 echo "Postgres is unavailable - sleeping"
+  >&2 echo "Postgres недоступен - ожидание"
   sleep 1
 done
 
->&2 echo "Postgres is up - executing command"
+>&2 echo "Postgres доступен - выполнение команды"
 exec $cmd

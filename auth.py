@@ -11,16 +11,22 @@ from models import User, db
 
 SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'your-secret-key-change-in-production')
 
-# Хеширование пароля с использованием bcrypt
 def hash_password(password):
+    """
+    Хеширование пароля с использованием bcrypt
+    """
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
-# Проверка пароля против его хеша
 def check_password(password, hashed):
+    """
+    Проверка пароля против его хеша
+    """
     return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
 
-# Генерация JWT токена для пользователя
 def generate_token(user_id, role):
+    """
+    Генерация JWT токена для пользователя
+    """
     payload = {
         'user_id': user_id,
         'role': role,
@@ -28,8 +34,10 @@ def generate_token(user_id, role):
     }
     return jwt.encode(payload, SECRET_KEY, algorithm='HS256')
 
-# Проверка JWT токена и возврат полезной нагрузки
 def verify_token(token):
+    """
+    Проверка JWT токена и возврат полезной нагрузки
+    """
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
         return payload
@@ -38,8 +46,10 @@ def verify_token(token):
     except jwt.InvalidTokenError:
         return None
 
-# Декоратор для требования действительного JWT токена для маршрута
 def token_required(f):
+    """
+    Декоратор для требования действительного JWT токена для маршрута
+    """
     @wraps(f)
     def decorated(*args, **kwargs):
         token = None
@@ -67,8 +77,10 @@ def token_required(f):
     
     return decorated
 
-# Декоратор для требования определенной роли для маршрута
 def role_required(required_role):
+    """
+    Декоратор для требования определенной роли для маршрута
+    """
     def decorator(f):
         @wraps(f)
         def decorated(*args, **kwargs):
@@ -90,13 +102,17 @@ def role_required(required_role):
         return decorated
     return decorator
 
-# Проверка формата электронной почты
 def validate_email(email):
+    """
+    Проверка формата электронной почты
+    """
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
     return re.match(pattern, email) is not None
 
-# Проверка сложности пароля
 def validate_password(password):
+    """
+    Проверка сложности пароля
+    """
     if len(password) < 8:
         return False
     if not re.search(r'[A-Z]', password):
@@ -107,6 +123,8 @@ def validate_password(password):
         return False
     return True
 
-# Генерация безопасного токена приглашения
 def generate_invitation_token():
+    """
+    Генерация безопасного токена приглашения
+    """
     return secrets.token_urlsafe(32)

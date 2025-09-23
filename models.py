@@ -21,8 +21,10 @@ class User(db.Model):
     def __repr__(self):
         return f'<User {self.email} ({self.role})>'
     
-    # Преобразование объекта пользователя в словарь
     def to_dict(self):
+        """
+        Преобразование объекта пользователя в словарь
+        """
         return {
             'id': self.id,
             'email': self.email,
