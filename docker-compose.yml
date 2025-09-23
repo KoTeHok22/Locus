@@ -17,7 +17,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # Flask backend (без изменений, конфигурация корректна для разработки)
+  # Flask backend
   backend:
     build:
       context: .
@@ -34,6 +34,8 @@ services:
         condition: service_healthy
     volumes:
       - .:/app
+    # Ensure the script is executable
+    command: ["./wait-for-it.sh", "db", "python", "main.py"]
 
   # React frontend
   frontend:
@@ -45,7 +47,7 @@ services:
       - "3000:3000"
     environment:
       # Убедитесь, что ваш React-проект (Vite/CRA) использует эту переменную
-      - VITE_API_URL=http://localhost:5000
+      - VITE_API_URL=http://backend:5000
     depends_on:
       - backend
     # volumes остаются, чтобы обеспечить live-reload
