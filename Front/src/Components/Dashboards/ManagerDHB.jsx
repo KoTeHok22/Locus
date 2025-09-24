@@ -2,11 +2,11 @@ import '../../index.css'
 
 
 function ManagerDHB({ onSwitch }){
-    {/* Dashboard для Менеджера */}
+    {/* Dashboard для Заказчика */}
     return(
 
         <div className='header'>
-
+            Заказчик
         </div>
 
     )

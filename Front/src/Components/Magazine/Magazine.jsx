@@ -1,23 +1,23 @@
 import '../../index.css'
-import { useNavigation } from './useNavigation';
-import { MobileNavButton } from './MobileNavButton';
-import { NavButton } from './NavButton';
 import { useState } from 'react';
-import { DashboardSelector } from '../DashboardSelector/DasboardSelector';
+import { RoleSelector } from '../RoleSelector/RoleSelector.jsx';
 import { NotificationIcon } from '../Notification/NotificationIcon';
 import { Notifications } from '../Notification/Notifications';
 import { useNotifications } from '../Notification/useNotification';
+import { ForemanDHB } from '../Dashboards/ForemanDHB.jsx';
+import { InspectorDHB } from '../Dashboards/InspectorDHB.jsx';
+import { ManagerDHB } from '../Dashboards/ManagerDHB.jsx';
 import authService from '../../authService.js';
 
 function Magazine({ onLogout }) {
-
     const [activeTab, setActiveTab] = useState('dashboard');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [selectedRole, setSelectedRole] = useState('managerDHB'); // Состояние для выбранной роли
 
     const mockNotifications = [
-    { id: 1, title: 'Новое сообщение', text: 'У вас новое сообщение от менеджера', time: '5 мин назад', unread: true },
-    { id: 2, title: 'Обновление системы', text: 'Система была обновлена до версии 2.1', time: '1 час назад', unread: true },
-    { id: 3, title: 'Напоминание', text: 'Не забудьте проверить отчёты', time: '2 часа назад', unread: false },
+        { id: 1, title: 'Новое сообщение', text: 'У вас новое сообщение от менеджера', time: '5 мин назад', unread: true },
+        { id: 2, title: 'Обновление системы', text: 'Система была обновлена до версии 2.1', time: '1 час назад', unread: true },
+        { id: 3, title: 'Напоминание', text: 'Не забудьте проверить отчёты', time: '2 часа назад', unread: false },
     ];
 
     const {
@@ -28,22 +28,102 @@ function Magazine({ onLogout }) {
         closeNotifications
     } = useNotifications(mockNotifications);
 
+    // Функция для изменения роли
+    const handleRoleChange = (newRole) => {
+        console.log('Changing role to:', newRole);
+        setSelectedRole(newRole);
+    };
+
+    // Функция рендеринга контента в зависимости от роли
+    const renderDashboardContent = () => {
+        console.log('Rendering dashboard for role:', selectedRole);
+        
+        switch (selectedRole) {
+            case 'managerDHB':
+                return <ManagerDHB />;
+            case 'foremanDHB':
+                return <ForemanDHB />;
+            case 'inspectorDHB':
+                return <InspectorDHB />;
+            default:
+                return <ManagerDHB />;
+        }
+    };
+
+    // Главная функция рендеринга контента
     const renderContent = () => {
         switch (activeTab) {
             case 'dashboard':
-                return <div>Контент Дашборда</div>;
+                return (
+                    <div>
+                        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <h3 className="text-lg font-semibold text-blue-800">
+                                Дашборд - {getRoleName(selectedRole)}
+                            </h3>
+                            <p className="text-blue-600">Текущая роль: {selectedRole}</p>
+                        </div>
+                        {renderDashboardContent()}
+                    </div>
+                );
             case 'objectList':
-                return <div>Список объектов</div>;
+                return (
+                    <div>
+                        <h2 className="text-xl font-bold mb-4">Список объектов</h2>
+                        <p>Роль: {getRoleName(selectedRole)}</p>
+                        {/* Контент для списка объектов */}
+                    </div>
+                );
             case 'map':
-                return <div>Карта объектов</div>;
+                return (
+                    <div>
+                        <h2 className="text-xl font-bold mb-4">Карта объектов</h2>
+                        <p>Роль: {getRoleName(selectedRole)}</p>
+                        {/* Контент для карты */}
+                    </div>
+                );
             case 'reports':
-                return <div>Отчёты</div>;
+                return (
+                    <div>
+                        <h2 className="text-xl font-bold mb-4">Отчёты</h2>
+                        <p>Роль: {getRoleName(selectedRole)}</p>
+                        {/* Контент для отчётов */}
+                    </div>
+                );
             case 'analytics':
-                return <div>Аналитика</div>;
+                return (
+                    <div>
+                        <h2 className="text-xl font-bold mb-4">Аналитика</h2>
+                        <p>Роль: {getRoleName(selectedRole)}</p>
+                        {/* Контент для аналитики */}
+                    </div>
+                );
             case 'settings':
-                return <div>Настройки</div>;
+                return (
+                    <div>
+                        <h2 className="text-xl font-bold mb-4">Настройки</h2>
+                        <p>Роль: {getRoleName(selectedRole)}</p>
+                        {/* Контент для настроек */}
+                    </div>
+                );
             default:
-                return <div>Дашборд</div>;
+                return (
+                    <div>
+                        <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                            <h3 className="text-lg font-semibold">Дашборд по умолчанию</h3>
+                        </div>
+                        <ManagerDHB />
+                    </div>
+                );
+        }
+    };
+
+    // Вспомогательная функция для получения имени роли
+    const getRoleName = (role) => {
+        switch (role) {
+            case 'managerDHB': return 'Менеджер';
+            case 'foremanDHB': return 'Прораб';
+            case 'inspectorDHB': return 'Инспектор';
+            default: return 'Менеджер';
         }
     };
 
@@ -63,12 +143,17 @@ function Magazine({ onLogout }) {
 
     return (
         <div className='size-full absolute'>
-
+            {/* Header */}
             <div className='w-full h-[10%] bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6'>
                 <div className='text-xl font-bold'>Locus</div>
+
+                {/* RoleSelector - передаем текущую роль и функцию для ее изменения */}
+                <RoleSelector 
+                    selectedRole={selectedRole}
+                    onRoleChange={handleRoleChange}
+                />
                 
                 <div className='flex items-center space-x-4'>
-                    
                     <div className='relative'>
                         <NotificationIcon 
                             unreadCount={unreadCount}
@@ -101,8 +186,9 @@ function Magazine({ onLogout }) {
                 </div>
             </div>
 
+            {/* Main Content */}
             <div className='flex h-[90%]'>
-
+                {/* Sidebar */}
                 <div className='
                     hidden md:flex md:h-full md:w-[20%] 
                     flex-col bg-gray-50 border-r border-gray-200 p-4 space-y-2
@@ -129,6 +215,7 @@ function Magazine({ onLogout }) {
                     </button>
                 </div>
 
+                {/* Mobile Menu */}
                 {isMobileMenuOpen && (
                     <div className='
                         absolute top-[10%] left-0 right-0 bg-white border-b border-gray-200 
@@ -161,15 +248,14 @@ function Magazine({ onLogout }) {
                     </div>
                 )}
 
+                {/* Content Area */}
                 <div className='
                     flex-1 h-full bg-white overflow-auto
                     p-4 md:p-6
                 '>
                     {renderContent()}
                 </div>
-
             </div>
-
         </div>
     );
 }

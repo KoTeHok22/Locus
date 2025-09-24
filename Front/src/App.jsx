@@ -5,6 +5,7 @@ import { RegistrationForm } from './Components/RegistrationForm/RegistrationForm
 import { Magazine } from './Components/Magazine/Magazine.jsx'
 import authService from './authService.js'
 
+
 function App() {
   const [currentPage, setCurrentPage] = useState('login');
   const [isAuthenticated, setIsAuthenticated] = useState(false);

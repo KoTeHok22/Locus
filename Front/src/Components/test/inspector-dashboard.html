@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Карта нарушений - Контроль строительства</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'slate': {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            200: '#e2e8f0',
+                            300: '#cbd5e1',
+                            400: '#94a3b8',
+                            500: '#64748b',
+                            600: '#475569',
+                            700: '#334155',
+                            800: '#1e293b',
+                            900: '#0f172a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Mobile sidebar overlay */
+        .sidebar-overlay {
+            display: none;
+        }
+        .sidebar-open .sidebar-overlay {
+            display: block;
+        }
+        /* Mobile sidebar */
+        .mobile-sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        .sidebar-open .mobile-sidebar {
+            transform: translateX(0);
+        }
+        @media (min-width: 1024px) {
+            .mobile-sidebar {
+                transform: none;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50">
+    <!-- Mobile sidebar overlay -->
+    <div class="sidebar-overlay fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"></div>
+    
+    <!-- Sidebar -->
+    <aside class="mobile-sidebar fixed top-0 left-0 z-50 h-full w-64 bg-white border-r border-slate-200 shadow-sm lg:relative lg:translate-x-0 lg:z-auto">
+        <div class="flex flex-col h-full">
+            <!-- Header for mobile -->
+            <div class="lg:hidden p-4 border-b border-slate-200">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <span class="text-white font-semibold text-sm">СК</span>
+                    </div>
+                    <div>
+                        <h2 class="font-semibold text-gray-900">Меню</h2>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="flex-1 p-4">
+                <div class="space-y-1">
+                    <button class="w-full flex items-center gap-3 px-3 py-2.5 text-left rounded-lg transition-colors text-blue-600 font-medium bg-blue-50">
+                        <i class="fas fa-home text-xl"></i>
+                        <span>Дашборд</span>
+                    </button>
+                    <button class="w-full flex items-center gap-3 px-3 py-2.5 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50">
+                        <i class="fas fa-list text-xl"></i>
+                        <span>Список объектов</span>
+                    </button>
+                    <button class="w-full flex items-center gap-3 px-3 py-2.5 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50">
+                        <i class="fas fa-map-marked-alt text-xl"></i>
+                        <span>Карта</span>
+                    </button>
+                    <button class="w-full flex items-center gap-3 px-3 py-2.5 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50">
+                        <i class="fas fa-file-alt text-xl"></i>
+                        <span>Отчеты</span>
+                    </button>
+                    <button class="w-full flex items-center gap-3 px-3 py-2.5 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50">
+                        <i class="fas fa-chart-bar text-xl"></i>
+                        <span>Аналитика</span>
+                    </button>
+                    <button class="w-full flex items-center gap-3 px-3 py-2.5 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50">
+                        <i class="fas fa-cog text-xl"></i>
+                        <span>Настройки</span>
+                    </button>
+                </div>
+            </nav>
+
+            <!-- Footer -->
+            <div class="p-4 border-t border-slate-200">
+                <div class="text-xs text-gray-500">
+                    © 2024 Система контроля
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="flex h-[calc(100vh-4rem)]">
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-hidden">
+            <!-- Header -->
+            <header class="bg-white border-b border-slate-200 px-4 sm:px-6 py-4 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <button id="menu-toggle" class="lg:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-full">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                                <span class="text-white font-semibold text-sm">СК</span>
+                            </div>
+                            <div>
+                                <h1 class="font-semibold text-gray-900">Карта нарушений</h1>
+                                <p class="text-sm text-gray-500 hidden sm:block">Контроль соответствия нормам</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <!-- Role Toggle -->
+                        <div class="hidden sm:flex items-center bg-gray-100 rounded-lg p-1">
+                            <button class="h-8 px-3 bg-transparent hover:bg-white/50 text-gray-700 text-sm rounded-md flex items-center">
+                                <i class="fas fa-users mr-2"></i>
+                                <span>Менеджер</span>
+                            </button>
+                            <button class="h-8 px-3 bg-transparent hover:bg-white/50 text-gray-700 text-sm rounded-md flex items-center">
+                                <i class="fas fa-hard-hat mr-2"></i>
+                                <span>Прораб</span>
+                            </button>
+                            <button class="h-8 px-3 bg-white shadow-sm text-gray-900 text-sm rounded-md flex items-center">
+                                <i class="fas fa-shield-alt mr-2"></i>
+                                <span>Инспектор</span>
+                            </button>
+                        </div>
+
+                        <button class="relative p-2 text-gray-600 hover:bg-gray-100 rounded-full">
+                            <i class="fas fa-bell"></i>
+                            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                                3
+                            </span>
+                        </button>
+                        
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                <span class="text-blue-600 text-sm font-medium">СС</span>
+                            </div>
+                            <div class="hidden sm:block">
+                                <p class="text-sm font-medium text-gray-900">Сергей Сергеев</p>
+                                <p class="text-xs text-gray-500">Инспектор</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+    <!-- Main Content -->
+    <main class="p-4 sm:p-6 h-full">
+        <div class="h-full overflow-hidden">
+            <!-- Mobile layout - stack all components vertically -->
+            <div class="space-y-4">
+                <!-- Violations Section -->
+                <div class="bg-white rounded-lg border border-slate-200 shadow-sm">
+                    <div class="border-b border-slate-200 px-6 py-4">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-xl font-semibold text-gray-900">Нарушения безопасности</h2>
+                            <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500 text-white">
+                                5
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-1">
+                            Активные нарушения на объектах
+                        </p>
+                    </div>
+
+                    <div class="p-6">
+                        <div class="space-y-4">
+                            <!-- Violation 1 -->
+                            <div class="border rounded-lg p-3 sm:p-4 transition-all hover:shadow-md border-red-200 bg-red-50">
+                                <div class="flex items-start gap-4 sm:flex-row flex-col">
+                                    <!-- Severity Indicator and Badges -->
+                                    <div class="flex-shrink-0 flex items-center justify-between sm:justify-start sm:gap-4 w-full sm:w-auto">
+                                        <div class="flex items-center gap-3">
+                                            <div class="text-2xl">
+                                                🔴
+                                            </div>
+                                            <div class="flex items-center gap-2 sm:hidden">
+                                                <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500 text-white">
+                                                    Критично
+                                                </div>
+                                                <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white border border-gray-200 text-gray-800">
+                                                    Безопасность
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Deadline - показываем на мобильной в этой строке -->
+                                        <div class="text-xs text-gray-500 flex items-center gap-1 sm:hidden">
+                                            <i class="fas fa-clock text-xs"></i>
+                                            срочно
+                                        </div>
+                                    </div>
+
+                                    <!-- Content -->
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-start justify-between gap-4 mb-2 hidden sm:flex">
+                                            <div class="flex items-center gap-2">
+                                                <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500 text-white">
+                                                    Критично
+                                                </div>
+                                                <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white border border-gray-200 text-gray-800">
+                                                    Безопасность
+                                                </div>
+                                            </div>
+                                            <div class="text-xs text-gray-500 flex items-center gap-1">
+                                                <i class="fas fa-clock text-xs"></i>
+                                                срочно
+                                            </div>
+                                        </div>
+
+                                        <h3 class="font-semibold text-gray-900 mb-1">
+                                            Нарушение техники безопасности
+                                        </h3>
+                                        
+                                        <p class="text-sm text-gray-600 mb-2">
+                                            Рабочий без каски в опасной зоне. Требуется провести инструктаж.
+                                        </p>
+
+                                        <p class="text-xs text-gray-500 mb-1">
+                                            Объект: ЖК "Северный квартал"
+                                        </p>
+                                        <p class="text-xs text-gray-500 mb-3">
+                                            Источник: Служба безопасности
+                                        </p>
+
+                                        <!-- Action Button -->
+                                        <button class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 h-8">
+                                            <i class="fas fa-file-alt mr-2"></i>
+                                            Документ
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Violation 2 -->
+                            <div class="border rounded-lg p-3 sm:p-4 transition-all hover:shadow-md border-red-200 bg-red-50">
+                                <div class="flex items-start gap-4 sm:flex-row flex-col">
+                                    <!-- Severity Indicator and Badges -->
+                                    <div class="flex-shrink-0 flex items-center justify-between sm:justify-start sm:gap-4 w-full sm:w-auto">
+                                        <div class="flex items-center gap-3">
+                                            <div class="text-2xl">
+                                                🔴
+                                            </div>
+                                            <div class="flex items-center gap-2 sm:hidden">
+                                                <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500 text-white">
+                                                    Критично
+                                                </div>
+                                                <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white border border-gray-200 text-gray-800">
+                                                    Инспектор
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Deadline - показываем на мобильной в этой строке -->
+                                        <div class="text-xs text-gray-500 flex items-center gap-1 sm:hidden">
+                                            <i class="fas fa-clock text-xs"></i>
+                                            сегодня до 18:00
+                                        </div>
+                                    </div>
+
+                                    <!-- Content -->
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-start justify-between gap-4 mb-2 hidden sm:flex">
+                                            <div class="flex items-center gap-2">
+                                                <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500 text-white">
+                                                    Критично
+                                                </div>
+                                                <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white border border-gray-200 text-gray-800">
+                                                    Инспектор
+                                                </div>
+                                            </div>
+                                            <div class="text-xs text-gray-500 flex items-center gap-1">
+                                                <i class="fas fa-clock text-xs"></i>
+                                                сегодня до 18:00
+                                            </div>
+                                        </div>
+
+                                        <h3 class="font-semibold text-gray-900 mb-1">
+                                            Замечание от Инспектора #102
+                                        </h3>
+                                        
+                                        <p class="text-sm text-gray-600 mb-2">
+                                            Неправильное хранение материалов. Требуется переместить арматуру в крытый склад.
+                                        </p>
+
+                                        <p class="text-xs text-gray-500 mb-1">
+                                            Объект: ЖК "Северный квартал"
+                                        </p>
+                                        <p class="text-xs text-gray-500 mb-3">
+                                            Источник: Госстройнадзор
+                                        </p>
+
+                                        <!-- Action Button -->
+                                        <button class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 h-8">
+                                            <i class="fas fa-camera mr-2"></i>
+                                            Сделать фото
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Violation 3 -->
+                            <div class="border rounded-lg p-3 sm:p-4 transition-all hover:shadow-md border-amber-200 bg-amber-50">
+                                <div class="flex items-start gap-4 sm:flex-row flex-col">
+                                    <!-- Severity Indicator and Badges -->
+                                    <div class="flex-shrink-0 flex items-center justify-between sm:justify-start sm:gap-4 w-full sm:w-auto">
+                                        <div class="flex items-center gap-3">
+                                            <div class="text-2xl">
+                                                🟡
+                                            </div>
+                                            <div class="flex items-center gap-2 sm:hidden">
+                                                <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500 text-white">
+                                                    Риск
+                                                </div>
+                                                <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white border border-gray-200 text-gray-800">
+                                                    Безопасность
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Deadline - показываем на мобильной в этой строке -->
+                                        <div class="text-xs text-gray-500 flex items-center gap-1 sm:hidden">
+                                            <i class="fas fa-clock text-xs"></i>
+                                            завтра до 12:00
+                                        </div>
+                                    </div>
+
+                                    <!-- Content -->
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-start justify-between gap-4 mb-2 hidden sm:flex">
+                                            <div class="flex items-center gap-2">
+                                                <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500 text-white">
+                                                    Риск
+                                                </div>
+                                                <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white border border-gray-200 text-gray-800">
+                                                    Безопасность
+                                                </div>
+                                            </div>
+                                            <div class="text-xs text-gray-500 flex items-center gap-1">
+                                                <i class="fas fa-clock text-xs"></i>
+                                                завтра до 12:00
+                                            </div>
+                                        </div>
+
+                                        <h3 class="font-semibold text-gray-900 mb-1">
+                                            Недостаточное освещение на объекте
+                                        </h3>
+                                        
+                                        <p class="text-sm text-gray-600 mb-2">
+                                            Нарушены нормы освещенности в зоне проведения сварочных работ.
+                                        </p>
+
+                                        <p class="text-xs text-gray-500 mb-1">
+                                            Объект: Офисный центр "Альфа"
+                                        </p>
+                                        <p class="text-xs text-gray-500 mb-3">
+                                            Источник: Служба безопасности
+                                        </p>
+
+                                        <!-- Action Button -->
+                                        <button class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 h-8">
+                                            <i class="fas fa-camera mr-2"></i>
+                                            Сделать фото
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Violation 4 -->
+                            <div class="border rounded-lg p-3 sm:p-4 transition-all hover:shadow-md border-amber-200 bg-amber-50">
+                                <div class="flex items-start gap-4 sm:flex-row flex-col">
+                                    <!-- Severity Indicator and Badges -->
+                                    <div class="flex-shrink-0 flex items-center justify-between sm:justify-start sm:gap-4 w-full sm:w-auto">
+                                        <div class="flex items-center gap-3">
+                                            <div class="text-2xl">
+                                                🟡
+                                            </div>
+                                            <div class="flex items-center gap-2 sm:hidden">
+                                                <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500 text-white">
+                                                    Риск
+                                                </div>
+                                                <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white border border-gray-200 text-gray-800">
+                                                    Качество
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Deadline - показываем на мобильной в этой строке -->
+                                        <div class="text-xs text-gray-500 flex items-center gap-1 sm:hidden">
+                                            <i class="fas fa-clock text-xs"></i>
+                                            завтра до 15:00
+                                        </div>
+                                    </div>
+
+                                    <!-- Content -->
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-start justify-between gap-4 mb-2 hidden sm:flex">
+                                            <div class="flex items-center gap-2">
+                                                <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500 text-white">
+                                                    Риск
+                                                </div>
+                                                <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white border border-gray-200 text-gray-800">
+                                                    Качество
+                                                </div>
+                                            </div>
+                                            <div class="text-xs text-gray-500 flex items-center gap-1">
+                                                <i class="fas fa-clock text-xs"></i>
+                                                завтра до 15:00
+                                            </div>
+                                        </div>
+
+                                        <h3 class="font-semibold text-gray-900 mb-1">
+                                            Отклонение от проекта
+                                        </h3>
+                                        
+                                        <p class="text-sm text-gray-600 mb-2">
+                                            Отклонение от проектной документации при установке металлических конструкций.
+                                        </p>
+
+                                        <p class="text-xs text-gray-500 mb-1">
+                                            Объект: Торговый комплекс "Центр"
+                                        </p>
+                                        <p class="text-xs text-gray-500 mb-3">
+                                            Источник: Главный инженер
+                                        </p>
+
+                                        <!-- Action Button -->
+                                        <button class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 h-8">
+                                            <i class="fas fa-file-alt mr-2"></i>
+                                            Документ
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Violation 5 -->
+                            <div class="border rounded-lg p-3 sm:p-4 transition-all hover:shadow-md border-red-200 bg-red-50">
+                                <div class="flex items-start gap-4 sm:flex-row flex-col">
+                                    <!-- Severity Indicator and Badges -->
+                                    <div class="flex-shrink-0 flex items-center justify-between sm:justify-start sm:gap-4 w-full sm:w-auto">
+                                        <div class="flex items-center gap-3">
+                                            <div class="text-2xl">
+                                                🔴
+                                            </div>
+                                            <div class="flex items-center gap-2 sm:hidden">
+                                                <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500 text-white">
+                                                    Критично
+                                                </div>
+                                                <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white border border-gray-200 text-gray-800">
+                                                    Безопасность
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Deadline - показываем на мобильной в этой строке -->
+                                        <div class="text-xs text-gray-500 flex items-center gap-1 sm:hidden">
+                                            <i class="fas fa-clock text-xs"></i>
+                                            срочно
+                                        </div>
+                                    </div>
+
+                                    <!-- Content -->
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-start justify-between gap-4 mb-2 hidden sm:flex">
+                                            <div class="flex items-center gap-2">
+                                                <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500 text-white">
+                                                    Критично
+                                                </div>
+                                                <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white border border-gray-200 text-gray-800">
+                                                    Безопасность
+                                                </div>
+                                            </div>
+                                            <div class="text-xs text-gray-500 flex items-center gap-1">
+                                                <i class="fas fa-clock text-xs"></i>
+                                                срочно
+                                            </div>
+                                        </div>
+
+                                        <h3 class="font-semibold text-gray-900 mb-1">
+                                            Нарушение правил пожарной безопасности
+                                        </h3>
+                                        
+                                        <p class="text-sm text-gray-600 mb-2">
+                                            Отсутствуют огнетушители в зоне проведения сварочных работ.
+                                        </p>
+
+                                        <p class="text-xs text-gray-500 mb-1">
+                                            Объект: Склад "Логистика+"
+                                        </p>
+                                        <p class="text-xs text-gray-500 mb-3">
+                                            Источник: Пожарная инспекция
+                                        </p>
+
+                                        <!-- Action Button -->
+                                        <button class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 h-8">
+                                            <i class="fas fa-file-alt mr-2"></i>
+                                            Документ
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inspection Reports Section -->
+                <div class="bg-white rounded-lg border border-slate-200 shadow-sm">
+                    <div class="border-b border-slate-200 px-6 py-4">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-xl font-semibold text-gray-900">Отчеты по инспекциям</h2>
+                            <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 border border-gray-200 text-gray-800">
+                                3 из 5
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-1">
+                            Запланированные и завершенные инspeкции
+                        </p>
+                    </div>
+
+                    <div class="p-6">
+                        <div class="space-y-4">
+                            <!-- Report 1 -->
+                            <div class="border rounded-lg p-3 sm:p-4 transition-all hover:shadow-md bg-white border-slate-200">
+                                <div class="flex items-start gap-4 sm:flex-row flex-col">
+                                    <!-- Status and Badges -->
+                                    <div class="flex-shrink-0 flex items-center justify-between sm:justify-start sm:gap-4 w-full sm:w-auto">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 rounded-full flex items-center justify-center bg-green-100">
+                                                <i class="fas fa-check-circle text-green-600"></i>
+                                            </div>
+                                        </div>
+                                        <!-- Priority - показываем на мобильной в этой строке -->
+                                        <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 sm:hidden">
+                                            Выполнено
+                                        </div>
+                                    </div>
+
+                                    <!-- Content -->
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-start justify-between gap-4 mb-2 hidden sm:flex">
+                                            <h3 class="font-semibold text-gray-900">
+                                                Инспекция ЖК "Северный квартал"
+                                            </h3>
+                                            <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                Выполнено
+                                            </div>
+                                        </div>
+
+                                        <h3 class="font-semibold text-gray-900 mb-1 sm:hidden">
+                                            Инспекция ЖК "Северный квартал"
+                                        </h3>
+                                        
+                                        <p class="text-sm text-gray-600 mb-2">
+                                            Еженедельная проверка соответствия нормам безопасности
+                                        </p>
+
+                                        <p class="text-xs text-gray-500 mb-1">
+                                            Инспектор: Сергей Сергеев
+                                        </p>
+                                        <p class="text-xs text-gray-500 mb-3">
+                                            Дата: 15.06.2023
+                                        </p>
+
+                                        <!-- Action Button -->
+                                        <button class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 h-8">
+                                            <i class="fas fa-file-pdf mr-2"></i>
+                                            Скачать PDF
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Report 2 -->
+                            <div class="border rounded-lg p-3 sm:p-4 transition-all hover:shadow-md bg-white border-slate-200">
+                                <div class="flex items-start gap-4 sm:flex-row flex-col">
+                                    <!-- Status and Badges -->
+                                    <div class="flex-shrink-0 flex items-center justify-between sm:justify-start sm:gap-4 w-full sm:w-auto">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 rounded-full flex items-center justify-center bg-green-100">
+                                                <i class="fas fa-check-circle text-green-600"></i>
+                                            </div>
+                                        </div>
+                                        <!-- Priority - показываем на мобильной в этой строке -->
+                                        <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 sm:hidden">
+                                            Выполнено
+                                        </div>
+                                    </div>
+
+                                    <!-- Content -->
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-start justify-between gap-4 mb-2 hidden sm:flex">
+                                            <h3 class="font-semibold text-gray-900">
+                                                Инспекция Офисный центр "Альфа"
+                                            </h3>
+                                            <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                Выполнено
+                                            </div>
+                                        </div>
+
+                                        <h3 class="font-semibold text-gray-900 mb-1 sm:hidden">
+                                            Инспекция Офисный центр "Альфа"
+                                        </h3>
+                                        
+                                        <p class="text-sm text-gray-600 mb-2">
+                                            Проверка соответствия проектной документации
+                                        </p>
+
+                                        <p class="text-xs text-gray-500 mb-1">
+                                            Инспектор: Сергей Сергеев
+                                        </p>
+                                        <p class="text-xs text-gray-500 mb-3">
+                                            Дата: 10.06.2023
+                                        </p>
+
+                                        <!-- Action Button -->
+                                        <button class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 h-8">
+                                            <i class="fas fa-file-pdf mr-2"></i>
+                                            Скачать PDF
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Report 3 -->
+                            <div class="border rounded-lg p-3 sm:p-4 transition-all hover:shadow-md bg-white border-slate-200">
+                                <div class="flex items-start gap-4 sm:flex-row flex-col">
+                                    <!-- Status and Badges -->
+                                    <div class="flex-shrink-0 flex items-center justify-between sm:justify-start sm:gap-4 w-full sm:w-auto">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 rounded-full flex items-center justify-center bg-green-100">
+                                                <i class="fas fa-check-circle text-green-600"></i>
+                                            </div>
+                                        </div>
+                                        <!-- Priority - показываем на мобильной в этой строке -->
+                                        <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 sm:hidden">
+                                            Выполнено
+                                        </div>
+                                    </div>
+
+                                    <!-- Content -->
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-start justify-between gap-4 mb-2 hidden sm:flex">
+                                            <h3 class="font-semibold text-gray-900">
+                                                Инспекция Торговый комплекс "Центр"
+                                            </h3>
+                                            <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                Выполнено
+                                            </div>
+                                        </div>
+
+                                        <h3 class="font-semibold text-gray-900 mb-1 sm:hidden">
+                                            Инспекция Торговый комплекс "Центр"
+                                        </h3>
+                                        
+                                        <p class="text-sm text-gray-600 mb-2">
+                                            Проверка качества строительных материалов
+                                        </p>
+
+                                        <p class="text-xs text-gray-500 mb-1">
+                                            Инспектор: Сергей Сергеев
+                                        </p>
+                                        <p class="text-xs text-gray-500 mb-3">
+                                            Дата: 05.06.2023
+                                        </p>
+
+                                        <!-- Action Button -->
+                                        <button class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 h-8">
+                                            <i class="fas fa-file-pdf mr-2"></i>
+                                            Скачать PDF
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Report 4 -->
+                            <div class="border rounded-lg p-3 sm:p-4 transition-all hover:shadow-md bg-amber-50 border-amber-200">
+                                <div class="flex items-start gap-4 sm:flex-row flex-col">
+                                    <!-- Status and Badges -->
+                                    <div class="flex-shrink-0 flex items-center justify-between sm:justify-start sm:gap-4 w-full sm:w-auto">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 rounded-full flex items-center justify-center bg-amber-100">
+                                                <i class="fas fa-clock text-amber-600"></i>
+                                            </div>
+                                        </div>
+                                        <!-- Priority - показываем на мобильной в этой строке -->
+                                        <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 sm:hidden">
+                                            В работе
+                                        </div>
+                                    </div>
+
+                                    <!-- Content -->
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-start justify-between gap-4 mb-2 hidden sm:flex">
+                                            <h3 class="font-semibold text-gray-900">
+                                                Инспекция Коттеджный поселок "Заречье"
+                                            </h3>
+                                            <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                                                В работе
+                                            </div>
+                                        </div>
+
+                                        <h3 class="font-semibold text-gray-900 mb-1 sm:hidden">
+                                            Инспекция Коттеджный поселок "Заречье"
+                                        </h3>
+                                        
+                                        <p class="text-sm text-gray-600 mb-2">
+                                            Ежемесячная проверка соответствия нормам
+                                        </p>
+
+                                        <p class="text-xs text-gray-500 mb-1">
+                                            Инспектор: Сергей Сергеев
+                                        </p>
+                                        <p class="text-xs text-gray-500 mb-3">
+                                            Плановая дата: 25.06.2023
+                                        </p>
+
+                                        <!-- Action Button -->
+                                        <button class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-amber-600 hover:bg-amber-700 h-8">
+                                            <i class="fas fa-edit mr-2"></i>
+                                            Продолжить
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Report 5 -->
+                            <div class="border rounded-lg p-3 sm:p-4 transition-all hover:shadow-md bg-red-50 border-red-200">
+                                <div class="flex items-start gap-4 sm:flex-row flex-col">
+                                    <!-- Status and Badges -->
+                                    <div class="flex-shrink-0 flex items-center justify-between sm:justify-start sm:gap-4 w-full sm:w-auto">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 rounded-full flex items-center justify-center bg-red-100">
+                                                <i class="fas fa-calendar-plus text-red-600"></i>
+                                            </div>
+                                        </div>
+                                        <!-- Priority - показываем на мобильной в этой строке -->
+                                        <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 sm:hidden">
+                                            Запланировано
+                                        </div>
+                                    </div>
+
+                                    <!-- Content -->
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-start justify-between gap-4 mb-2 hidden sm:flex">
+                                            <h3 class="font-semibold text-gray-900">
+                                                Инспекция Спорткомплекс "Арена"
+                                            </h3>
+                                            <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                Запланировано
+                                            </div>
+                                        </div>
+
+                                        <h3 class="font-semibold text-gray-900 mb-1 sm:hidden">
+                                            Инспекция Спорткомплекс "Арена"
+                                        </h3>
+                                        
+                                        <p class="text-sm text-gray-600 mb-2">
+                                            Предварительная проверка перед открытием
+                                        </p>
+
+                                        <p class="text-xs text-gray-500 mb-1">
+                                            Инспектор: Сергей Сергеев
+                                        </p>
+                                        <p class="text-xs text-gray-500 mb-3">
+                                            Плановая дата: 30.06.2023
+                                        </p>
+
+                                        <!-- Action Button -->
+                                        <button class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 h-8">
+                                            <i class="fas fa-calendar-check mr-2"></i>
+                                            Начать инспекцию
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics Section -->
+                <div class="bg-white rounded-lg border border-slate-200 shadow-sm">
+                    <div class="border-b border-slate-200 px-6 py-4">
+                        <h2 class="text-xl font-semibold text-gray-900">Статистика инспекций</h2>
+                        <p class="text-sm text-gray-600 mt-1">
+                            Эффективность работы за месяц
+                        </p>
+                    </div>
+
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                            <!-- Total Inspections -->
+                            <div class="bg-blue-50 rounded-lg p-4">
+                                <div class="text-2xl font-semibold text-blue-600">24</div>
+                                <div class="text-sm text-gray-600">Проведено инспекций</div>
+                            </div>
+
+                            <!-- Violations Found -->
+                            <div class="bg-amber-50 rounded-lg p-4">
+                                <div class="text-2xl font-semibold text-amber-600">12</div>
+                                <div class="text-sm text-gray-600">Выявлено нарушений</div>
+                            </div>
+
+                            <!-- Compliance Rate -->
+                            <div class="bg-green-50 rounded-lg p-4">
+                                <div class="text-2xl font-semibold text-green-600">85%</div>
+                                <div class="text-sm text-gray-600">Уровень соответствия</div>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-slate-200 pt-6">
+                            <h3 class="font-medium text-gray-900 mb-4">Нарушения по категориям</h3>
+                            <div class="space-y-3">
+                                <!-- Category 1 -->
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span>Безопасность</span>
+                                        <span>7</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-red-500 h-2 rounded-full" style="width: 58%"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Category 2 -->
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span>Качество</span>
+                                        <span>3</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-amber-500 h-2 rounded-full" style="width: 25%"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Category 3 -->
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span>Документация</span>
+                                        <span>2</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-blue-500 h-2 rounded-full" style="width: 17%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <div class="lg:hidden fixed bottom-0 left-0 right-0 z-50">
+        <div class="bg-white border-t border-slate-200 shadow-lg">
+            <div class="flex">
+                <button class="flex-1 flex flex-col items-center py-3 px-2 relative transition-colors min-h-[60px] touch-manipulation text-blue-600 bg-blue-50">
+                    <div class="relative">
+                        <i class="fas fa-list text-xl mb-1"></i>
+                        <div class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
+                            5
+                        </div>
+                    </div>
+                    <span class="text-xs font-medium leading-tight">Список</span>
+                </button>
+                <button class="flex-1 flex flex-col items-center py-3 px-2 relative transition-colors min-h-[60px] touch-manipulation text-gray-600 hover:text-gray-900 hover:bg-gray-50 active:bg-gray-100">
+                    <div class="relative">
+                        <i class="fas fa-map-marked-alt text-xl mb-1"></i>
+                    </div>
+                    <span class="text-xs font-medium leading-tight">Карта</span>
+                </button>
+                <button class="flex-1 flex flex-col items-center py-3 px-2 relative transition-colors min-h-[60px] touch-manipulation text-gray-600 hover:text-gray-900 hover:bg-gray-50 active:bg-gray-100">
+                    <div class="relative">
+                        <i class="fas fa-filter text-xl mb-1"></i>
+                    </div>
+                    <span class="text-xs font-medium leading-tight">Фильтры</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toggle sidebar on mobile
+        document.getElementById('menu-toggle').addEventListener('click', function() {
+            document.body.classList.toggle('sidebar-open');
+        });
+        
+        // Close sidebar when clicking on overlay
+        document.querySelector('.sidebar-overlay').addEventListener('click', function() {
+            document.body.classList.remove('sidebar-open');
+        });
+    </script>
+</body>
+</html>

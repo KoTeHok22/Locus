@@ -6,7 +6,7 @@ function InspectorDHB({ onSwitch }){
     return(
 
         <div className='header'>
-
+            Инспектор
         </div>
 
     )

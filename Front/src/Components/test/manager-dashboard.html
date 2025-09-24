@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Контроль строительства - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'slate': {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            200: '#e2e8f0',
+                            300: '#cbd5e1',
+                            400: '#94a3b8',
+                            500: '#64748b',
+                            600: '#475569',
+                            700: '#334155',
+                            800: '#1e293b',
+                            900: '#0f172a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Mobile sidebar overlay */
+        .sidebar-overlay {
+            display: none;
+        }
+        .sidebar-open .sidebar-overlay {
+            display: block;
+        }
+        /* Mobile sidebar */
+        .mobile-sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        .sidebar-open .mobile-sidebar {
+            transform: translateX(0);
+        }
+        @media (min-width: 1024px) {
+            .mobile-sidebar {
+                transform: none;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50">
+    <!-- Mobile sidebar overlay -->
+    <div class="sidebar-overlay fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"></div>
+    
+    <!-- Sidebar -->
+    <aside class="mobile-sidebar fixed top-0 left-0 z-50 h-full w-64 bg-white border-r border-slate-200 shadow-sm lg:relative lg:translate-x-0 lg:z-auto">
+        <div class="flex flex-col h-full">
+            <!-- Header for mobile -->
+            <div class="lg:hidden p-4 border-b border-slate-200">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <span class="text-white font-semibold text-sm">СК</span>
+                    </div>
+                    <div>
+                        <h2 class="font-semibold text-gray-900">Меню</h2>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="flex-1 p-4">
+                <div class="space-y-1">
+                    <button class="w-full flex items-center gap-3 px-3 py-2.5 text-left rounded-lg transition-colors text-blue-600 font-medium bg-blue-50">
+                        <i class="fas fa-home text-xl"></i>
+                        <span>Дашборд</span>
+                    </button>
+                    <button class="w-full flex items-center gap-3 px-3 py-2.5 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50">
+                        <i class="fas fa-list text-xl"></i>
+                        <span>Список объектов</span>
+                    </button>
+                    <button class="w-full flex items-center gap-3 px-3 py-2.5 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50">
+                        <i class="fas fa-map-marked-alt text-xl"></i>
+                        <span>Карта</span>
+                    </button>
+                    <button class="w-full flex items-center gap-3 px-3 py-2.5 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50">
+                        <i class="fas fa-file-alt text-xl"></i>
+                        <span>Отчеты</span>
+                    </button>
+                    <button class="w-full flex items-center gap-3 px-3 py-2.5 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50">
+                        <i class="fas fa-chart-bar text-xl"></i>
+                        <span>Аналитика</span>
+                    </button>
+                    <button class="w-full flex items-center gap-3 px-3 py-2.5 text-left rounded-lg transition-colors text-gray-700 hover:bg-gray-50">
+                        <i class="fas fa-cog text-xl"></i>
+                        <span>Настройки</span>
+                    </button>
+                </div>
+            </nav>
+
+            <!-- Footer -->
+            <div class="p-4 border-t border-slate-200">
+                <div class="text-xs text-gray-500">
+                    © 2024 Система контроля
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="flex h-[calc(100vh-4rem)]">
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-hidden">
+            <!-- Header -->
+            <header class="bg-white border-b border-slate-200 px-4 sm:px-6 py-4 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <button id="menu-toggle" class="lg:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-full">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                                <span class="text-white font-semibold text-sm">СК</span>
+                            </div>
+                            <div>
+                                <h1 class="font-semibold text-gray-900">Контроль строительства</h1>
+                                <p class="text-sm text-gray-500 hidden sm:block">Система управления объектами</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <!-- Role Toggle -->
+                        <div class="hidden sm:flex items-center bg-gray-100 rounded-lg p-1">
+                            <button class="h-8 px-3 bg-white shadow-sm text-gray-900 text-sm rounded-md flex items-center">
+                                <i class="fas fa-users mr-2"></i>
+                                <span>Менеджер</span>
+                            </button>
+                            <button class="h-8 px-3 bg-transparent hover:bg-white/50 text-gray-700 text-sm rounded-md flex items-center">
+                                <i class="fas fa-hard-hat mr-2"></i>
+                                <span>Прораб</span>
+                            </button>
+                            <button class="h-8 px-3 bg-transparent hover:bg-white/50 text-gray-700 text-sm rounded-md flex items-center">
+                                <i class="fas fa-shield-alt mr-2"></i>
+                                <span>Инспектор</span>
+                            </button>
+                        </div>
+
+                        <button class="relative p-2 text-gray-600 hover:bg-gray-100 rounded-full">
+                            <i class="fas fa-bell"></i>
+                            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                                3
+                            </span>
+                        </button>
+                        
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                <span class="text-blue-600 text-sm font-medium">ИИ</span>
+                            </div>
+                            <div class="hidden sm:block">
+                                <p class="text-sm font-medium text-gray-900">Иван Иванов</p>
+                                <p class="text-xs text-gray-500">Руководитель</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+    <!-- Main Content -->
+    <main class="p-4 sm:p-6 h-full">
+        <div class="flex flex-col h-full">
+            <!-- KPI Cards -->
+            <div class="flex-shrink-0 p-6 pb-0">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Total Objects -->
+                    <div class="bg-white rounded-lg border border-slate-200 shadow-sm p-5">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                                <i class="fas fa-building text-blue-600 text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Всего объектов</p>
+                                <p class="text-2xl font-semibold text-gray-900">6</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Success Objects -->
+                    <div class="bg-white rounded-lg border border-slate-200 shadow-sm p-5">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
+                                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Нормальные</p>
+                                <p class="text-2xl font-semibold text-green-600">2</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Warning Objects -->
+                    <div class="bg-white rounded-lg border border-slate-200 shadow-sm p-5">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 rounded-lg bg-amber-100 flex items-center justify-center">
+                                <i class="fas fa-exclamation-triangle text-amber-600 text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Риски</p>
+                                <p class="text-2xl font-semibold text-amber-600">2</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Critical Objects -->
+                    <div class="bg-white rounded-lg border border-slate-200 shadow-sm p-5">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 rounded-lg bg-red-100 flex items-center justify-center">
+                                <i class="fas fa-times-circle text-red-600 text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Критично</p>
+                                <p class="text-2xl font-semibold text-red-600">2</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Grid -->
+            <div class="flex-1 p-6 pt-6 min-h-0">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+                    <!-- Map - 2 columns -->
+                    <div class="lg:col-span-2 min-h-0">
+                        <div class="bg-white rounded-lg border border-slate-200 shadow-sm h-full">
+                            <div class="border-b border-slate-200 px-6 py-4">
+                                <h2 class="text-xl font-semibold text-gray-900">Карта объектов</h2>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    Географическое расположение объектов
+                                </p>
+                            </div>
+                            <div class="p-6 h-[calc(100%-4rem)]">
+                                <div class="relative w-full h-full bg-blue-50 rounded-lg border border-blue-100">
+                                    <!-- Map placeholder with objects -->
+                                    <div class="absolute w-full h-full">
+                                        <!-- Object 1 -->
+                                        <div class="absolute" style="left: 25%; top: 30%;">
+                                            <div class="relative">
+                                                <div class="w-6 h-6 rounded-full bg-red-500 border-2 border-white shadow-lg cursor-pointer"></div>
+                                                <div class="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 bg-white shadow-lg rounded-lg p-2 min-w-[180px] border border-slate-200 z-10 hidden group-hover:block">
+                                                    <div class="font-medium text-gray-900">ЖК "Северный квартал"</div>
+                                                    <div class="text-sm text-gray-600">ул. Ленина, 15</div>
+                                                    <div class="flex items-center mt-1">
+                                                        <div class="w-full bg-gray-200 rounded-full h-2">
+                                                            <div class="bg-red-500 h-2 rounded-full" style="width: 45%"></div>
+                                                        </div>
+                                                        <span class="text-xs text-red-500 ml-2">45%</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Object 2 -->
+                                        <div class="absolute" style="left: 60%; top: 45%;">
+                                            <div class="relative">
+                                                <div class="w-6 h-6 rounded-full bg-amber-500 border-2 border-white shadow-lg cursor-pointer"></div>
+                                                <div class="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 bg-white shadow-lg rounded-lg p-2 min-w-[180px] border border-slate-200 z-10 hidden group-hover:block">
+                                                    <div class="font-medium text-gray-900">Офисный центр "Альфа"</div>
+                                                    <div class="text-sm text-gray-600">пр. Мира, 42</div>
+                                                    <div class="flex items-center mt-1">
+                                                        <div class="w-full bg-gray-200 rounded-full h-2">
+                                                            <div class="bg-amber-500 h-2 rounded-full" style="width: 72%"></div>
+                                                        </div>
+                                                        <span class="text-xs text-amber-500 ml-2">72%</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Object 3 -->
+                                        <div class="absolute" style="left: 40%; top: 70%;">
+                                            <div class="relative">
+                                                <div class="w-6 h-6 rounded-full bg-red-500 border-2 border-white shadow-lg cursor-pointer"></div>
+                                                <div class="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 bg-white shadow-lg rounded-lg p-2 min-w-[180px] border border-slate-200 z-10 hidden group-hover:block">
+                                                    <div class="font-medium text-gray-900">Торговый комплекс "Центр"</div>
+                                                    <div class="text-sm text-gray-600">ул. Советская, 28</div>
+                                                    <div class="flex items-center mt-1">
+                                                        <div class="w-full bg-gray-200 rounded-full h-2">
+                                                            <div class="bg-red-500 h-2 rounded-full" style="width: 35%"></div>
+                                                        </div>
+                                                        <span class="text-xs text-red-500 ml-2">35%</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Object 4 -->
+                                        <div class="absolute" style="left: 75%; top: 25%;">
+                                            <div class="relative">
+                                                <div class="w-6 h-6 rounded-full bg-amber-500 border-2 border-white shadow-lg cursor-pointer"></div>
+                                                <div class="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 bg-white shadow-lg rounded-lg p-2 min-w-[180px] border border-slate-200 z-10 hidden group-hover:block">
+                                                    <div class="font-medium text-gray-900">Склад "Логистика+"</div>
+                                                    <div class="text-sm text-gray-600">пер. Индустриальный, 5</div>
+                                                    <div class="flex items-center mt-1">
+                                                        <div class="w-full bg-gray-200 rounded-full h-2">
+                                                            <div class="bg-amber-500 h-2 rounded-full" style="width: 68%"></div>
+                                                        </div>
+                                                        <span class="text-xs text-amber-500 ml-2">68%</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Object 5 -->
+                                        <div class="absolute" style="left: 20%; top: 60%;">
+                                            <div class="relative">
+                                                <div class="w-6 h-6 rounded-full bg-green-500 border-2 border-white shadow-lg cursor-pointer"></div>
+                                                <div class="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 bg-white shadow-lg rounded-lg p-2 min-w-[180px] border border-slate-200 z-10 hidden group-hover:block">
+                                                    <div class="font-medium text-gray-900">Коттеджный поселок "Заречье"</div>
+                                                    <div class="text-sm text-gray-600">ул. Заречная, 101</div>
+                                                    <div class="flex items-center mt-1">
+                                                        <div class="w-full bg-gray-200 rounded-full h-2">
+                                                            <div class="bg-green-500 h-2 rounded-full" style="width: 92%"></div>
+                                                        </div>
+                                                        <span class="text-xs text-green-500 ml-2">92%</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Object 6 -->
+                                        <div class="absolute" style="left: 80%; top: 55%;">
+                                            <div class="relative">
+                                                <div class="w-6 h-6 rounded-full bg-green-500 border-2 border-white shadow-lg cursor-pointer"></div>
+                                                <div class="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 bg-white shadow-lg rounded-lg p-2 min-w-[180px] border border-slate-200 z-10 hidden group-hover:block">
+                                                    <div class="font-medium text-gray-900">Спорткомплекс "Арена"</div>
+                                                    <div class="text-sm text-gray-600">ул. Спортивная, 12</div>
+                                                    <div class="flex items-center mt-1">
+                                                        <div class="w-full bg-gray-200 rounded-full h-2">
+                                                            <div class="bg-green-500 h-2 rounded-full" style="width: 88%"></div>
+                                                        </div>
+                                                        <span class="text-xs text-green-500 ml-2">88%</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Priority Objects List - 1 column -->
+                    <div class="lg:col-span-1 min-h-0">
+                        <div class="bg-white rounded-lg border border-slate-200 shadow-sm h-full">
+                            <div class="border-b border-slate-200 px-6 py-4">
+                                <div class="flex items-center justify-between">
+                                    <h2 class="text-xl font-semibold text-gray-900">Приоритетные объекты</h2>
+                                    <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+                                        4 с рисками
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    Объекты требующие внимания
+                                </p>
+                            </div>
+                            <div class="p-6 overflow-y-auto h-[calc(100%-4rem)]">
+                                <div class="space-y-4">
+                                    <!-- Object 1 -->
+                                    <div class="border border-red-200 rounded-lg p-4 bg-red-50">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <h3 class="font-semibold text-gray-900">ЖК "Северный квартал"</h3>
+                                                <p class="text-sm text-gray-600">ул. Ленина, 15</p>
+                                                <div class="flex items-center mt-2">
+                                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                                        <div class="bg-red-500 h-2 rounded-full" style="width: 45%"></div>
+                                                    </div>
+                                                    <span class="text-xs text-red-500 ml-2">45%</span>
+                                                </div>
+                                            </div>
+                                            <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                        </div>
+                                        <div class="mt-3 space-y-2">
+                                            <div class="flex items-center text-sm">
+                                                <i class="fas fa-calendar text-red-500 mr-2"></i>
+                                                <span>Прогноз срыва срока: <span class="font-medium">+5 дней</span></span>
+                                            </div>
+                                            <div class="flex items-center text-sm">
+                                                <i class="fas fa-truck text-amber-500 mr-2"></i>
+                                                <span>Обеспеченность материалами: <span class="font-medium">40%</span></span>
+                                            </div>
+                                            <div class="flex items-center text-sm">
+                                                <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
+                                                <span>Открытых нарушений: <span class="font-medium">3 (1 просрочено)</span></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Object 2 -->
+                                    <div class="border border-amber-200 rounded-lg p-4 bg-amber-50">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <h3 class="font-semibold text-gray-900">Офисный центр "Альфа"</h3>
+                                                <p class="text-sm text-gray-600">пр. Мира, 42</p>
+                                                <div class="flex items-center mt-2">
+                                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                                        <div class="bg-amber-500 h-2 rounded-full" style="width: 72%"></div>
+                                                    </div>
+                                                    <span class="text-xs text-amber-500 ml-2">72%</span>
+                                                </div>
+                                            </div>
+                                            <div class="w-3 h-3 rounded-full bg-amber-500"></div>
+                                        </div>
+                                        <div class="mt-3 space-y-2">
+                                            <div class="flex items-center text-sm">
+                                                <i class="fas fa-calendar text-amber-500 mr-2"></i>
+                                                <span>Отставание от плана: <span class="font-medium">2 дня</span></span>
+                                            </div>
+                                            <div class="flex items-center text-sm">
+                                                <i class="fas fa-truck text-amber-500 mr-2"></i>
+                                                <span>Обеспеченность материалами: <span class="font-medium">75%</span></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Object 3 -->
+                                    <div class="border border-red-200 rounded-lg p-4 bg-red-50">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <h3 class="font-semibold text-gray-900">Торговый комплекс "Центр"</h3>
+                                                <p class="text-sm text-gray-600">ул. Советская, 28</p>
+                                                <div class="flex items-center mt-2">
+                                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                                        <div class="bg-red-500 h-2 rounded-full" style="width: 35%"></div>
+                                                    </div>
+                                                    <span class="text-xs text-red-500 ml-2">35%</span>
+                                                </div>
+                                            </div>
+                                            <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                        </div>
+                                        <div class="mt-3 space-y-2">
+                                            <div class="flex items-center text-sm">
+                                                <i class="fas fa-calendar text-red-500 mr-2"></i>
+                                                <span>Критическая задержка: <span class="font-medium">+12 дней</span></span>
+                                            </div>
+                                            <div class="flex items-center text-sm">
+                                                <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
+                                                <span>Открытых нарушений: <span class="font-medium">7 (4 просрочено)</span></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Object 4 -->
+                                    <div class="border border-amber-200 rounded-lg p-4 bg-amber-50">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <h3 class="font-semibold text-gray-900">Склад "Логистика+"</h3>
+                                                <p class="text-sm text-gray-600">пер. Индустриальный, 5</p>
+                                                <div class="flex items-center mt-2">
+                                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                                        <div class="bg-amber-500 h-2 rounded-full" style="width: 68%"></div>
+                                                    </div>
+                                                    <span class="text-xs text-amber-500 ml-2">68%</span>
+                                                </div>
+                                            </div>
+                                            <div class="w-3 h-3 rounded-full bg-amber-500"></div>
+                                        </div>
+                                        <div class="mt-3 space-y-2">
+                                            <div class="flex items-center text-sm">
+                                                <i class="fas fa-truck text-amber-500 mr-2"></i>
+                                                <span>Обеспеченность материалами: <span class="font-medium">55%</span></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Object 5 -->
+                                    <div class="border border-green-200 rounded-lg p-4 bg-green-50">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <h3 class="font-semibold text-gray-900">Коттеджный поселок "Заречье"</h3>
+                                                <p class="text-sm text-gray-600">ул. Заречная, 101</p>
+                                                <div class="flex items-center mt-2">
+                                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                                        <div class="bg-green-500 h-2 rounded-full" style="width: 92%"></div>
+                                                    </div>
+                                                    <span class="text-xs text-green-500 ml-2">92%</span>
+                                                </div>
+                                            </div>
+                                            <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                        </div>
+                                        <div class="mt-3 text-sm text-green-700">
+                                            <i class="fas fa-check-circle mr-2"></i>
+                                            <span>Все показатели в норме</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <div class="lg:hidden fixed bottom-0 left-0 right-0 z-50">
+        <div class="bg-white border-t border-slate-200 shadow-lg">
+            <div class="flex">
+                <button class="flex-1 flex flex-col items-center py-3 px-2 relative transition-colors min-h-[60px] touch-manipulation text-blue-600 bg-blue-50">
+                    <div class="relative">
+                        <i class="fas fa-list text-xl mb-1"></i>
+                        <div class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
+                            4
+                        </div>
+                    </div>
+                    <span class="text-xs font-medium leading-tight">Список</span>
+                </button>
+                <button class="flex-1 flex flex-col items-center py-3 px-2 relative transition-colors min-h-[60px] touch-manipulation text-gray-600 hover:text-gray-900 hover:bg-gray-50 active:bg-gray-100">
+                    <div class="relative">
+                        <i class="fas fa-map-marked-alt text-xl mb-1"></i>
+                    </div>
+                    <span class="text-xs font-medium leading-tight">Карта</span>
+                </button>
+                <button class="flex-1 flex flex-col items-center py-3 px-2 relative transition-colors min-h-[60px] touch-manipulation text-gray-600 hover:text-gray-900 hover:bg-gray-50 active:bg-gray-100">
+                    <div class="relative">
+                        <i class="fas fa-filter text-xl mb-1"></i>
+                    </div>
+                    <span class="text-xs font-medium leading-tight">Фильтры</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toggle sidebar on mobile
+        document.getElementById('menu-toggle').addEventListener('click', function() {
+            document.body.classList.toggle('sidebar-open');
+        });
+        
+        // Close sidebar when clicking on overlay
+        document.querySelector('.sidebar-overlay').addEventListener('click', function() {
+            document.body.classList.remove('sidebar-open');
+        });
+    </script>
+</body>
+</html>
