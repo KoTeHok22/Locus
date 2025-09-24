@@ -1,6 +1,8 @@
 import '../../index.css'
 import authService from '../../authService.js'
 import { useState } from 'react'
+import logo from '../../logo/logo.png'
+
 
 function RegistrationForm({onSwitchToLogin}){
 
@@ -68,7 +70,7 @@ function RegistrationForm({onSwitchToLogin}){
 
         <div className="text-center mb-6">
           <div className="flex items-center justify-center mb-3">
-            <img src='../logo/logo.png' alt="RIP" className='w-15 h-15 bg-blue-600 rounded-lg flex items-center justify-center' />
+            <img src={ logo } alt="RIP" className='w-15 h-15 bg-blue-600 rounded-lg flex items-center justify-center' />
           </div>
           <h1 className="text-xl font-bold text-gray-900 mb-1">
             Locus
@@ -160,7 +162,7 @@ function RegistrationForm({onSwitchToLogin}){
               required
             />
 
-            <button onClick={() => setShowPassword(!showPassword)} name='eye' className='w-[10%]'>
+            <button type='button' onClick={() => {setShowPassword(!showPassword); e.preventDefault()}} name='eye' className='w-[10%]'>
                 {showPassword ? (
                 <svg className="w-[50%] h-5px self-center" fill="none" stroke="currentColor" viewBox="0 -5 24 24">
                   <path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.875-3.825m10.792 0a10.05 10.05 0 011.875 3.825M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
@@ -191,7 +193,7 @@ function RegistrationForm({onSwitchToLogin}){
               required
             />
 
-            <button onClick={() => setShowConfPass(!showConfPass)} name='eye' className='w-[10%]'>
+            <button type='button' onClick={() => {setShowConfPass(!showConfPass); e.preventDefault()}}  name='eye' className='w-[10%]'>
                 {showConfPass ? (
                 <svg className="w-[50%] h-5px self-center" fill="none" stroke="currentColor" viewBox="0 -5 24 24">
                   <path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.875-3.825m10.792 0a10.05 10.05 0 011.875 3.825M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
@@ -210,20 +212,21 @@ function RegistrationForm({onSwitchToLogin}){
           <label className="flex flex-col items-start space-x-2 text-xs text-gray-600">
             
             <select name="role" className='w-[100%] text-[15px] text-center self-center focus:ring-blue-700 mb-2 mt-1 mx-0 p-2 border-2 border-blue-600 appearance-none bg-none rounded-[10px]'>
+              
               <option value="" selected disabled>-- Выберите роль --</option>
-              <option value="Manager">Менеджер</option>
+              <option value="Manager">Заказчик</option>
               <option value="Foreman">Прораб</option>
               <option value="Inspector">Инспектор</option>
+            
             </select>
             
-            <div>
+            <div className='flex flex-row justify-center align-middle'>
               <input
-                type="checkbox"
-                className="mr-2 mt-(-2) ml-3 text-blue-600 rounded focus:ring-blue-500"
-                required
+                className=" w-6 h-6 m-2 text-blue-600 rounded focus:ring-blue-500"
+                required type="checkbox"
               />
               
-              <span>
+              <span className=''>
                 Я соглашаюсь с условиями использования и политикой конфиденциальности
               </span>
             </div>
@@ -254,7 +257,7 @@ function RegistrationForm({onSwitchToLogin}){
 
         <div className="w-2/5 bg-gradient-to-br from-blue-600 to-blue-800 p-8 text-white">
           <div className="flex items-center mb-6">
-            <img src='../logo/logo.png' alt="RIP" className='w-15 h-15 bg-blue-600 rounded-lg flex items-center justify-center' />
+            <img src={ logo } alt="RIP" className='w-15 h-15 bg-blue-600 rounded-lg flex items-center justify-center' />
             <h1 className="text-2xl font-bold ml-4">Locus</h1>
           </div>
           
@@ -263,8 +266,9 @@ function RegistrationForm({onSwitchToLogin}){
               Добро пожаловать в Locus
             </h2>
             <p className="text-blue-100 text-sm leading-relaxed">
-              Присоединяйтесь к нашей платформе для управления проектами 
-              и сотрудничества с командой
+              Присоединяйтесь к нашей платформе для управления проектами,
+              мониторингом объектов, контролем исправлений,
+              нарушений, замечаний и сотрудничества с командой
             </p>
           </div>
 
@@ -363,7 +367,7 @@ function RegistrationForm({onSwitchToLogin}){
               required
             />
 
-            <button onClick={() => setShowPassword(!showPassword)} name='eye' className='w-[10%]'>
+            <button type='button' onClick={() => {setShowPassword(!showPassword); e.preventDefault()}} name='eye' className='w-[10%]'>
                 {showPassword ? (
                 <svg className="w-[50%] h-5px self-center" fill="none" stroke="currentColor" viewBox="0 -5 24 24">
                   <path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.875-3.825m10.792 0a10.05 10.05 0 011.875 3.825M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
@@ -394,7 +398,7 @@ function RegistrationForm({onSwitchToLogin}){
               required
             />
 
-            <button onClick={() => setShowConfPass(!showConfPass)} name='eye' className='w-[10%]'>
+            <button type='button' onClick={() => {setShowConfPass(!showConfPass); e.preventDefault()}} name='eye' className='w-[10%]'>
                 {showConfPass ? (
                 <svg className="w-[50%] h-5px self-center" fill="none" stroke="currentColor" viewBox="0 -5 24 24">
                   <path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.875-3.825m10.792 0a10.05 10.05 0 011.875 3.825M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
@@ -412,21 +416,22 @@ function RegistrationForm({onSwitchToLogin}){
 
               <label className="flex flex-col items-start space-x-3 text-xs text-gray-600">
             
-            <select name="role" className='w-[100%] text-[15px] text-center self-center focus:ring-blue-700 mb-2 mt-1 mx-0 p-2 border-2 border-blue-600 appearance-none bg-none rounded-[10px]'>
+            <select name="role" className='w-[100%] text-[15px] text-center self-center focus:ring-blue-700 mb-3 mx-0 p-2 border-2 border-blue-600 appearance-none bg-none rounded-[10px]'>
+              
               <option value="" selected disabled>-- Выберите роль --</option>
-              <option value="Manager">Менеджер</option>
+              <option value="Manager">Заказчик</option>
               <option value="Foreman">Прораб</option>
               <option value="Inspector">Инспектор</option>
+            
             </select>
             
-            <div>
+            <div className='flex flex-row justify-center align-middle'>
               <input
-                type="checkbox"
-                className="mr-2 mt-(-2) ml-3 text-blue-600 rounded focus:ring-blue-500"
-                required
+                className=" w-5 h-5 m-2 text-blue-600 rounded focus:ring-blue-500"
+                required type="checkbox"
               />
               
-              <span>
+              <span className='text-sm'>
                 Я соглашаюсь с условиями использования и политикой конфиденциальности
               </span>
             </div>

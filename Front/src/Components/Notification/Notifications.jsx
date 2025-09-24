@@ -111,7 +111,6 @@ function Notifications ({ isOpen, onClose, notifications: initialNotifications  
                 </div>
             </div>
         </>
-        </>
         
     )
 

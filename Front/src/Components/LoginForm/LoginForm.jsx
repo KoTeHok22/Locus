@@ -2,6 +2,7 @@ import '../../index.css'
 import '../RegistrationForm/RegistrationForm.jsx'
 import authService from '../../authService.js'
 import { useState } from 'react'
+import logo from '../../logo/logo.png'
 
 function LoginForm({onSwitchToRegistration, onSwitchToMagaz}) {
   
@@ -32,7 +33,7 @@ function LoginForm({onSwitchToRegistration, onSwitchToMagaz}) {
       <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-6 w-full max-w-md md:hidden relative z-10">
         <div className="text-center mb-6">
           <div className="flex items-center justify-center mb-3">
-            <img src='../logo/logo.png' alt="RIP" className='w-15 h-15 bg-blue-600 rounded-lg flex items-center justify-center' />
+            <img src={ logo } alt="RIP" className='w-15 h-15 bg-blue-600 rounded-lg flex items-center justify-center' />
           </div>
           <h1 className="text-xl font-bold text-gray-900 mb-1">
             Locus
@@ -80,7 +81,7 @@ function LoginForm({onSwitchToRegistration, onSwitchToMagaz}) {
               required
             />
 
-            <button onClick={() => setShowPassword(!showPassword)} name='eye' className='w-[10%]'>
+            <button type='button' onClick={() => {setShowPassword(!showPassword); e.preventDefault()}} name='eye' className='w-[10%]'>
                 {showPassword ? (
                 <svg className="w-[50%] h-5px self-center" fill="none" stroke="currentColor" viewBox="0 -5 24 24">
                   <path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.875-3.825m10.792 0a10.05 10.05 0 011.875 3.825M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
@@ -96,8 +97,16 @@ function LoginForm({onSwitchToRegistration, onSwitchToMagaz}) {
             </button>
           </div>
 
-          <div className="text-right">
-            <a href="#" className="text-xs text-blue-600 hover:text-blue-800">
+          <div className="flex items-center justify-between">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+              />
+              <span className="ml-2 text-sm text-gray-600">Запомнить меня</span>
+            </label>
+            
+            <a href="#" className="text-sm text-blue-600 hover:text-blue-800 transition-colors">
               Забыли пароль?
             </a>
           </div>
@@ -123,7 +132,7 @@ function LoginForm({onSwitchToRegistration, onSwitchToMagaz}) {
           <div className="absolute inset-0 bg-black/20"></div>
           <div className="relative z-10">
             <div className="flex items-center mb-6">
-              <img src='../logo/logo-mini.ico' alt="RIP" className='w-15 h-15 bg-blue-600 rounded-lg flex items-center justify-center' />
+              <img src={ logo } alt="RIP" className='w-15 h-15 bg-blue-600 rounded-lg flex items-center justify-center' />
               <h1 className="text-2xl font-bold ml-4">Locus</h1>
             </div>
             
@@ -194,7 +203,7 @@ function LoginForm({onSwitchToRegistration, onSwitchToMagaz}) {
                 required
               />
 
-              <button onClick={() => setShowPassword(!showPassword)} name='eye' className='w-[10%]'>
+              <button type='button' onClick={() => {setShowPassword(!showPassword); e.preventDefault()}} name='eye' className='w-[10%]'>
                 {showPassword ? (
                 <svg className="w-[50%] h-5px self-center" fill="none" stroke="currentColor" viewBox="0 -5 24 24">
                   <path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.875-3.825m10.792 0a10.05 10.05 0 011.875 3.825M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
