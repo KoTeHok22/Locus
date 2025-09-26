@@ -5,8 +5,11 @@ function ForemanDHB({ onSwitch }){
     {/* Dashboard для Прораба */}
     return(
 
-        <div className='header'>
+        <div className='main'>
+
             Прораб
+
+
         </div>
 
     )

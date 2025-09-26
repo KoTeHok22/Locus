@@ -266,24 +266,30 @@ function RegistrationForm({onSwitchToLogin}){
               Добро пожаловать в Locus
             </h2>
             <p className="text-blue-100 text-sm leading-relaxed">
-              Присоединяйтесь к нашей платформе для управления проектами,
-              мониторингом объектов, контролем исправлений,
-              нарушений, замечаний и сотрудничества с командой
+              Присоединяйтесь к нашей платформе для:
             </p>
           </div>
 
-          <div className="mt-16 space-y-2">
+          <div className="mt-3 space-y-2">
             <div className="flex items-center space-x-2 text-blue-200 text-sm">
               <div className="w-2 h-2 bg-blue-300 rounded-full"></div>
               <span>Управление проектами</span>
             </div>
             <div className="flex items-center space-x-2 text-blue-200 text-sm">
               <div className="w-2 h-2 bg-blue-300 rounded-full"></div>
-              <span>Командное сотрудничество</span>
+              <span>Мониторинга объектов</span>
             </div>
             <div className="flex items-center space-x-2 text-blue-200 text-sm">
               <div className="w-2 h-2 bg-blue-300 rounded-full"></div>
-              <span>Безопасное хранение данных</span>
+              <span>Командного сотрудничества</span>
+            </div>
+            <div className="flex items-center space-x-2 text-blue-200 text-sm">
+              <div className="w-2 h-2 bg-blue-300 rounded-full"></div>
+              <span>Контролем исправлений, нарушений, замечаний</span>
+            </div>
+            <div className="flex items-center space-x-2 text-blue-200 text-sm">
+              <div className="w-2 h-2 bg-blue-300 rounded-full"></div>
+              <span>Безопасного хранения данных</span>
             </div>
           </div>
         </div>

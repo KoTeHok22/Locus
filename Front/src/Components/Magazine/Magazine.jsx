@@ -56,7 +56,7 @@ function Magazine({ onLogout }) {
             case 'dashboard':
                 return (
                     <div>
-                        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg hidden">
                             <h3 className="text-lg font-semibold text-blue-800">
                                 Дашборд - {getRoleName(selectedRole)}
                             </h3>
@@ -144,7 +144,7 @@ function Magazine({ onLogout }) {
     return (
         <div className='size-full absolute'>
             {/* Header */}
-            <div className='w-full h-[10%] bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6'>
+            <div className='w-full h-[10%] bg-white border-b-[1px] border-gray-200 flex items-center justify-between px-4 md:px-6'>
                 <div className='text-xl font-bold'>Locus</div>
 
                 {/* RoleSelector - передаем текущую роль и функцию для ее изменения */}
@@ -191,7 +191,7 @@ function Magazine({ onLogout }) {
                 {/* Sidebar */}
                 <div className='
                     hidden md:flex md:h-full md:w-[20%] 
-                    flex-col bg-gray-50 border-r border-gray-200 p-4 space-y-2
+                    flex-col bg-gray-50 border-r-[1px] border-gray-200 p-4 space-y-2
                 '>
                     {navigationItems.map((item) => (
                         <button 
@@ -250,7 +250,7 @@ function Magazine({ onLogout }) {
 
                 {/* Content Area */}
                 <div className='
-                    flex-1 h-full bg-white overflow-auto
+                    flex-1 h-full bg-gray-100 overflow-auto
                     p-4 md:p-6
                 '>
                     {renderContent()}

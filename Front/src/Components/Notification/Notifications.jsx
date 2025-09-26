@@ -1,63 +1,175 @@
 import "../../index.css"
-import { useState } from "react";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 
-function Notifications ({ isOpen, onClose, notifications: initialNotifications    }){
-
+function Notifications({ isOpen, onClose, notifications: initialNotifications }) {
     const [notifications, setNotifications] = useState(initialNotifications || []);
+    const [isMobile, setIsMobile] = useState(false);
 
-        useEffect(() => {
-            setNotifications(initialNotifications || []);
-        }, [initialNotifications]);
+    useEffect(() => {
+        setNotifications(initialNotifications || []);
+    }, [initialNotifications]);
 
-        const unreadCount = notifications.filter(n => n.unread).length;
-
-        const markAsRead = (id) => {
-            setNotifications(notifications.map(notification =>
-                notification.id === id ? { ...notification, unread: false } : notification
-            ));
+    // Определяем мобильное устройство
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768); // md breakpoint
         };
 
-        const markAllAsRead = () => {
-            setNotifications(notifications.map(notification => ({
-                ...notification,
-                unread: false
-            })));
-        };
-
-        if (!isOpen) return null;
-
-    return(
-        <>
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
         
-            <div 
-                className='fixed inset-0 z-40'
-                onClick={onClose}
-            />
-            
-            <div className='absolute right-0 top-full mt-2 w-80 md:w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50'>
-                
-                <div className='p-4 border-b border-gray-200 flex justify-between items-center'>
-                    <div className='flex items-center space-x-2'>
-                        <h3 className='font-semibold text-lg'>Уведомления</h3>
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    const unreadCount = notifications.filter(n => n.unread).length;
+
+    const markAsRead = (id) => {
+        setNotifications(notifications.map(notification =>
+            notification.id === id ? { ...notification, unread: false } : notification
+        ));
+    };
+
+    const markAllAsRead = () => {
+        setNotifications(notifications.map(notification => ({
+            ...notification,
+            unread: false
+        })));
+    };
+
+    if (!isOpen) return null;
+
+    // Мобильная версия - полноэкранное меню
+    if (isMobile) {
+        return (
+            <div className="fixed inset-0 z-50 bg-white flex flex-col">
+                {/* Шапка мобильного меню */}
+                <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-white">
+                    <div className="flex items-center space-x-2">
+                        <h3 className="font-semibold text-lg">Уведомления</h3>
                         {unreadCount > 0 && (
-                            <span className='bg-red-500 text-white text-xs rounded-full px-2 py-1'>
+                            <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1">
                                 {unreadCount}
                             </span>
                         )}
                     </div>
-                    <div className='flex items-center space-x-2'>
+                    
+                    <button 
+                        onClick={onClose}
+                        className="p-2 text-gray-600 hover:text-gray-800"
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                {/* Кнопка "Прочитать все" */}
+                {unreadCount > 0 && (
+                    <div className="px-4 py-3 border-b border-gray-100 bg-blue-50">
+                        <button 
+                            onClick={markAllAsRead}
+                            className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
+                        >
+                            Прочитать все уведомления
+                        </button>
+                    </div>
+                )}
+
+                {/* Список уведомлений */}
+                <div className="flex-1 overflow-y-auto">
+                    {notifications.length > 0 ? (
+                        <div className="divide-y divide-gray-100">
+                            {notifications.map((notification) => (
+                                <div 
+                                    key={notification.id}
+                                    className={`p-4 hover:bg-gray-50 active:bg-gray-100 transition-colors ${
+                                        notification.unread ? 'bg-blue-50' : ''
+                                    }`}
+                                    onClick={() => markAsRead(notification.id)}
+                                >
+                                    <div className="flex justify-between items-start mb-2">
+                                        <span className={`font-medium text-base ${
+                                            notification.unread ? 'text-blue-600' : 'text-gray-800'
+                                        }`}>
+                                            {notification.title}
+                                        </span>
+                                        {notification.unread && (
+                                            <span className="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0 mt-1"></span>
+                                        )}
+                                    </div>
+                                    <p className="text-sm text-gray-600 mb-3 leading-relaxed">
+                                        {notification.text}
+                                    </p>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-xs text-gray-400">{notification.time}</span>
+                                        <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onClose();
+                                            }}
+                                            className="text-blue-500 text-sm font-medium"
+                                        >
+                                            Закрыть
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+                            <svg className="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
+                                    d="M15 17h5l-5 5-5-5h5V7a5 5 0 1110 0v10h-5z"/>
+                            </svg>
+                            <p className="text-gray-500 text-lg mb-2">Нет новых уведомлений</p>
+                            <p className="text-gray-400 text-sm">Здесь будут появляться ваши уведомления</p>
+                        </div>
+                    )}
+                </div>
+
+                {/* Футер мобильного меню */}
+                <div className="p-4 border-t border-gray-200 bg-white">
+                    <button 
+                        onClick={onClose}
+                        className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg text-base font-medium hover:bg-gray-200 transition-colors"
+                    >
+                        Закрыть уведомления
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // Десктопная версия (остается как была)
+    return (
+        <>
+            <div 
+                className="fixed inset-0 z-40"
+                onClick={onClose}
+            />
+            
+            <div className="absolute right-0 top-full mt-2 w-80 md:w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+                    <div className="flex items-center space-x-2">
+                        <h3 className="font-semibold text-lg">Уведомления</h3>
+                        {unreadCount > 0 && (
+                            <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1">
+                                {unreadCount}
+                            </span>
+                        )}
+                    </div>
+                    <div className="flex items-center space-x-2">
                         {unreadCount > 0 && (
                             <button 
                                 onClick={markAllAsRead}
-                                className='text-sm text-blue-600 hover:text-blue-700'
+                                className="text-sm text-blue-600 hover:text-blue-700"
                             >
                                 Прочитать все
                             </button>
                         )}
                         <button 
                             onClick={onClose}
-                            className='text-gray-400 hover:text-gray-600 p-1'
+                            className="text-gray-400 hover:text-gray-600 p-1"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/>
@@ -66,7 +178,7 @@ function Notifications ({ isOpen, onClose, notifications: initialNotifications  
                     </div>
                 </div>
 
-                <div className='max-h-96 overflow-y-auto'>
+                <div className="max-h-96 overflow-y-auto">
                     {notifications.length > 0 ? (
                         notifications.map((notification) => (
                             <div 
@@ -79,22 +191,22 @@ function Notifications ({ isOpen, onClose, notifications: initialNotifications  
                                     onClose();
                                 }}
                             >
-                                <div className='flex justify-between items-start mb-1'>
+                                <div className="flex justify-between items-start mb-1">
                                     <span className={`font-medium ${
                                         notification.unread ? 'text-blue-600' : 'text-gray-700'
                                     }`}>
                                         {notification.title}
                                     </span>
                                     {notification.unread && (
-                                        <span className='w-2 h-2 bg-blue-500 rounded-full'></span>
+                                        <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
                                     )}
                                 </div>
-                                <p className='text-sm text-gray-600 mb-2'>{notification.text}</p>
-                                <span className='text-xs text-gray-400'>{notification.time}</span>
+                                <p className="text-sm text-gray-600 mb-2">{notification.text}</p>
+                                <span className="text-xs text-gray-400">{notification.time}</span>
                             </div>
                         ))
                     ) : (
-                        <div className='p-8 text-center text-gray-500'>
+                        <div className="p-8 text-center text-gray-500">
                             <svg className="w-12 h-12 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
                                     d="M15 17h5l-5 5-5-5h5V7a5 5 0 1110 0v10h-5z"/>
@@ -104,17 +216,14 @@ function Notifications ({ isOpen, onClose, notifications: initialNotifications  
                     )}
                 </div>
 
-                <div className='p-3 border-t border-gray-200 bg-gray-50 rounded-b-lg'>
-                    <button className='w-full text-center text-sm text-blue-600 hover:text-blue-700 font-medium'>
+                <div className="p-3 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+                    <button className="w-full text-center text-sm text-blue-600 hover:text-blue-700 font-medium">
                         Показать все уведомления
                     </button>
                 </div>
             </div>
         </>
-        
-    )
-
+    );
 }
 
-
-export { Notifications }
+export { Notifications };

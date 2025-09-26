@@ -43,6 +43,7 @@ function App() {
   };
 
   return (
+    
     <div className='mainApp'>
       {!isAuthenticated && <div className='back'></div>}
       
@@ -62,6 +63,7 @@ function App() {
       {currentPage === 'dashboard' && (
         <Magazine onLogout={switchToLogin} />
       )}
+      
     </div>
   )
 }
