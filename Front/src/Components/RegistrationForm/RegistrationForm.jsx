@@ -6,8 +6,8 @@ import logo from '../../logo/logo.png'
 
 function RegistrationForm({onSwitchToLogin}){
 
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfPass, setShowConfPass] = useState(false);
+    const [showPassword, setShowPassword] = useState(true);
+    const [showConfPass, setShowConfPass] = useState(true);
 
     const [formData, setFormData] = useState({
         firstName: '',
@@ -164,15 +164,15 @@ function RegistrationForm({onSwitchToLogin}){
 
             <button type='button' onClick={() => {setShowPassword(!showPassword); e.preventDefault()}} name='eye' className='w-[10%]'>
                 {showPassword ? (
+                <svg className="w-[50%] h-5px" fill="none" stroke="currentColor" viewBox="0 -5 24 24">
+                  <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+              ) : (
                 <svg className="w-[50%] h-5px self-center" fill="none" stroke="currentColor" viewBox="0 -5 24 24">
                   <path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.875-3.825m10.792 0a10.05 10.05 0 011.875 3.825M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                   <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                   <path d="M2 2l20 20"/>
-                </svg>
-              ) : (
-                <svg className="w-[50%] h-5px" fill="none" stroke="currentColor" viewBox="0 -5 24 24">
-                  <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                  <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                 </svg>
               )}
             </button>
@@ -195,15 +195,15 @@ function RegistrationForm({onSwitchToLogin}){
 
             <button type='button' onClick={() => {setShowConfPass(!showConfPass); e.preventDefault()}}  name='eye' className='w-[10%]'>
                 {showConfPass ? (
+                <svg className="w-[50%] h-5px" fill="none" stroke="currentColor" viewBox="0 -5 24 24">
+                  <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+              ) : (
                 <svg className="w-[50%] h-5px self-center" fill="none" stroke="currentColor" viewBox="0 -5 24 24">
                   <path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.875-3.825m10.792 0a10.05 10.05 0 011.875 3.825M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                   <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                   <path d="M2 2l20 20"/>
-                </svg>
-              ) : (
-                <svg className="w-[50%] h-5px" fill="none" stroke="currentColor" viewBox="0 -5 24 24">
-                  <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                  <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                 </svg>
               )}
             </button>
@@ -291,6 +291,10 @@ function RegistrationForm({onSwitchToLogin}){
               <div className="w-2 h-2 bg-blue-300 rounded-full"></div>
               <span>Безопасного хранения данных</span>
             </div>
+            <div className="flex items-center space-x-2 text-blue-200 text-sm">
+              <div className="w-2 h-2 bg-blue-300 rounded-full"></div>
+              <span>Интеллектуального анализа и предсказания задержек</span>
+            </div>
           </div>
         </div>
 
@@ -375,15 +379,15 @@ function RegistrationForm({onSwitchToLogin}){
 
             <button type='button' onClick={() => {setShowPassword(!showPassword); e.preventDefault()}} name='eye' className='w-[10%]'>
                 {showPassword ? (
+                <svg className="w-[50%] h-5px" fill="none" stroke="currentColor" viewBox="0 -5 24 24">
+                  <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+              ) : (
                 <svg className="w-[50%] h-5px self-center" fill="none" stroke="currentColor" viewBox="0 -5 24 24">
                   <path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.875-3.825m10.792 0a10.05 10.05 0 011.875 3.825M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                   <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                   <path d="M2 2l20 20"/>
-                </svg>
-              ) : (
-                <svg className="w-[50%] h-5px" fill="none" stroke="currentColor" viewBox="0 -5 24 24">
-                  <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                  <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                 </svg>
               )}
             </button>
@@ -406,15 +410,15 @@ function RegistrationForm({onSwitchToLogin}){
 
             <button type='button' onClick={() => {setShowConfPass(!showConfPass); e.preventDefault()}} name='eye' className='w-[10%]'>
                 {showConfPass ? (
+                <svg className="w-[50%] h-5px" fill="none" stroke="currentColor" viewBox="0 -5 24 24">
+                  <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+              ) : (
                 <svg className="w-[50%] h-5px self-center" fill="none" stroke="currentColor" viewBox="0 -5 24 24">
                   <path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.875-3.825m10.792 0a10.05 10.05 0 011.875 3.825M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                   <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                   <path d="M2 2l20 20"/>
-                </svg>
-              ) : (
-                <svg className="w-[50%] h-5px" fill="none" stroke="currentColor" viewBox="0 -5 24 24">
-                  <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                  <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                 </svg>
               )}
             </button>
