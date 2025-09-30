@@ -1,6 +1,4 @@
-# Убрана устаревшая директива 'version'
 services:
-  # База данных PostgreSQL
   db:
     image: postgres:13
     environment:
@@ -15,7 +13,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # Бэкенд на Flask
   backend:
     build:
       context: .
@@ -33,24 +30,19 @@ services:
         condition: service_healthy
     volumes:
       - .:/app
-    # Убедитесь, что скрипт является исполняемым
-    command: ["./wait-for-it.sh", "db", "--", "python", "main.py"]
+    command: ["python", "main.py"]
 
-  # Фронтенд на React
   frontend:
-    # Контекст сборки теперь явно указывает на папку Front
     build:
       context: ./Front
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
     environment:
-      # Убедитесь, что ваш React-проект (Vite/CRA) использует эту переменную
       - VITE_API_URL=${VITE_API_URL}
       - VITE_YANDEX_MAPS_API_KEY=${VITE_YANDEX_MAPS_API_KEY}
     depends_on:
       - backend
-    # volumes остаются, чтобы обеспечить live-reload
     volumes:
       - ./Front:/app:delegated
       - /app/node_modules
