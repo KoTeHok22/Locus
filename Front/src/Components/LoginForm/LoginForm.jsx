@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import AuthService from '../../AuthService.js';
+import authService from '../../authService';
 import logo from '../../logo/logo.png';
 import '../../index.css';
 
@@ -13,7 +13,7 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    if (AuthService.isAuthenticated()) {
+    if (authService.isAuthenticated()) {
       navigate('/');
     }
   }, [navigate]);
@@ -24,7 +24,7 @@ function LoginForm() {
     setError('');
     
     try {
-      await AuthService.login(email, password);
+      await authService.login(email, password);
       navigate('/');
     } catch (err) {
       setError(err.message);

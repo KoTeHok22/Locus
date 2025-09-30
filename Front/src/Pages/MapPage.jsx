@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import ApiService from "../apiService";
-import YandexMap from '../Components/Map/YandexMap';
+import { YandexMap } from '../Components/Map/YandexMap';
 
 const MapPage = () => {
     const [projects, setProjects] = useState([]);
@@ -50,4 +50,4 @@ const MapPage = () => {
     );
 };
 
-export default MapPage;
+export { MapPage };

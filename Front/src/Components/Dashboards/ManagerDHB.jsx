@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ApiService from '../../apiService';
-import YandexMap from '../Map/YandexMap';
+import { YandexMap } from '../Map/YandexMap';
 import '../../index.css';
 
 const StatCard = ({ title, value, icon, colorClass }) => (

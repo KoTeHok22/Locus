@@ -189,4 +189,4 @@ const InspectorDHB = () => {
     );
 };
 
-export default InspectorDHB;
+export { InspectorDHB };

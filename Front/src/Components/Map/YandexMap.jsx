@@ -92,4 +92,4 @@ const YandexMap = ({ projects }) => {
     );
 };
 
-export default YandexMap;
+export { YandexMap };

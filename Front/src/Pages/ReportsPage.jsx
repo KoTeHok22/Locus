@@ -77,4 +77,4 @@ const ReportsPage = () => {
     );
 };
 
-export default ReportsPage;
+export { ReportsPage };
