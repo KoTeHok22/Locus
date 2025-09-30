@@ -1,21 +1,20 @@
 import '../../index.css'
-import { useState } from 'react';
-import { RoleSelector } from '../RoleSelector/RoleSelector.jsx';
+import { useState, useEffect } from 'react';
 import { NotificationIcon } from '../Notification/NotificationIcon';
 import { Notifications } from '../Notification/Notifications';
 import { useNotifications } from '../Notification/useNotification';
 import { ForemanDHB } from '../Dashboards/ForemanDHB.jsx';
-import { InspectorDHB } from '../Dashboards/InspectorDHB.jsx';
+import InspectorDHB from '../Dashboards/InspectorDHB/InspectorDHB.jsx';
 import { ManagerDHB } from '../Dashboards/ManagerDHB.jsx';
+import { ObjectList } from '../ObjectList/ObjectList';
 import authService from '../../authService.js';
 
-function Magazine({ onLogout }) {
+function Magazine({ onLogout, userRole }) {
     const [activeTab, setActiveTab] = useState('dashboard');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [selectedRole, setSelectedRole] = useState('managerDHB'); // Состояние для выбранной роли
 
     const mockNotifications = [
-        { id: 1, title: 'Новое сообщение', text: 'У вас новое сообщение от менеджера', time: '5 мин назад', unread: true },
+        { id: 1, title: 'Новое сообщение', text: 'У вас новое сообщение от заказчика', time: '5 мин назад', unread: true },
         { id: 2, title: 'Обновление системы', text: 'Система была обновлена до версии 2.1', time: '1 час назад', unread: true },
         { id: 3, title: 'Напоминание', text: 'Не забудьте проверить отчёты', time: '2 часа назад', unread: false },
     ];
@@ -28,104 +27,50 @@ function Magazine({ onLogout }) {
         closeNotifications
     } = useNotifications(mockNotifications);
 
-    // Функция для изменения роли
-    const handleRoleChange = (newRole) => {
-        console.log('Changing role to:', newRole);
-        setSelectedRole(newRole);
-    };
-
-    // Функция рендеринга контента в зависимости от роли
     const renderDashboardContent = () => {
-        console.log('Rendering dashboard for role:', selectedRole);
-        
-        switch (selectedRole) {
-            case 'managerDHB':
+        switch (userRole) {
+            case 'client':
                 return <ManagerDHB />;
-            case 'foremanDHB':
+            case 'foreman':
                 return <ForemanDHB />;
-            case 'inspectorDHB':
+            case 'inspector':
                 return <InspectorDHB />;
             default:
                 return <ManagerDHB />;
         }
     };
 
-    // Главная функция рендеринга контента
-    const renderContent = () => {
-        switch (activeTab) {
-            case 'dashboard':
-                return (
-                    <div>
-                        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg hidden">
-                            <h3 className="text-lg font-semibold text-blue-800">
-                                Дашборд - {getRoleName(selectedRole)}
-                            </h3>
-                            <p className="text-blue-600">Текущая роль: {selectedRole}</p>
-                        </div>
-                        {renderDashboardContent()}
-                    </div>
-                );
-            case 'objectList':
-                return (
-                    <div>
-                        <h2 className="text-xl font-bold mb-4">Список объектов</h2>
-                        <p>Роль: {getRoleName(selectedRole)}</p>
-                        {/* Контент для списка объектов */}
-                    </div>
-                );
-            case 'map':
-                return (
-                    <div>
-                        <h2 className="text-xl font-bold mb-4">Карта объектов</h2>
-                        <p>Роль: {getRoleName(selectedRole)}</p>
-                        {/* Контент для карты */}
-                    </div>
-                );
-            case 'reports':
-                return (
-                    <div>
-                        <h2 className="text-xl font-bold mb-4">Отчёты</h2>
-                        <p>Роль: {getRoleName(selectedRole)}</p>
-                        {/* Контент для отчётов */}
-                    </div>
-                );
-            case 'analytics':
-                return (
-                    <div>
-                        <h2 className="text-xl font-bold mb-4">Аналитика</h2>
-                        <p>Роль: {getRoleName(selectedRole)}</p>
-                        {/* Контент для аналитики */}
-                    </div>
-                );
-            case 'settings':
-                return (
-                    <div>
-                        <h2 className="text-xl font-bold mb-4">Настройки</h2>
-                        <p>Роль: {getRoleName(selectedRole)}</p>
-                        {/* Контент для настроек */}
-                    </div>
-                );
-            default:
-                return (
-                    <div>
-                        <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                            <h3 className="text-lg font-semibold">Дашборд по умолчанию</h3>
-                        </div>
-                        <ManagerDHB />
-                    </div>
-                );
-        }
-    };
+    const getRoleInfo = (role) => {
+        const roleInfo = {
+            'client': { title: 'Дашборд Заказчика', subtitle: 'Система управления объектами' },
+            'foreman': { title: 'Боевой пост', subtitle: 'Управление объектом' },
+            'inspector': { title: 'Карта нарушений', subtitle: 'Контроль соответствия нормам' }
+        };
+        return roleInfo[role] || roleInfo['client'];
+    }
 
-    // Вспомогательная функция для получения имени роли
-    const getRoleName = (role) => {
-        switch (role) {
-            case 'managerDHB': return 'Менеджер';
-            case 'foremanDHB': return 'Прораб';
-            case 'inspectorDHB': return 'Инспектор';
-            default: return 'Менеджер';
-        }
-    };
+    const [userInfo, setUserInfo] = useState({ initials: '', name: '', position: '' });
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            const token = authService.getToken();
+            if (token) {
+                try {
+                    const data = await authService.getProfile(token);
+                    const user = data.user;
+                    setUserInfo({
+                        initials: `${user.first_name[0]}${user.last_name[0]}`,
+                        name: `${user.first_name} ${user.last_name}`,
+                        position: user.role
+                    });
+                } catch (error) {
+                    console.error("Failed to fetch profile", error);
+                }
+            }
+        };
+
+        fetchProfile();
+    }, []);
 
     const handleLogout = () => {
         authService.logout();
@@ -133,128 +78,135 @@ function Magazine({ onLogout }) {
     };
 
     const navigationItems = [
-        { key: 'dashboard', label: 'Дашборд' },
-        { key: 'objectList', label: 'Список объектов' },
-        { key: 'map', label: 'Карта' },
-        { key: 'reports', label: 'Отчёты' },
-        { key: 'analytics', label: 'Аналитика' },
-        { key: 'settings', label: 'Настройки' }
+        { key: 'dashboard', label: 'Дашборд', icon: 'fa-home' },
+        { key: 'objectList', label: 'Список объектов', icon: 'fa-list' },
+        { key: 'map', label: 'Карта', icon: 'fa-map-marked-alt' },
+        { key: 'reports', label: 'Отчёты', icon: 'fa-file-alt' },
+        { key: 'analytics', label: 'Аналитика', icon: 'fa-chart-bar' },
+        { key: 'settings', label: 'Настройки', icon: 'fa-cog' }
     ];
 
-    return (
-        <div className='size-full absolute'>
-            {/* Header */}
-            <div className='w-full h-[10%] bg-white border-b-[1px] border-gray-200 flex items-center justify-between px-4 md:px-6'>
-                <div className='text-xl font-bold'>Locus</div>
+    const currentRoleInfo = getRoleInfo(userRole);
 
-                {/* RoleSelector - передаем текущую роль и функцию для ее изменения */}
-                <RoleSelector 
-                    selectedRole={selectedRole}
-                    onRoleChange={handleRoleChange}
-                />
-                
-                <div className='flex items-center space-x-4'>
-                    <div className='relative'>
-                        <NotificationIcon 
-                            unreadCount={unreadCount}
-                            onClick={toggleNotifications}
-                        />
-                        
-                        <Notifications 
-                            isOpen={isNotificationsOpen}
-                            onClose={closeNotifications}
-                            notifications={notifications}
-                        />
-                    </div>
-
-                    <button 
-                        onClick={handleLogout}
-                        className='hidden md:block text-sm text-gray-600 hover:text-gray-900'
-                    >
-                        Выйти
-                    </button>
-
-                    <button 
-                        className='md:hidden p-2 rounded-full hover:bg-gray-100' 
-                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" 
-                                strokeWidth="2" d={isMobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
-            {/* Main Content */}
-            <div className='flex h-[90%]'>
-                {/* Sidebar */}
-                <div className='
-                    hidden md:flex md:h-full md:w-[20%] 
-                    flex-col bg-gray-50 border-r-[1px] border-gray-200 p-4 space-y-2
-                '>
-                    {navigationItems.map((item) => (
-                        <button 
-                            key={item.key}
-                            className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
-                                activeTab === item.key 
-                                    ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-500' 
-                                    : 'text-gray-700 hover:bg-gray-100'
-                            }`}
-                            onClick={() => setActiveTab(item.key)}
-                        >
-                            {item.label}
-                        </button>
-                    ))}
-                    
-                    <button 
-                        onClick={handleLogout}
-                        className='w-full text-left px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 mt-auto'
-                    >
-                        Выйти
-                    </button>
-                </div>
-
-                {/* Mobile Menu */}
-                {isMobileMenuOpen && (
-                    <div className='
-                        absolute top-[10%] left-0 right-0 bg-white border-b border-gray-200 
-                        md:hidden z-40 shadow-lg
-                    '>
-                        <div className='flex flex-col p-2 space-y-1'>
-                            {navigationItems.map((item) => (
-                                <button 
-                                    key={item.key}
-                                    className='w-full text-left px-4 py-3 rounded-lg bg-gray-50 hover:bg-gray-100 border-b border-gray-200 last:border-b-0 transition-colors'
-                                    onClick={() => { 
-                                        setActiveTab(item.key); 
-                                        setIsMobileMenuOpen(false); 
-                                    }}
-                                >
-                                    {item.label}
-                                </button>
-                            ))}
-                            
-                            <button 
-                                onClick={() => { 
-                                    handleLogout(); 
-                                    setIsMobileMenuOpen(false); 
-                                }}
-                                className='w-full text-left px-4 py-3 rounded-lg bg-gray-50 hover:bg-gray-100 border-b border-gray-200 last:border-b-0 transition-colors text-red-600'
-                            >
-                                Выйти
-                            </button>
+    const renderContent = () => {
+        switch (activeTab) {
+            case 'dashboard':
+                return renderDashboardContent();
+            case 'objectList':
+                return <ObjectList />;
+            default:
+                return (
+                    <div className="p-6 h-full flex items-center justify-center" id="other-sections">
+                        <div className="text-center">
+                            <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+                                {navigationItems.find(item => item.key === activeTab)?.label}
+                            </h2>
+                            <p className="text-gray-600">Раздел в разработке</p>
                         </div>
                     </div>
-                )}
+                );
+        }
+    };
 
-                {/* Content Area */}
-                <div className='
-                    flex-1 h-full bg-gray-100 overflow-auto
-                    p-4 md:p-6
-                '>
-                    {renderContent()}
+    useEffect(() => {
+        if (isMobileMenuOpen) {
+            document.body.classList.add('sidebar-open');
+        } else {
+            document.body.classList.remove('sidebar-open');
+        }
+    }, [isMobileMenuOpen]);
+
+
+    return (
+        <div className={`h-screen bg-slate-50 flex ${isMobileMenuOpen ? 'sidebar-open' : ''}`}>
+            <div className="sidebar-overlay fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" onClick={() => setIsMobileMenuOpen(false)}></div>
+            
+            <aside className="mobile-sidebar fixed top-0 left-0 z-50 h-full w-64 bg-white border-r border-slate-200 shadow-sm lg:relative lg:translate-x-0 lg:z-auto">
+                <div className="flex flex-col h-full">
+                    <div className="lg:hidden p-4 border-b border-slate-200">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                                <span className="text-white font-semibold text-sm">СК</span>
+                            </div>
+                            <div>
+                                <h2 className="font-semibold text-gray-900">Меню</h2>
+                            </div>
+                        </div>
+                    </div>
+
+                    <nav className="flex-1 p-4">
+                        <div className="space-y-1">
+                            {navigationItems.map(item => (
+                                <button 
+                                    key={item.key}
+                                    className={`w-full flex items-center gap-3 px-3 py-2.5 text-left rounded-lg transition-colors ${activeTab === item.key ? 'text-blue-600 font-medium bg-blue-50' : 'text-gray-700 hover:bg-gray-50'}`}
+                                    onClick={() => {
+                                        setActiveTab(item.key);
+                                        setIsMobileMenuOpen(false);
+                                    }}
+                                >
+                                    <i className={`fas ${item.icon} text-xl`}></i>
+                                    <span>{item.label}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </nav>
+
+                    <div className="p-4 border-t border-slate-200">
+                        <div className="text-xs text-gray-500">
+                            © 2024 Система контроля
+                        </div>
+                    </div>
                 </div>
+            </aside>
+
+            <div className="flex-1 flex flex-col">
+                <header className="bg-white border-b border-slate-200 px-6 py-4 shadow-sm">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <button id="menu-toggle" className="lg:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-full" onClick={() => setIsMobileMenuOpen(true)}>
+                                <i className="fas fa-bars"></i>
+                            </button>
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                                    <span className="text-white font-semibold text-sm">СК</span>
+                                </div>
+                                <div>
+                                    <h1 id="role-title" className="font-semibold text-gray-900">{currentRoleInfo.title}</h1>
+                                    <p id="role-subtitle" className="text-sm text-gray-500 hidden sm:block">{currentRoleInfo.subtitle}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            <div className='relative'>
+                                <NotificationIcon 
+                                    unreadCount={unreadCount}
+                                    onClick={toggleNotifications}
+                                />
+                                <Notifications 
+                                    isOpen={isNotificationsOpen}
+                                    onClose={closeNotifications}
+                                    notifications={notifications}
+                                />
+                            </div>
+                            
+                            <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                    <span id="user-initials" className="text-blue-600 text-sm font-medium">{userInfo.initials}</span>
+                                </div>
+                                <div className="hidden sm:block">
+                                    <p id="user-name" className="text-sm font-medium text-gray-900">{userInfo.name}</p>
+                                    <p id="user-position" className="text-xs text-gray-500">{userInfo.position}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <main className="flex-1 overflow-y-auto">
+                    {renderContent()}
+                </main>
             </div>
         </div>
     );

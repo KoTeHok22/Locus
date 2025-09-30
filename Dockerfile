@@ -22,6 +22,10 @@ COPY requirements.txt .
 # Устанавливаем зависимости Python
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Устанавливаем системные зависимости для Playwright и сами браузеры
+RUN playwright install-deps
+RUN playwright install
+
 # Копируем файлы проекта
 COPY . .
 

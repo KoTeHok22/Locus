@@ -1,6 +1,6 @@
 import jwt
 import bcrypt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 from flask import request, jsonify
 import os
@@ -30,7 +30,7 @@ def generate_token(user_id, role):
     payload = {
         'user_id': user_id,
         'role': role,
-        'exp': datetime.utcnow() + timedelta(hours=24)
+        'exp': datetime.now(timezone.utc) + timedelta(hours=24)
     }
     return jwt.encode(payload, SECRET_KEY, algorithm='HS256')
 
@@ -128,3 +128,23 @@ def generate_invitation_token():
     Генерация безопасного токена приглашения
     """
     return secrets.token_urlsafe(32)
+
+def geolocation_required(f):
+    """
+    Декоратор для требования заголовка геолокации
+    """
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        geo_header = request.headers.get('X-User-Geolocation')
+        if not geo_header:
+            return jsonify({'message': 'Заголовок X-User-Geolocation отсутствует'}), 400
+        
+        try:
+            lat, lon = geo_header.split(',')
+            float(lat)
+            float(lon)
+        except (ValueError, TypeError):
+            return jsonify({'message': 'Неверный формат геолокации. Ожидается "широта,долгота"'}), 400
+            
+        return f(*args, **kwargs)
+    return decorated

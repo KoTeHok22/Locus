@@ -1,71 +1,58 @@
-import { useState, useEffect } from 'react'
-import './App.css'
-import { LoginForm } from './Components/LoginForm/LoginForm.jsx'
-import { RegistrationForm } from './Components/RegistrationForm/RegistrationForm.jsx'
-import { Magazine } from './Components/Magazine/Magazine.jsx'
-import authService from './authService.js'
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import AuthService from './authService';
+
+import ReportsPage from './Pages/ReportsPage';
+import ProjectsPage from './Pages/ProjectsPage';
+import MapPage from './Pages/MapPage';
+import MainLayout from './Components/MainLayout';
+import { LoginForm } from './Components/LoginForm/LoginForm';
+import { RegistrationForm } from './Components/RegistrationForm/RegistrationForm';
+import { ManagerDHB } from './Components/Dashboards/ManagerDHB';
+import { ForemanDHB } from './Components/Dashboards/ForemanDHB';
+import InspectorDHB from './Components/Dashboards/InspectorDHB/InspectorDHB';
+
+const Dashboard = () => {
+    const userRole = AuthService.getUserRole();
+
+    switch (userRole) {
+        case 'client':
+            return <ManagerDHB />;
+        case 'foreman':
+            return <ForemanDHB />;
+        case 'inspector':
+            return <InspectorDHB />;
+        default:
+            AuthService.logout();
+            return <Navigate to="/login" />;
+    }
+};
+
+const PrivateRoutes = () => {
+    const isAuth = AuthService.isAuthenticated();
+
+    return isAuth ? <MainLayout><Outlet /></MainLayout> : <Navigate to="/login" />;
+};
 
 
 function App() {
-  const [currentPage, setCurrentPage] = useState('login');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+    return (
+        <Router>
+            <Routes>
+                <Route path="/login" element={<LoginForm />} />
+                <Route path="/register" element={<RegistrationForm />} />
+                
+                <Route element={<PrivateRoutes />}>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/projects" element={<ProjectsPage />} />
+                    <Route path="/map" element={<MapPage />} />
+                    <Route path="/reports" element={<ReportsPage />} />
+                </Route>
 
-  useEffect(() => {
-    const checkAuthStatus = async () => {
-      const token = authService.getToken();
-      if (token) {
-        if (authService.isAuthenticated()) {
-          const isVerified = await authService.verifyToken(token);
-          if (isVerified) {
-            setIsAuthenticated(true);
-            setCurrentPage('dashboard');
-            return;
-          }
-        }
-      }
-      setIsAuthenticated(false);
-      setCurrentPage('login');
-    };
-
-    checkAuthStatus();
-  }, []);
-
-  const switchToLogin = () => {
-    setCurrentPage('login');
-    setIsAuthenticated(false);
-  };
-  
-  const switchToRegistration = () => setCurrentPage('registration');
-  
-  const switchToDashboard = () => {
-    setCurrentPage('dashboard');
-    setIsAuthenticated(true);
-  };
-
-  return (
-    
-    <div className='mainApp'>
-      {!isAuthenticated && <div className='back'></div>}
-      
-      {currentPage === 'login' && (
-        <LoginForm 
-          onSwitchToRegistration={switchToRegistration}
-          onSwitchToMagaz={switchToDashboard}
-        />
-      )}
-      
-      {currentPage === 'registration' && (
-        <RegistrationForm 
-          onSwitchToLogin={switchToLogin}
-        />
-      )}
-      
-      {currentPage === 'dashboard' && (
-        <Magazine onLogout={switchToLogin} />
-      )}
-      
-    </div>
-  )
+                <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+        </Router>
+    );
 }
 
-export default App
+export default App;

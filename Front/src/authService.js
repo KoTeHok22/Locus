@@ -1,13 +1,13 @@
 const API_BASE_URL = 'http://localhost:5000';
 
 class AuthService {
-  async register(email, password) {
+  async register(userData) {
     const response = await fetch(`${API_BASE_URL}/api/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify(userData),
     });
 
     const data = await response.json();
