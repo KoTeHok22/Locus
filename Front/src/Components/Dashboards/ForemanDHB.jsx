@@ -1,35 +1,38 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import ApiService from '../../apiService';
+import { translate } from '../../utils/translation.js';
+import TaskCompletionModal from '../Tasks/TaskCompletionModal';
 import '../../index.css';
 
-const TaskCard = ({ task, onUpdate }) => {
-    const handleComplete = async () => {
-        try {
-            await ApiService.updateTaskStatus(task.project_id, task.id, 'completed');
-            onUpdate();
-        } catch (error) {
-            console.error(`Ошибка при обновлении задачи #${task.id}:`, error);
-            toast.error(`Не удалось завершить задачу: ${error.message}`);
+const TaskCard = ({ task, onUpdate, onComplete }) => {
+
+    const getStatusBadgeClass = (status) => {
+        switch(status) {
+            case 'pending': return 'bg-yellow-100 text-yellow-800';
+            case 'completed': return 'bg-blue-100 text-blue-800';
+            case 'verified': return 'bg-green-100 text-green-800';
+            default: return 'bg-gray-100 text-gray-800';
         }
     };
 
     return (
-        <div className={`border rounded-lg p-4 transition-all bg-white ${task.status === 'completed' ? 'opacity-60 bg-slate-50' : 'hover:shadow-md'}`}>
-            <h3 className="font-semibold text-gray-900">{task.name}</h3>
-            <p className="text-sm text-gray-500 mb-3">Проект: {task.project_name}</p>
+        <div className={`border rounded-lg p-4 transition-all bg-white ${task.status === 'pending' ? 'hover:shadow-md' : 'opacity-75 bg-slate-50'}`}>
+            <div className="flex justify-between items-start mb-2">
+                <h3 className="font-semibold text-gray-900">{task.name}</h3>
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(task.status)}`}>
+                    {translate(task.status)}
+                </span>
+            </div>
+            <p className="text-sm text-gray-500 mb-1">Проект: {task.project_name}</p>
             <p className="text-xs text-gray-500 mb-3">Срок: до {task.end_date}</p>
-            {task.status !== 'completed' ? (
+            {task.status === 'pending' && (
                 <button 
-                    onClick={handleComplete}
+                    onClick={() => onComplete(task)}
                     className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700 h-8">
                     <i className="fas fa-check-circle mr-1"></i>
                     Готово
                 </button>
-            ) : (
-                <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    Выполнено
-                </div>
             )}
         </div>
     );
@@ -203,6 +206,7 @@ function ForemanDHB(){
     const [data, setData] = useState({ projects: [], tasks: [], issues: [] });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [completingTask, setCompletingTask] = useState(null);
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -234,24 +238,32 @@ function ForemanDHB(){
     }
 
     return(
-        <div className="p-6 h-full bg-slate-50" id="foreman-dashboard">
-            <div className="grid grid-cols-3 gap-6 h-full">
-                <div className="col-span-2 min-h-0 flex flex-col gap-6">
-                    <div className="bg-white rounded-lg border border-slate-200 shadow-sm flex-1 flex flex-col">
-                        <div className="border-b border-slate-200 p-4">
-                            <h2 className="text-lg font-semibold text-gray-900">Мои задачи ({data.tasks.length})</h2>
-                        </div>
-                        <div className="p-4 overflow-y-auto space-y-4">
-                            {data.tasks.length > 0 ? (
-                                data.tasks.map(task => <TaskCard key={task.id} task={task} onUpdate={fetchData} />)
-                            ) : (
-                                <p className="text-center text-gray-500 pt-10">Нет назначенных задач.</p>
-                            )}
+        <>
+            {completingTask && (
+                <TaskCompletionModal 
+                    task={completingTask}
+                    onClose={() => setCompletingTask(null)}
+                    onUpdate={fetchData}
+                />
+            )}
+            <div className="p-6 h-full bg-slate-50" id="foreman-dashboard">
+                <div className="grid grid-cols-3 gap-6 h-full">
+                    <div className="col-span-2 min-h-0 flex flex-col gap-6">
+                        <div className="bg-white rounded-lg border border-slate-200 shadow-sm flex-1 flex flex-col">
+                            <div className="border-b border-slate-200 p-4">
+                                <h2 className="text-lg font-semibold text-gray-900">Мои задачи ({data.tasks.length})</h2>
+                            </div>
+                            <div className="p-4 overflow-y-auto space-y-4">
+                                {data.tasks.length > 0 ? (
+                                    data.tasks.map(task => <TaskCard key={task.id} task={task} onUpdate={fetchData} onComplete={setCompletingTask} />)
+                                ) : (
+                                    <p className="text-center text-gray-500 pt-10">Нет назначенных задач.</p>
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div className="col-span-1 flex flex-col gap-6 min-h-0">
+                    <div className="col-span-1 flex flex-col gap-6 min-h-0">
                     <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
                          <MaterialDeliveryFlow projects={data.projects} onUpdate={fetchData} />
                     </div>
@@ -269,7 +281,8 @@ function ForemanDHB(){
                     </div>
                 </div>
             </div>
-        </div>
+            </div>
+        </>
     )
 }
 

@@ -38,6 +38,9 @@ def update_document(document_id):
     return jsonify(doc.to_dict())
 
 
+import os
+from flask import current_app
+
 @document_bp.route('/api/documents/upload', methods=['POST'])
 @token_required
 def upload_document():
@@ -46,8 +49,8 @@ def upload_document():
 
     Принимает файл и метаданные (project_id, file_type, linked_entity_id)
     из multipart/form-data запроса. Генерирует уникальный идентификатор для файла,
-    сохраняет информацию о документе в базе данных и возвращает
-    словарь с данными нового документа.
+    сохраняет его в папку 'uploads', сохраняет информацию о документе в базе данных 
+    и возвращает словарь с данными нового документа.
     """
     if 'file' not in request.files:
         return jsonify({'message': 'Файл не найден в запросе'}), 400
@@ -64,16 +67,28 @@ def upload_document():
         return jsonify({'message': 'Требуются поля формы project_id и file_type'}), 400
 
     file_extension = file.filename.rsplit('.', 1)[1].lower()
-    file_id = uuid.uuid4()
-    file_url = f"https://example.storage.com/{file_id}.{file_extension}"
-
+    file_id = str(uuid.uuid4())
+    filename = f"{file_id}.{file_extension}"
+    
+    # Путь для сохранения файла
+    upload_folder = os.path.join(current_app.root_path, 'uploads')
+    if not os.path.exists(upload_folder):
+        os.makedirs(upload_folder)
+    file_path = os.path.join(upload_folder, filename)
+    
     try:
+        # Сохраняем файл
+        file.save(file_path)
+
+        # URL для доступа через API
+        file_url = f"/uploads/{filename}"
+
         new_doc = Document(
-            id=str(file_id),
+            id=file_id,
             project_id=project_id,
             uploader_id=request.current_user['id'],
             file_type=file_type,
-            url=file_url,
+            url=file_url, # Сохраняем локальный URL
             linked_entity_id=linked_entity_id
         )
         db.session.add(new_doc)
@@ -83,6 +98,9 @@ def upload_document():
 
     except Exception as e:
         db.session.rollback()
+        # Если файл был создан, но произошла ошибка БД, его можно удалить
+        if os.path.exists(file_path):
+            os.remove(file_path)
         return jsonify({'message': 'Ошибка сохранения документа', 'error': str(e)}), 500
 
 @document_bp.route('/api/documents/recognize', methods=['POST'])
@@ -101,6 +119,26 @@ def recognize_document():
     recognition_task_id = str(uuid.uuid4())
     
     return jsonify({'recognition_task_id': recognition_task_id}), 202
+
+from flask import Blueprint, request, jsonify, current_app, send_from_directory
+import os
+
+@document_bp.route('/api/documents/<string:document_id>/file', methods=['GET'])
+@token_required
+def get_document_file(document_id):
+    """Отдает файл документа по его ID."""
+    doc = db.get_or_404(Document, document_id)
+
+    # Извлекаем имя файла из URL
+    filename = os.path.basename(doc.url)
+    upload_folder = os.path.join(current_app.root_path, 'uploads')
+
+    # Проверяем, существует ли файл
+    if not os.path.exists(os.path.join(upload_folder, filename)):
+        return jsonify({'message': 'Файл не найден на сервере'}), 404
+
+    return send_from_directory(upload_folder, filename)
+
 
 @document_bp.route('/api/documents/recognize/<task_id>', methods=['GET'])
 @token_required

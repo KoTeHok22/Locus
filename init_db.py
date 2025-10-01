@@ -102,9 +102,34 @@ def create_fixtures():
             print("Создание демонстрационных задач...")
             today = date.today()
             tasks = [
-                Task(project_id=project1.id, name="Устройство фундамента", start_date=today - timedelta(days=20), end_date=today - timedelta(days=5), status='verified', completed_by_id=foreman.id, verified_by_id=inspector.id),
-                Task(project_id=project1.id, name="Возведение стен 1-го этажа", start_date=today - timedelta(days=4), end_date=today + timedelta(days=10), status='completed', completed_by_id=foreman.id),
-                Task(project_id=project1.id, name="Монтаж окон", start_date=today, end_date=today + timedelta(days=15), status='pending')
+                Task(
+                    project_id=project1.id, 
+                    name="Устройство фундамента", 
+                    start_date=today - timedelta(days=20), 
+                    end_date=today - timedelta(days=5), 
+                    status='verified', 
+                    completed_by_id=foreman.id, 
+                    verified_by_id=inspector.id,
+                    completion_comment="Фундамент залит согласно проектной документации. Бетон марки М300.",
+                    completion_photos=[]
+                ),
+                Task(
+                    project_id=project1.id, 
+                    name="Возведение стен 1-го этажа", 
+                    start_date=today - timedelta(days=4), 
+                    end_date=today + timedelta(days=10), 
+                    status='completed', 
+                    completed_by_id=foreman.id,
+                    completion_comment="Стены первого этажа возведены. Использовался кирпич керамический полнотелый М150.",
+                    completion_photos=[]
+                ),
+                Task(
+                    project_id=project1.id, 
+                    name="Монтаж окон", 
+                    start_date=today, 
+                    end_date=today + timedelta(days=15), 
+                    status='pending'
+                )
             ]
             db.session.add_all(tasks)
             print("Задачи созданы.")

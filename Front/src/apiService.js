@@ -58,10 +58,23 @@ class ApiService {
         return request(`/tasks?${query}`);
     }
 
-    updateTaskStatus(projectId, taskId, status) {
+    updateTaskStatus(projectId, taskId, status, photos, comment) {
+        const formData = new FormData();
+        formData.append('status', status);
+        
+        if (comment) {
+            formData.append('comment', comment);
+        }
+        
+        if (photos && photos.length > 0) {
+            photos.forEach(photo => {
+                formData.append('photos', photo);
+            });
+        }
+        
         return request(`/projects/${projectId}/tasks/${taskId}`, {
             method: 'PATCH',
-            body: JSON.stringify({ status })
+            body: formData
         });
     }
 
@@ -147,6 +160,38 @@ class ApiService {
             method: 'PUT',
             body: JSON.stringify({ recognized_data: newData })
         });
+    }
+
+    getDocumentFileUrl(documentId) {
+        const token = AuthService.getToken();
+        return `${API_BASE_URL}/documents/${documentId}/file?token=${token}`;
+    }
+
+    async openDocumentFile(documentId) {
+        const token = AuthService.getToken();
+        const url = `${API_BASE_URL}/documents/${documentId}/file`;
+        
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.message || 'Не удалось открыть файл');
+            }
+            
+            const blob = await response.blob();
+            const fileUrl = window.URL.createObjectURL(blob);
+            window.open(fileUrl, '_blank');
+            
+            // Освобождаем память после небольшой задержки
+            setTimeout(() => window.URL.revokeObjectURL(fileUrl), 100);
+        } catch (error) {
+            throw error;
+        }
     }
 }
 

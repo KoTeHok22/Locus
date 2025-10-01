@@ -1,18 +1,32 @@
-
 from flask import Blueprint, request, jsonify
+from datetime import datetime
+from werkzeug.utils import secure_filename
+import os
+import uuid
 from models import db, Task
 from auth import token_required, role_required
 
 task_bp = Blueprint('task_bp', __name__)
+
+UPLOAD_FOLDER = 'uploads/task_photos'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @task_bp.route('/api/tasks', methods=['GET'])
 @token_required
 def get_tasks():
     """
     Возвращает список задач с возможностью фильтрации.
-    Поддерживает фильтры: `status`, `assignee_id`.
+    Поддерживает фильтры: `status`, `assignee_id`, `project_id`.
     """
     query = Task.query
+
+    # Фильтр по проекту
+    project_id = request.args.get('project_id')
+    if project_id:
+        query = query.filter(Task.project_id == project_id)
 
     # Фильтр по статусу
     status = request.args.get('status')
@@ -36,10 +50,63 @@ def get_tasks():
         'start_date': task.start_date.isoformat(),
         'end_date': task.end_date.isoformat(),
         'completed_at': task.completed_at.isoformat() if task.completed_at else None,
+        'completion_comment': task.completion_comment,
+        'completion_photos': task.completion_photos or [],
         # 'project_name': task.project.name, // Пример обогащения
     } for task in tasks]
 
     return jsonify(tasks_list), 200
+
+@task_bp.route('/api/projects/<int:project_id>/tasks/<int:task_id>', methods=['PATCH'])
+@token_required
+def update_task_status(project_id, task_id):
+    """
+    Обновляет статус задачи (для прораба).
+    Принимает статус 'completed' для отметки задачи как выполненной.
+    Требует прикрепления минимум одного фото при завершении.
+    """
+    task = Task.query.filter_by(id=task_id, project_id=project_id).first_or_404()
+    
+    # Проверяем, что это multipart/form-data запрос
+    if 'status' not in request.form:
+        return jsonify({'message': 'Статус не указан'}), 400
+
+    new_status = request.form.get('status')
+    
+    if new_status == 'completed':
+        # Проверяем наличие фотографий
+        photos = request.files.getlist('photos')
+        if not photos or len(photos) == 0:
+            return jsonify({'message': 'Необходимо прикрепить минимум одно фото'}), 400
+        
+        # Создаем директорию для загрузок, если её нет
+        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+        
+        # Сохраняем фотографии
+        photo_urls = []
+        for photo in photos:
+            if photo and allowed_file(photo.filename):
+                # Генерируем уникальное имя файла
+                ext = photo.filename.rsplit('.', 1)[1].lower()
+                filename = f"{uuid.uuid4()}.{ext}"
+                filepath = os.path.join(UPLOAD_FOLDER, filename)
+                photo.save(filepath)
+                photo_urls.append(f"/uploads/task_photos/{filename}")
+        
+        if not photo_urls:
+            return jsonify({'message': 'Не удалось загрузить фотографии. Проверьте формат файлов.'}), 400
+        
+        # Обновляем задачу
+        task.status = 'completed'
+        task.completed_by_id = request.current_user['id']
+        task.completed_at = datetime.utcnow()
+        task.completion_comment = request.form.get('comment', '')
+        task.completion_photos = photo_urls
+    else:
+        task.status = new_status
+
+    db.session.commit()
+    return jsonify({'message': f'Статус задачи обновлен на {task.status}'}), 200
 
 @task_bp.route('/api/projects/<int:project_id>/tasks/<int:task_id>/verify', methods=['POST'])
 @token_required
@@ -71,4 +138,3 @@ def verify_task(project_id, task_id):
 
     db.session.commit()
     return jsonify({'message': f'Статус задачи обновлен на {task.status}'}), 200
-

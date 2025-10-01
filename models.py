@@ -135,6 +135,8 @@ class Task(db.Model):
     completed_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     verified_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     completed_at = db.Column(db.DateTime, nullable=True)
+    completion_comment = db.Column(db.Text, nullable=True)
+    completion_photos = db.Column(db.JSON, nullable=True)
     
     project = db.relationship('Project', back_populates='tasks')
     completed_by = db.relationship('User', foreign_keys=[completed_by_id])

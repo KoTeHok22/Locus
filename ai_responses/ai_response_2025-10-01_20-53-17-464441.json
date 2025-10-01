@@ -1,0 +1,54 @@
+```json
+[
+  {
+    "document_number": "14267/Е",
+    "document_date": "2024-05-22",
+    "sender": "ООО \"БЕКАМ\"",
+    "recipient": "ГБУ \"Автомобильные Дороги СВАО\", г. Москва",
+    "carrier": "ООО \"АВТОТРАНС\"",
+    "shipping_address": "г. Москва, ул. Адмирала Макарова, д. 6, стр. 13, пом. 3Так 1, часть помещения 6",
+    "delivery_address": "г. Москва, п. Челобитьевское, д. 14, к. 1",
+    "driver": {
+      "full_name": "Тутаев М.Н."
+    },
+    "vehicle": {
+      "registration_plate": "9924 334480"
+    },
+    "items": [
+      {
+        "name": "Бортовой камень 1000x300x150 (с фаской 20x20)",
+        "quantity": 90,
+        "unit": "шт",
+        "total_weight_net_kg": 9105,
+        "total_weight_gross_kg": 9000,
+        "volume_m3": 3.98
+      }
+    ]
+  },
+  {
+    "document_number": "11656/6",
+    "document_date": "2024-05-11",
+    "sender": "ООО \"БЕКАМ\"",
+    "recipient": "ГБУ \"Автомобильные Дороги СВАО\", г. Москва",
+    "carrier": "ООО \"АВТОТРАНС\"",
+    "shipping_address": "г. Москва, ул. Адмирала Макарова, д. 6, стр. 13, пом. 3Так 1, часть помещения 6",
+    "delivery_address": "г. Москва, п. Челобитьевское, д. 14, к. 1",
+    "driver": {
+      "full_name": "Тутаев М.Н."
+    },
+    "vehicle": {
+      "registration_plate": "9924 334480"
+    },
+    "items": [
+      {
+        "name": "Бортовой камень 1000x300x150 (с фаской 20x20)",
+        "quantity": 90,
+        "unit": "шт",
+        "total_weight_net_kg": 9105,
+        "total_weight_gross_kg": 9000,
+        "volume_m3": 3.98
+      }
+    ]
+  }
+]
+```

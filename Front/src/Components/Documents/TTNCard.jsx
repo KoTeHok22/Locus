@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { translate } from '../../utils/translation';
 import AuthService from '../../authService';
+import ApiService from '../../apiService';
 
 const StatusBadge = ({ status }) => {
     const baseClasses = 'px-2 py-1 text-xs font-medium rounded-full';
@@ -49,12 +50,20 @@ const RecognitionDetailsView = ({ data }) => (
 
 const TTNCard = ({ document, onEdit }) => {
     const [showDetails, setShowDetails] = useState(false);
+    const [error, setError] = useState(null);
     const recognized = document.recognized_data ? document.recognized_data[0] : null;
     const userRole = AuthService.getUserRole();
 
-    const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
-    const backendUrl = apiUrl.replace('/api', '');
-    const fileUrl = document.url && (document.url.startsWith('http') ? document.url : `${backendUrl}${document.url}`);
+    const handleOpenFile = async (e) => {
+        e.preventDefault();
+        setError(null);
+        try {
+            await ApiService.openDocumentFile(document.id);
+        } catch (err) {
+            setError(err.message);
+            alert(`Ошибка: ${err.message}`);
+        }
+    };
 
     return (
         <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
@@ -84,7 +93,7 @@ const TTNCard = ({ document, onEdit }) => {
             )}
 
             <div className="flex justify-end gap-4 mt-4 pt-3 border-t">
-                <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">Открыть файл</a>
+                <button onClick={handleOpenFile} className="text-blue-600 hover:underline text-sm">Открыть файл</button>
                 {userRole === 'foreman' && document.recognition_status === 'completed' && (
                     <button onClick={onEdit} className="text-green-600 hover:underline text-sm">Отредактировать</button>
                 )}
