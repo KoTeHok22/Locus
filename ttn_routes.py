@@ -5,15 +5,13 @@ from flask import Blueprint, request, jsonify, current_app
 from werkzeug.utils import secure_filename
 from auth import token_required
 from models import db, Document
-from qwen_api import QwenAPIClient, AccountManager, CookieManager # Предполагается, что этот модуль существует и настроен
+from qwen_api import QwenAPIClient, AccountManager, CookieManager
 from datetime import datetime
 
 recognition_bp = Blueprint('recognition_bp', __name__)
 
 UPLOAD_FOLDER = 'uploads'
 AI_RESPONSES_FOLDER = 'ai_responses'
-
-# --- Вспомогательные функции ---
 
 def run_recognition_in_background(document_id, app):
     """Выполняет распознавание документа в фоновом потоке."""
@@ -25,7 +23,6 @@ def run_recognition_in_background(document_id, app):
 
         chat_session = None
         try:
-            # Настройки клиента API (должны быть вынесены в конфигурацию)
             ACCOUNTS_FILE = "accounts.json"
             COOKIES_FILE = "shared_cookies.json"
             account_manager = AccountManager(accounts_file_path=ACCOUNTS_FILE)
@@ -34,11 +31,78 @@ def run_recognition_in_background(document_id, app):
 
             chat_session = api_client.create_chat(title=f"Doc Recognition - {document.id}")
             
-            # Промпт для ИИ остается тот же, он хорошо описывает задачу извлечения данных
-            prompt = '''# ROLE...
-# TASK...
-# ... (полный текст промпта из предыдущей версии)
-''' # Примечание: здесь должен быть полный текст вашего промпта
+            prompt = '''# ROLE
+You are an expert AI system specializing in the automated processing and data extraction from Russian shipping and transport documents. Your function is to meticulously analyze scanned documents and convert unstructured information into a structured JSON format with perfect accuracy.
+
+# CONTEXT
+The user will provide a file containing one or more scanned Russian transport documents (Транспортная накладная - ТН). These documents detail cargo shipments. Your task is to identify each individual document within the file, process it, and extract key information. The documents might have slight variations in layout, stamps, or handwritten notes.
+
+# TASK
+Analyze the provided file step-by-step. For EACH transport document you identify, perform the following actions:
+1.  **Isolate the Document**: Clearly define the boundaries of a single transport document before extracting its data. A document typically consists of the main "ТРАНСПОРТНАЯ НАКЛАДНАЯ" form and may have an associated "ДОКУМЕНТ О КАЧЕСТВЕ" page.
+2.  **Extract Data**: Meticulously extract the specific fields listed below for that single document.
+3.  **Format Output**: Structure the extracted information into a JSON object according to the specified schema and example.
+4.  **Aggregate Results**: Compile the JSON objects for all processed documents into a single JSON array.
+
+# EXTRACTION SCHEMA & INSTRUCTIONS
+For each document, create a JSON object with the following keys. If a specific piece of information cannot be found, the value for that key must be `null`.
+
+-   `"document_number"`: The number of the transport note (Транспортная накладная №).
+-   `"document_date"`: The date of the transport note. Format as "YYYY-MM-DD".
+-   `"sender"`: The name of the consignor (Грузоотправитель).
+-   `"recipient"`: The name of the consignee (Грузополучатель).
+-   `"carrier"`: The name of the carrier (Перевозчик).
+-   `"shipping_address"`: The full address of the loading point (адрес места погрузки).
+-   `"delivery_address"`: The full address of the destination (адрес места доставки груза).
+-   `"driver"`: An object containing the driver's details:
+    -   `"full_name"`: The full name of the driver (ФИО водителя).
+-   `"vehicle"`: An object containing the vehicle's details:
+    -   `"registration_plate"`: The state registration number (регистрационный номер транспортного средства).
+-   `"items"`: An array of objects, with one object per line item in the cargo section (Груз). Each object should contain:
+    -   `"name"`: The name of the item (Наименование).
+    -   `"quantity"`: The quantity of the item (Количество). Convert to a number.
+    -   `"unit"`: The unit of measurement (e.g., "шт", "п.м.").
+    -   `"total_weight_net_kg"`: The net weight in kilograms (Масса нетто). Extract the numeric value only.
+    -   `"total_weight_gross_kg"`: The gross weight in kilograms (Масса брутто). Extract the numeric value only.
+    -   `"volume_m3"`: The volume in cubic meters (Объем). Extract the numeric value only.
+
+# EXAMPLE JSON OUTPUT TEMPLATE
+Use the following structure as a strict template for each JSON object you generate. The final output must be an array of objects structured exactly like this example.
+
+```json
+[
+  {
+    "document_number": "31795/Б",
+    "document_date": "2024-08-06",
+    "sender": "ООО \"Бекам\"",
+    "recipient": "ГБУ города Москвы \"Автомобильные дороги\"",
+    "carrier": "ООО \"Автопрофит\"",
+    "shipping_address": "г. Москва, Походный проезд, вл.2 стр.1-1 / обл. Московская, г. Химки, д. Подолино, тер. Промышленная зона, стр. 1",
+    "delivery_address": "г. Москва, поселок Некрасовка, пр-зд Проектируемый 4296",
+    "driver": {
+      "full_name": "Александров А.А."
+    },
+    "vehicle": {
+      "registration_plate": "О 942 АЕ 797"
+    },
+    "items": [
+      {
+        "name": "Бортовой камень 1000х300х150",
+        "quantity": 198,
+        "unit": "шт",
+        "total_weight_net_kg": 19463,
+        "total_weight_gross_kg": 19694,
+        "volume_m3": 8.91
+      }
+    ]
+  }
+]
+```
+
+# FINAL OUTPUT INSTRUCTIONS
+
+Your final output must be a single, valid JSON array containing one object for each transport document found in the file, matching the example template perfectly. Do NOT include any text, explanations, or markdown formatting outside of the JSON array.
+'''
 
             stream = api_client.send_message(chat_session, prompt, file_paths=[document.url])
 
@@ -52,7 +116,6 @@ def run_recognition_in_background(document_id, app):
             if not full_response.strip():
                 raise ValueError("Получен пустой ответ от API распознавания")
 
-            # Сохранение ответа от ИИ для отладки
             try:
                 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S-%f")
                 filename = f"ai_response_{timestamp}.json"
@@ -63,7 +126,6 @@ def run_recognition_in_background(document_id, app):
             except Exception as e:
                 print(f"[Recognition] Не удалось сохранить ответ ИИ: {e}")
 
-            # Извлечение чистого JSON из ответа
             json_response_str = full_response.strip().replace("```json", "").replace("```", "").strip()
             recognized_data = json.loads(json_response_str)
 
@@ -78,8 +140,6 @@ def run_recognition_in_background(document_id, app):
         finally:
             if chat_session:
                 api_client.delete_chat(chat_session)
-
-# --- Эндпоинты ---
 
 @recognition_bp.route('/api/recognize/document', methods=['POST'])
 @token_required
@@ -110,7 +170,7 @@ def recognize_document():
         document = Document(
             project_id=project_id,
             uploader_id=current_user_id,
-            file_type=file.content_type, # или более сложная логика определения типа
+            file_type=file.content_type,
             url=file_path, 
             recognition_status='processing'
         )
@@ -151,7 +211,7 @@ def get_recognition_status(document_id):
         response["message"] = "Распознавание успешно завершено"
     elif document.recognition_status == 'failed':
         response["message"] = "Ошибка во время распознавания."
-    else: # processing or pending
+    else:
         response["message"] = "Распознавание еще в процессе."
 
     return jsonify(response), 200

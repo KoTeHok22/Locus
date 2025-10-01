@@ -30,7 +30,7 @@ services:
         condition: service_healthy
     volumes:
       - .:/app
-    command: ["python", "main.py"]
+    command: sh -c "./boot.sh"
 
   frontend:
     build:

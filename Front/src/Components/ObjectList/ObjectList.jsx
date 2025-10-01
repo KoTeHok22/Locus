@@ -18,17 +18,7 @@ function ObjectList({ onSwitchToPage }) {
         try {
             setLoading(true);
             const projectsData = await ApiService.getProjects();
-            if (projectsData.length === 0) {
-                setProjects([]);
-            } else {
-                const projectsWithRisk = await Promise.all(
-                    projectsData.map(async (project) => {
-                        const risk = await ApiService.getProjectRiskAssessment(project.id);
-                        return { ...project, ...risk };
-                    })
-                );
-                setProjects(projectsWithRisk);
-            }
+            setProjects(projectsData || []);
         } catch (error) {
             setError(error.message);
         } finally {
@@ -60,40 +50,7 @@ function ObjectList({ onSwitchToPage }) {
         setShowCreateForm(true);
     };
 
-    const getRiskColor = (riskLevel) => {
-        switch (riskLevel) {
-            case 'high':
-                return '#EF4444';
-            case 'medium':
-                return '#F59E0B';
-            case 'low':
-                return '#10B981';
-            default:
-                return '#6B7280';
-        }
-    };
 
-    const getRiskBorderColor = (riskLevel) => {
-        switch (riskLevel) {
-            case 'high':
-                return 'border-red-200';
-            case 'medium':
-                return 'border-amber-200';
-            default:
-                return 'border-slate-200';
-        }
-    };
-
-    const getRiskBgColor = (riskLevel) => {
-        switch (riskLevel) {
-            case 'high':
-                return 'bg-red-50';
-            case 'medium':
-                return 'bg-amber-50';
-            default:
-                return 'bg-white';
-        }
-    };
 
     return (
         <>
@@ -131,16 +88,13 @@ function ObjectList({ onSwitchToPage }) {
                     ) : (
                         <div className="space-y-3">
                             {projects.map(project => (
-                                <div key={project.id} className={`border rounded-lg p-3 sm:p-4 transition-all hover:shadow-md ${getRiskBorderColor(project.risk_level)} ${getRiskBgColor(project.risk_level)}`}>
+                                <div key={project.id} className={`border rounded-lg p-3 sm:p-4 transition-all hover:shadow-md border-slate-200 bg-white`}>
                                     <div className="flex items-start justify-between mb-3 flex-col sm:flex-row gap-2 sm:gap-0">
                                         <div className="flex-1 min-w-0 w-full sm:w-auto">
                                             <div className="flex items-start justify-between sm:justify-start gap-2 mb-1">
                                                 <h4 className="font-semibold text-gray-900 text-sm leading-tight flex-1">
                                                     {project.name}
                                                 </h4>
-                                                <div className={'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white'} style={{ backgroundColor: getRiskColor(project.risk_level) }}>
-                                                    {project.risk_level}
-                                                </div>
                                             </div>
                                             <p className="text-xs text-gray-500 mb-3">{project.address}</p>
                                         </div>

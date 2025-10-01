@@ -22,6 +22,16 @@ class Classifier(db.Model):
     description = db.Column(db.Text, nullable=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'type': self.type,
+            'code': self.code,
+            'title': self.title,
+            'description': self.description,
+            'is_active': self.is_active
+        }
+
 class Checklist(db.Model):
     """Модель чек-листа для задач или инспекций."""
     __tablename__ = 'checklists'
@@ -155,6 +165,18 @@ class Document(db.Model):
     project = db.relationship('Project', back_populates='documents')
     uploader = db.relationship('User')
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'project_id': self.project_id,
+            'uploader_id': self.uploader_id,
+            'file_type': self.file_type,
+            'url': self.url,
+            'recognized_data': self.recognized_data,
+            'recognition_status': self.recognition_status,
+            'created_at': self.created_at.isoformat()
+        }
+
 class Issue(db.Model):
     """Модель замечания или нарушения."""
     __tablename__ = 'issues'
@@ -182,6 +204,23 @@ class Issue(db.Model):
     
     # Связь с документами (многие-ко-многим)
     documents = db.relationship('Document', secondary='issue_documents', backref='issues')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'project_id': self.project_id,
+            'task_id': self.task_id,
+            'classifier_id': self.classifier_id,
+            'type': self.type,
+            'author_id': self.author_id,
+            'status': self.status,
+            'description': self.description,
+            'due_date': self.due_date.isoformat() if self.due_date else None,
+            'resolution_comment': self.resolution_comment,
+            'resolved_by_id': self.resolved_by_id,
+            'resolved_at': self.resolved_at.isoformat() if self.resolved_at else None,
+            'created_at': self.created_at.isoformat()
+        }
 
 class DailyReport(db.Model):
     """Модель ежедневного отчета."""

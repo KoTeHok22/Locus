@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from models import db, DailyReport, User, Project
-from auth import token_required
+from auth import token_required, role_required
+from datetime import datetime
 
 daily_report_bp_v2 = Blueprint('daily_report_bp_v2', __name__)
 
@@ -28,6 +29,34 @@ def get_daily_reports():
 
     return jsonify(reports_list), 200
 
+@daily_report_bp_v2.route('/api/daily-reports', methods=['POST'])
+@token_required
+@role_required('foreman')
+def create_daily_report():
+    """Создает новый ежедневный отчет. Доступно только для прораба."""
+    data = request.get_json()
+    required_fields = ['project_id', 'report_date', 'notes']
+    if not all(field in data for field in required_fields):
+        return jsonify({'message': 'Требуются поля project_id, report_date, notes'}), 400
+
+    try:
+        new_report = DailyReport(
+            project_id=data['project_id'],
+            author_id=request.current_user['id'],
+            report_date=datetime.strptime(data['report_date'], '%Y-%m-%d').date(),
+            workers_count=data.get('workers_count'),
+            equipment=data.get('equipment'),
+            weather_conditions=data.get('weather_conditions'),
+            notes=data['notes']
+        )
+        db.session.add(new_report)
+        db.session.commit()
+        # Нужна to_dict модель для DailyReport или формировать словарь вручную
+        return jsonify({'message': 'Ежедневный отчет успешно создан', 'id': new_report.id}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': 'Ошибка создания отчета', 'error': str(e)}), 500
+
 @daily_report_bp_v2.route('/api/daily-reports/<int:report_id>', methods=['GET'])
 @token_required
 def get_daily_report(report_id):
@@ -45,9 +74,12 @@ def get_daily_report(report_id):
         
         user_role = request.current_user['role']
         user_id = request.current_user['id']
-        
-        if user_role in ['foreman', 'inspector'] and report.author_id != user_id:
+
+        # Клиент может видеть все, прораб - только свои, инспектор - ничего
+        if user_role == 'inspector':
             return jsonify({'message': 'Недостаточно прав для просмотра этого отчета'}), 403
+        if user_role == 'foreman' and report.author_id != user_id:
+            return jsonify({'message': 'Вы можете просматривать только свои отчеты'}), 403
         
         # Нужно будет обновить to_dict в модели или формировать словарь здесь
         return jsonify({
@@ -74,11 +106,10 @@ def update_daily_report(report_id):
         if not report:
             return jsonify({'message': 'Ежедневный отчет не найден'}), 404
         
-        user_role = request.current_user['role']
         user_id = request.current_user['id']
         
-        if user_role in ['foreman', 'inspector'] and report.author_id != user_id:
-            return jsonify({'message': 'Недостаточно прав для обновления этого отчета'}), 403
+        if report.author_id != user_id:
+            return jsonify({'message': 'Вы можете обновлять только свои отчеты'}), 403
         
         data = request.get_json()
         
@@ -111,11 +142,10 @@ def delete_daily_report(report_id):
         if not report:
             return jsonify({'message': 'Ежедневный отчет не найден'}), 404
         
-        user_role = request.current_user['role']
         user_id = request.current_user['id']
         
-        if user_role in ['foreman', 'inspector'] and report.author_id != user_id:
-            return jsonify({'message': 'Недостаточно прав для удаления этого отчета'}), 403
+        if report.author_id != user_id:
+            return jsonify({'message': 'Вы можете удалять только свои отчеты'}), 403
         
         db.session.delete(report)
         db.session.commit()

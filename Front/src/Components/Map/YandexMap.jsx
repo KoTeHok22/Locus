@@ -57,9 +57,8 @@ const MapObject = ({ project }) => {
         );
     }
 
-    
-    if (project.center_point) {
-        const geometry = [project.center_point[1], project.center_point[0]];
+    if (project.latitude && project.longitude) {
+        const geometry = [project.latitude, project.longitude];
         return (
             <Placemark
                 geometry={geometry}
@@ -84,8 +83,8 @@ const YandexMapInternal = ({ projects, ymaps }) => {
                     return acc.concat(coords);
                 }
                 
-                if (project.center_point) {
-                    const coord = [project.center_point[1], project.center_point[0]];
+                if (project.latitude && project.longitude) {
+                    const coord = [project.latitude, project.longitude];
                     return acc.concat([coord]);
                 }
                 return acc;

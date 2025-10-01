@@ -77,29 +77,22 @@ def token_required(f):
     
     return decorated
 
-def role_required(required_role):
+def role_required(*required_roles):
     """
-    Декоратор для требования определенной роли для маршрута
+    Декоратор для требования одной из указанных ролей.
     """
     def decorator(f):
         @wraps(f)
-        def decorated(*args, **kwargs):
+        def decorated_function(*args, **kwargs):
             if not hasattr(request, 'current_user'):
                 return jsonify({'message': 'Требуется аутентификация'}), 401
             
-            user_role = request.current_user['role']
-            
-            if required_role == 'client' and user_role != 'client':
-                return jsonify({'message': 'Недостаточно прав'}), 403
-            
-            if required_role == 'foreman' and user_role not in ['foreman', 'client']:
-                return jsonify({'message': 'Недостаточно прав'}), 403
-                
-            if required_role == 'inspector' and user_role not in ['inspector', 'client']:
-                return jsonify({'message': 'Недостаточно прав'}), 403
+            user_role = request.current_user.get('role')
+            if user_role not in required_roles:
+                return jsonify({'message': 'Недостаточно прав для выполнения этого действия'}), 403
             
             return f(*args, **kwargs)
-        return decorated
+        return decorated_function
     return decorator
 
 def validate_email(email):

@@ -7,7 +7,7 @@ from geopy.geocoders import Yandex
 from geopy.exc import GeocoderQueryError, GeocoderTimedOut, GeocoderUnavailable
 
 from models import db, Project, User, ProjectUser, Task, Issue
-from auth import token_required
+from auth import token_required, role_required
 
 project_bp_v2 = Blueprint('project_bp_v2', __name__)
 
@@ -158,3 +158,32 @@ def get_project_details(project_id):
     return jsonify(project_dict), 200
 
 # NOTE: Эндпоинт /members требует отдельного рефакторинга, пока оставляем его без изменений.
+
+@project_bp_v2.route('/api/projects/<int:project_id>/members', methods=['POST'])
+@token_required
+@role_required('client')
+def add_project_member(project_id):
+    """Добавляет участника в проект."""
+    project = db.get_or_404(Project, project_id)
+    data = request.get_json()
+
+    if not data or not data.get('email') or not data.get('role'):
+        return jsonify({'message': 'Требуются email и role'}), 400
+
+    email = data['email']
+
+    user_to_add = User.query.filter_by(email=email).first()
+    if not user_to_add:
+        return jsonify({'message': f'Пользователь с email {email} не найден.'}), 404
+
+    # Проверка, не добавлен ли уже пользователь
+    existing_link = ProjectUser.query.filter_by(project_id=project.id, user_id=user_to_add.id).first()
+    if existing_link:
+        return jsonify({'message': 'Пользователь уже является участником проекта'}), 409
+
+    # Добавление пользователя в проект
+    new_link = ProjectUser(project_id=project.id, user_id=user_to_add.id)
+    db.session.add(new_link)
+    db.session.commit()
+
+    return jsonify({'message': f'Пользователь {email} успешно добавлен в проект.'}), 201

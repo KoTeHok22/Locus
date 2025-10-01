@@ -8,7 +8,7 @@ const navigationItems = [
     { key: '/', label: 'Дашборд', icon: 'fa-home' },
     { key: '/projects', label: 'Объекты', icon: 'fa-list' },
     { key: '/map', label: 'Карта', icon: 'fa-map-marked-alt' },
-    { key: '/reports', label: 'Отчёты', icon: 'fa-file-alt' },
+    { key: '/reports', label: 'Отчёты', icon: 'fa-file-alt', roles: ['client', 'foreman'] },
 ];
 
 const UserMenu = ({ user, onLogout }) => {
@@ -79,7 +79,9 @@ const MainLayout = ({ children }) => {
                 </div>
                 <nav className="flex-1 p-4">
                     <div className="space-y-1">
-                        {navigationItems.map(item => (
+                        {navigationItems
+                            .filter(item => !item.roles || item.roles.includes(userInfo.role))
+                            .map(item => (
                             <Link
                                 key={item.key}
                                 to={item.key}

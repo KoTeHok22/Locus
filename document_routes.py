@@ -1,9 +1,42 @@
 from flask import Blueprint, request, jsonify
-from models import db, Document
-from auth import token_required
+from models import db, Document, Project
+from auth import token_required, role_required
 import uuid
 
 document_bp = Blueprint('document', __name__)
+
+@document_bp.route('/api/projects/<int:project_id>/documents', methods=['GET'])
+@token_required
+def get_project_documents(project_id):
+    """Возвращает все документы, связанные с проектом."""
+    # Убедимся, что проект существует, чтобы не запрашивать документы для несуществующего проекта
+    db.get_or_404(Project, project_id)
+
+    documents = Document.query.filter_by(project_id=project_id).order_by(Document.created_at.desc()).all()
+    
+    # У модели Document должен быть метод to_dict()
+    docs_list = [doc.to_dict() for doc in documents]
+    
+    return jsonify(docs_list)
+
+@document_bp.route('/api/documents/<int:document_id>', methods=['PUT'])
+@token_required
+@role_required('foreman')
+def update_document(document_id):
+    """Обновляет распознанные данные документа. Доступно только для прораба."""
+    doc = db.get_or_404(Document, document_id)
+    data = request.get_json()
+
+    if 'recognized_data' not in data:
+        return jsonify({'message': 'Отсутствует поле recognized_data'}), 400
+
+    doc.recognized_data = data['recognized_data']
+    # Можно добавить флаг, что данные были отредактированы вручную
+    # doc.is_manually_edited = True 
+    db.session.commit()
+
+    return jsonify(doc.to_dict())
+
 
 @document_bp.route('/api/documents/upload', methods=['POST'])
 @token_required

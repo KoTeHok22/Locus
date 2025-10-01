@@ -1,7 +1,7 @@
 
 import os
 import time
-from flask import Flask
+from flask import Flask, send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from dotenv import load_dotenv
@@ -37,7 +37,7 @@ from delivery_routes import delivery_bp
 def create_app(test_config=None):
     """Создание и настройка Flask приложения."""
     app = Flask(__name__)
-    CORS(app)
+    CORS(app, origins="*", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"], allow_headers=["Authorization", "Content-Type", "X-User-Geolocation"])
 
     # --- Конфигурация --- 
     if test_config is None:
@@ -95,6 +95,10 @@ def create_app(test_config=None):
     app.register_blueprint(map_bp)
     app.register_blueprint(recognition_bp)
     app.register_blueprint(delivery_bp)
+
+    @app.route('/uploads/<path:filename>')
+    def serve_upload(filename):
+        return send_from_directory(os.path.join(app.root_path, 'uploads'), filename)
     
     return app, celery
 

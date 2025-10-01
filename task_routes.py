@@ -1,7 +1,7 @@
 
 from flask import Blueprint, request, jsonify
 from models import db, Task
-from auth import token_required
+from auth import token_required, role_required
 
 task_bp = Blueprint('task_bp', __name__)
 
@@ -40,3 +40,35 @@ def get_tasks():
     } for task in tasks]
 
     return jsonify(tasks_list), 200
+
+@task_bp.route('/api/projects/<int:project_id>/tasks/<int:task_id>/verify', methods=['POST'])
+@token_required
+@role_required('client')
+def verify_task(project_id, task_id):
+    """
+    Верифицирует выполненную задачу.
+    Доступно для 'client' и 'inspector'.
+    Принимает статус 'verified' или 'rejected'.
+    """
+    task = Task.query.filter_by(id=task_id, project_id=project_id).first_or_404()
+    
+    if task.status != 'completed':
+        return jsonify({'message': 'Задачу можно верифицировать только в статусе completed'}), 409
+
+    data = request.get_json()
+    new_status = data.get('status')
+
+    if new_status not in ['verified', 'rejected']:
+        return jsonify({'message': 'Статус должен быть \'verified\' или \'rejected\''}), 400
+
+    if new_status == 'verified':
+        task.status = 'verified'
+        task.verified_by_id = request.current_user['id']
+    elif new_status == 'rejected':
+        task.status = 'pending'
+        task.completed_by_id = None
+        task.completed_at = None
+
+    db.session.commit()
+    return jsonify({'message': f'Статус задачи обновлен на {task.status}'}), 200
+

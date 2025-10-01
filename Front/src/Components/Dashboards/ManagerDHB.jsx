@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ApiService from '../../apiService';
 import { YandexMap } from '../Map/YandexMap';
 import '../../index.css';
@@ -17,25 +18,29 @@ const StatCard = ({ title, value, icon, colorClass }) => (
     </div>
 );
 
-const ProjectCard = ({ project }) => (
-    <div className="border rounded-lg p-4 transition-all hover:shadow-md bg-white border-slate-200">
-        <div className="flex-1 min-w-0">
-            <h4 className="font-semibold text-gray-900 text-sm truncate mb-1">{project.name}</h4>
-            <p className="text-xs text-gray-500 mb-3 truncate">{project.address}</p>
-            
-            <div className="flex items-center gap-4 text-xs text-gray-600">
-                <div><i className="fas fa-tasks mr-1"></i>{project.tasks_count || 0} задач</div>
-                <div><i className="fas fa-exclamation-triangle mr-1 text-red-500"></i>{project.issues_count || 0} нарушений</div>
+const ProjectCard = ({ project }) => {
+    const navigate = useNavigate();
+
+    return (
+        <div className="border rounded-lg p-4 transition-all hover:shadow-md bg-white border-slate-200">
+            <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-900 text-sm truncate mb-1">{project.name}</h4>
+                <p className="text-xs text-gray-500 mb-3 truncate">{project.address}</p>
+                
+                <div className="flex items-center gap-4 text-xs text-gray-600">
+                    <div><i className="fas fa-tasks mr-1"></i>{project.tasks_count || 0} задач</div>
+                    <div><i className="fas fa-exclamation-triangle mr-1 text-red-500"></i>{project.issues_count || 0} нарушений</div>
+                </div>
+            </div>
+            <div className="flex justify-end mt-3">
+                <button onClick={() => navigate(`/projects/${project.id}`)} className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 h-8 px-2 text-xs flex items-center rounded">
+                    <span>Подробнее</span>
+                    <i className="fas fa-chevron-right ml-1 text-xs"></i>
+                </button>
             </div>
         </div>
-        <div className="flex justify-end mt-3">
-            <button className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 h-8 px-2 text-xs flex items-center rounded">
-                <span>Подробнее</span>
-                <i className="fas fa-chevron-right ml-1 text-xs"></i>
-            </button>
-        </div>
-    </div>
-);
+    );
+};
 
 
 function ManagerDHB() {

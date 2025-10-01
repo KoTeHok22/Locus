@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import ApiService from '../apiService';
 import { translate } from '../utils/translation';
+import ActivateProjectModal from '../Components/Projects/ActivateProjectModal';
+import AuthService from '../authService';
 
 const CreateProjectModal = ({ onCancel, onUpdate }) => {
     const [name, setName] = useState('');
@@ -68,10 +71,13 @@ const CreateProjectModal = ({ onCancel, onUpdate }) => {
 };
 
 const ProjectsPage = () => {
+    const navigate = useNavigate();
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [activatingProject, setActivatingProject] = useState(null);
+    const userRole = AuthService.getUserRole();
 
     const fetchProjects = useCallback(async () => {
         setLoading(true);
@@ -89,21 +95,35 @@ const ProjectsPage = () => {
         fetchProjects();
     }, [fetchProjects]);
 
+    const handleActivationSuccess = () => {
+        fetchProjects();
+        setActivatingProject(null);
+    };
+
     if (error) {
-        return <div className="text-red-500">Ошибка при загрузке проектов: {error}</div>;
+        return <div className="text-red-500 p-6">Ошибка при загрузке проектов: {error}</div>;
     }
 
     return (
         <>
             {showCreateModal && <CreateProjectModal onCancel={() => setShowCreateModal(false)} onUpdate={fetchProjects} />}
+            {activatingProject && (
+                <ActivateProjectModal
+                    project={activatingProject}
+                    onClose={() => setActivatingProject(null)}
+                    onSuccess={handleActivationSuccess}
+                />
+            )}
             
             <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
                 <div className="border-b border-slate-200 p-4 flex items-center justify-between">
                     <h1 className="text-xl font-bold text-gray-900">Проекты</h1>
-                    <button onClick={() => setShowCreateModal(true)} className="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2">
-                        <i className="fas fa-plus"></i>
-                        <span>Создать проект</span>
-                    </button>
+                    {userRole === 'client' && (
+                        <button onClick={() => setShowCreateModal(true)} className="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2">
+                            <i className="fas fa-plus"></i>
+                            <span>Создать проект</span>
+                        </button>
+                    )}
                 </div>
 
                 {loading ? (
@@ -126,12 +146,19 @@ const ProjectsPage = () => {
                                     </th>
                                     <td className="px-6 py-4">{project.address}</td>
                                     <td className="px-6 py-4">
-                                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${project.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                            project.status === 'active' ? 'bg-green-100 text-green-800' : 
+                                            project.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                            'bg-gray-100 text-gray-800'
+                                        }`}>
                                             {translate(project.status)}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <button className="font-medium text-blue-600 hover:underline">Детали</button>
+                                    <td className="px-6 py-4 space-x-4">
+                                        <button onClick={() => navigate(`/projects/${project.id}`)} className="font-medium text-blue-600 hover:underline">Детали</button>
+                                        {userRole === 'client' && project.status === 'pending' && (
+                                            <button onClick={() => setActivatingProject(project)} className="font-medium text-green-600 hover:underline">Активировать</button>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

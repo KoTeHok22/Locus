@@ -77,11 +77,18 @@ class ApiService {
         return request(`/issues?${query}`);
     }
 
-    createIssue(projectId, issueData) {
-        return request(`/projects/${projectId}/issues`, {
+    createIssue(projectId, issueData, geolocation) {
+        const options = {
             method: 'POST',
-            body: JSON.stringify(issueData)
-        });
+            body: JSON.stringify(issueData),
+            headers: {}
+        };
+
+        if (geolocation) {
+            options.headers['X-User-Geolocation'] = geolocation;
+        }
+
+        return request(`/projects/${projectId}/issues`, options);
     }
 
     async getClassifiers(filters = {}) {
@@ -115,6 +122,31 @@ class ApiService {
     getDailyReports(filters = {}) {
         const query = new URLSearchParams(filters).toString();
         return request(`/daily-reports?${query}`);
+    }
+
+    addProjectMember(projectId, email, role) {
+        return request(`/projects/${projectId}/members`, {
+            method: 'POST',
+            body: JSON.stringify({ email, role }),
+        });
+    }
+
+    activateProject(projectId) {
+        return request(`/projects/${projectId}/activate`, {
+            method: 'POST',
+            body: JSON.stringify({}),
+        });
+    }
+
+    getProjectDocuments(projectId) {
+        return request(`/projects/${projectId}/documents`);
+    }
+
+    updateDocument(documentId, newData) {
+        return request(`/documents/${documentId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ recognized_data: newData })
+        });
     }
 }
 

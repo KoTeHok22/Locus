@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from models import db, Project, Issue, User
 from auth import token_required, role_required, geolocation_required
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 
 workflow_bp = Blueprint('workflow', __name__)
 
@@ -63,14 +63,23 @@ def create_issue(project_id):
     if not data or not data.get('description') or not data.get('type'):
         return jsonify({'message': 'Требуются description и type'}), 400
 
+    due_date_str = data.get('due_date')
+    due_date_obj = None
+    if due_date_str:
+        try:
+            due_date_obj = datetime.strptime(due_date_str, '%Y-%m-%d').date()
+            if due_date_obj < date.today():
+                return jsonify({'message': 'Срок устранения не может быть в прошлом'}), 400
+        except ValueError:
+            return jsonify({'message': 'Неверный формат даты. Ожидается YYYY-MM-DD'}), 400
+
     new_issue = Issue(
         project_id=project_id,
         author_id=request.current_user['id'],
         type=data['type'],
         classifier_id=data.get('classifier_id'),
         description=data['description'],
-        document_ids=data.get('document_ids', []),
-        due_date=datetime.strptime(data['due_date'], '%Y-%m-%d').date() if data.get('due_date') else None,
+        due_date=due_date_obj,
         task_id=data.get('task_id')
     )
     db.session.add(new_issue)

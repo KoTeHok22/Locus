@@ -52,7 +52,17 @@ const MaterialDeliveryFlow = ({ projects, onUpdate }) => {
     const [selectedProject, setSelectedProject] = useState('');
     const [isRecognizing, setIsRecognizing] = useState(false);
     const [recognizedData, setRecognizedData] = useState(null);
+    const [editableItems, setEditableItems] = useState([]);
     const [documentId, setDocumentId] = useState(null);
+
+    useEffect(() => {
+        // When recognized data is received, populate the editable form state
+        if (recognizedData && recognizedData[0]?.items) {
+            setEditableItems(recognizedData[0].items);
+        } else {
+            setEditableItems([]);
+        }
+    }, [recognizedData]);
 
     const handleFileChange = (e) => {
         setFile(e.target.files[0]);
@@ -90,19 +100,25 @@ const MaterialDeliveryFlow = ({ projects, onUpdate }) => {
         }
     };
 
+    const handleItemChange = (index, field, value) => {
+        const updatedItems = [...editableItems];
+        updatedItems[index][field] = value;
+        setEditableItems(updatedItems);
+    };
+
     const handleConfirmDelivery = async () => {
-        if (!documentId || !recognizedData) {
+        if (!documentId || !editableItems) {
             toast.error('Нет данных для подтверждения.');
             return;
         }
         const toastId = toast.loading('Регистрация поставки...');
         try {
-            const items = recognizedData[0]?.items || [];
-            await ApiService.createDelivery(selectedProject, documentId, items);
+            await ApiService.createDelivery(selectedProject, documentId, editableItems);
             toast.success('Поставка успешно зарегистрирована!', { id: toastId });
             setFile(null);
             setSelectedProject('');
             setRecognizedData(null);
+            setEditableItems([]);
             setDocumentId(null);
             onUpdate();
         } catch (error) {
@@ -113,11 +129,43 @@ const MaterialDeliveryFlow = ({ projects, onUpdate }) => {
     if (recognizedData) {
         return (
             <div className="p-6">
-                <h3 className="text-lg font-semibold mb-2">Проверьте распознанные данные</h3>
-                <div className="bg-slate-100 p-4 rounded-lg text-xs mb-4 overflow-auto">
-                    <pre>{JSON.stringify(recognizedData, null, 2)}</pre>
+                <h3 className="text-lg font-semibold mb-4">Проверьте и исправьте данные</h3>
+                <div className="space-y-4 max-h-64 overflow-y-auto pr-2">
+                    {editableItems.map((item, index) => (
+                        <div key={index} className="p-3 border rounded-lg bg-slate-50 space-y-2">
+                            <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label className="text-xs text-gray-600">Наименование</label>
+                                    <input 
+                                        type="text" 
+                                        value={item.name || ''}
+                                        onChange={(e) => handleItemChange(index, 'name', e.target.value)}
+                                        className="w-full p-1.5 border rounded-md text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs text-gray-600">Количество</label>
+                                    <input 
+                                        type="number" 
+                                        value={item.quantity || ''}
+                                        onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
+                                        className="w-full p-1.5 border rounded-md text-sm"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="text-xs text-gray-600">Ед. изм.</label>
+                                <input 
+                                    type="text" 
+                                    value={item.unit || ''}
+                                    onChange={(e) => handleItemChange(index, 'unit', e.target.value)}
+                                    className="w-full p-1.5 border rounded-md text-sm"
+                                />
+                            </div>
+                        </div>
+                    ))}
                 </div>
-                <div className="flex gap-4">
+                <div className="flex gap-4 mt-4">
                     <button onClick={handleConfirmDelivery} className="bg-green-600 text-white px-4 py-2 rounded-lg">Подтвердить поставку</button>
                     <button onClick={() => setRecognizedData(null)} className="bg-gray-300 px-4 py-2 rounded-lg">Отмена</button>
                 </div>
