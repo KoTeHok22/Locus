@@ -5,7 +5,7 @@ function CreateProjectForm({ onSubmit, onCancel, apiError }) {
     const [name, setName] = useState('');
     const [address, setAddress] = useState('');
     const [placemarkCoords, setPlacemarkCoords] = useState(null);
-    const [mapCenter, setMapCenter] = useState([55.751574, 37.573856]); // Default to Moscow
+    const [mapCenter, setMapCenter] = useState([55.751574, 37.573856]);
 
     const [polygon, setPolygon] = useState(null);
     const [geocodingError, setGeocodingError] = useState('');

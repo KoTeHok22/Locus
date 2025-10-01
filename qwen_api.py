@@ -303,11 +303,9 @@ class QwenAPIClient:
             chat_id = result['data']['id']
             print(f"Чат '{title}' успешно создан с ID: {chat_id}")
             
-            # Возвращаем состояние сессии вместе с аккаунтом
             return {'chat_id': chat_id, 'messages': [], 'account': account}
 
         except Exception as e:
-            # Если создание чата не удалось, возвращаем аккаунт в очередь
             self.account_manager.return_account(account)
             account['session_valid'] = False
             if isinstance(e, requests.HTTPError) and e.response.status_code in [401, 403]:
@@ -422,7 +420,6 @@ class QwenAPIClient:
             print(f"Ошибка при удалении чата: {e.response.text}")
             return False
         finally:
-            # Возвращаем аккаунт в очередь в любом случае, так как сессия завершена.
             self.account_manager.return_account(account)
 
 
@@ -463,7 +460,6 @@ if __name__ == '__main__':
         print(f"\n\nПроизошла непредвиденная ошибка: {e}")
     finally:
         if chat_session:
-            # Передаем весь объект сессии для корректного удаления и возврата аккаунта
             api_client.delete_chat(chat_session)
         if os.path.exists("test_file.txt"):
             os.remove("test_file.txt")

@@ -8,7 +8,7 @@ const EditTTNModal = ({ document, onClose, onUpdate }) => {
 
     useEffect(() => {
         if (document && document.recognized_data) {
-            setEditableData(JSON.parse(JSON.stringify(document.recognized_data))); // Deep copy
+            setEditableData(JSON.parse(JSON.stringify(document.recognized_data)));
         }
     }, [document]);
 
@@ -40,7 +40,7 @@ const EditTTNModal = ({ document, onClose, onUpdate }) => {
     };
 
     if (!editableData) {
-        return null; // Or a loading spinner
+        return null;
     }
 
     return (

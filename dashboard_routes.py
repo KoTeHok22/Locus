@@ -42,13 +42,7 @@ def get_dashboard_summary():
         
         open_issues_total = base_report_query.count()
         
-        # base_lab_query = LabSampleRequest.query
-        # if user_role in ['foreman', 'inspector']:
-        #     base_lab_query = base_lab_query.filter_by(initiator_id=user_id)
         
-        # open_violations = base_lab_query.filter(
-        #     LabSampleRequest.status.in_(['requested', 'sampled', 'testing'])
-        # ).count()
         open_violations = 0
         
         return jsonify({
@@ -88,15 +82,8 @@ def get_project_summary(project_id):
         daily_reports = base_report_query.all()
         open_issues_count = len(daily_reports)
         
-        # base_lab_query = LabSampleRequest.query.filter_by(project_id=project_id)
-        # if user_role in ['foreman', 'inspector']:
-        #     base_lab_query = base_lab_query.filter_by(initiator_id=user_id)
         
-        # lab_requests = base_lab_query.all()
         
-        # total_requests = len(lab_requests)
-        # completed_requests = len([req for req in lab_requests if req.status in ['passed', 'failed']])
-        # progress_percentage = int((completed_requests / total_requests * 100)) if total_requests > 0 else 0
         total_requests = 0
         completed_requests = 0
         progress_percentage = 0
@@ -105,10 +92,6 @@ def get_project_summary(project_id):
         
         days_left = 30
         
-        # materials_pending_lab_test = len([
-        #     req for req in lab_requests 
-        #     if req.status in ['requested', 'sampled', 'testing']
-        # ])
         materials_pending_lab_test = 0
         
         return jsonify({
@@ -133,18 +116,15 @@ def get_performance_rating():
     ratings = []
 
     for foreman in foremen:
-        # 1. % задач, сданных в срок
         completed_tasks = Task.query.filter_by(completed_by=foreman.id).all()
         total_completed = len(completed_tasks)
         on_time_tasks = [t for t in completed_tasks if t.completed_at and t.completed_at.date() <= t.end_date]
         on_time_percentage = (len(on_time_tasks) / total_completed * 100) if total_completed > 0 else 100
 
-        # 2. Среднее время устранения нарушения
         resolved_issues = Issue.query.filter_by(resolved_by_id=foreman.id).all()
         total_resolution_time = sum([(i.resolved_at - i.created_at).total_seconds() for i in resolved_issues if i.resolved_at])
         avg_resolution_days = (total_resolution_time / len(resolved_issues) / 86400) if resolved_issues else 0
 
-        # 3. Количество нарушений на 10 выполненных задач
         if total_completed > 0:
             task_ids = [t.id for t in completed_tasks]
             issues_on_tasks = Issue.query.filter(Issue.task_id.in_(task_ids)).count()
@@ -152,7 +132,6 @@ def get_performance_rating():
         else:
             issues_per_10_tasks = 0
 
-        # Расчет общего рейтинга (простая формула для примера)
         score = (on_time_percentage * 0.5) + ((1 / (1 + avg_resolution_days)) * 30) + ((1 / (1 + issues_per_10_tasks)) * 20)
 
         ratings.append({
@@ -166,7 +145,6 @@ def get_performance_rating():
             }
         })
 
-    # Сортировка по убыванию рейтинга
     sorted_ratings = sorted(ratings, key=lambda x: x['score'], reverse=True)
     
     return jsonify(sorted_ratings), 200

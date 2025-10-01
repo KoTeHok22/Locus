@@ -187,7 +187,6 @@ class ApiService {
             const fileUrl = window.URL.createObjectURL(blob);
             window.open(fileUrl, '_blank');
             
-            // Освобождаем память после небольшой задержки
             setTimeout(() => window.URL.revokeObjectURL(fileUrl), 100);
         } catch (error) {
             throw error;

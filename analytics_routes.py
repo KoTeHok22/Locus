@@ -11,7 +11,6 @@ def calculate_project_risk(project_id):
     factors = []
     recommendations = []
 
-    # 1. Фактор: Срыв сроков (schedule_delay)
     today = date.today()
     overdue_tasks = Task.query.filter(
         Task.project_id == project_id,
@@ -29,7 +28,6 @@ def calculate_project_risk(project_id):
         })
         recommendations.append(f"Срочно проверить задачи {task_ids}.")
 
-    # 2. Фактор: Критические нарушения (critical_issues)
     critical_issues = Issue.query.filter(
         Issue.project_id == project_id,
         Issue.type == 'violation',
@@ -46,7 +44,6 @@ def calculate_project_risk(project_id):
         })
         recommendations.append(f"Связаться с инспектором по нарушениям {issue_ids}.")
 
-    # 3. Фактор: Несоответствие поставок (supply_mismatch)
     supply_mismatches = Document.query.filter(
         Document.project_id == project_id,
         Document.file_type == 'ttn',
@@ -63,7 +60,6 @@ def calculate_project_risk(project_id):
         })
         recommendations.append(f"Проверить некорректные ТТН {doc_ids}.")
 
-    # Определение уровня риска
     if score > 60:
         risk_level = "high"
     elif score > 30:

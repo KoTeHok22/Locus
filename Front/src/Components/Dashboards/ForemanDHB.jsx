@@ -59,7 +59,6 @@ const MaterialDeliveryFlow = ({ projects, onUpdate }) => {
     const [documentId, setDocumentId] = useState(null);
 
     useEffect(() => {
-        // When recognized data is received, populate the editable form state
         if (recognizedData && recognizedData[0]?.items) {
             setEditableItems(recognizedData[0].items);
         } else {

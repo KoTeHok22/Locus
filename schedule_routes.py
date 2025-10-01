@@ -6,7 +6,6 @@ from datetime import datetime
 
 schedule_bp = Blueprint('schedule_bp_v2', __name__)
 
-# --- Управление задачами (Tasks) ---
 
 @schedule_bp.route('/api/projects/<int:project_id>/tasks', methods=['POST'])
 @token_required
@@ -28,7 +27,6 @@ def add_task_to_project(project_id):
         )
         db.session.add(new_task)
         db.session.commit()
-        # Здесь можно будет вернуть to_dict(), когда он будет исправлен
         return jsonify({'message': 'Задача успешно создана', 'task_id': new_task.id}), 201
     except (ValueError, KeyError) as e:
         return jsonify({'message': f'Ошибка в данных: {e}'}), 400
@@ -38,7 +36,6 @@ def add_task_to_project(project_id):
 def get_task(task_id):
     """Возвращает информацию о конкретной задаче."""
     task = Task.query.get_or_404(task_id)
-    # В будущем здесь будет полноценный to_dict
     task_data = {
         'id': task.id,
         'project_id': task.project_id,
@@ -76,7 +73,6 @@ def delete_task(task_id):
     db.session.commit()
     return jsonify({'message': 'Задача удалена'}), 200
 
-# --- Управление материалами для задач ---
 
 @schedule_bp.route('/api/tasks/<int:task_id>/materials', methods=['POST'])
 @token_required
@@ -90,7 +86,6 @@ def add_material_to_task(task_id):
     task = Task.query.get_or_404(task_id)
     material = Material.query.get_or_404(data['material_id'])
 
-    # Проверяем, не добавлен ли уже такой материал
     existing_link = TaskMaterial.query.filter_by(task_id=task.id, material_id=material.id).first()
     if existing_link:
         return jsonify({'message': 'Этот материал уже добавлен к задаче'}), 409
@@ -114,7 +109,6 @@ def remove_material_from_task(task_id, material_id):
     db.session.commit()
     return jsonify({'message': 'Материал удален из задачи'}), 200
 
-# --- Управление зависимостями задач ---
 
 @schedule_bp.route('/api/tasks/<int:task_id>/dependencies', methods=['POST'])
 @token_required
@@ -131,7 +125,6 @@ def add_task_dependency(task_id):
     if task.id == dependency_task.id:
         return jsonify({'message': 'Задача не может зависеть от самой себя'}), 400
     
-    # Проверка на циклическую зависимость (упрощенная)
     if dependency_task in task.dependents:
          return jsonify({'message': 'Обнаружена циклическая зависимость'}), 400
 

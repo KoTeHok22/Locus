@@ -13,7 +13,6 @@ const TaskCompletionModal = ({ task, onClose, onUpdate }) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
-        // Проверка размера и формата
         const validFiles = files.filter(file => {
             if (file.size > 10 * 1024 * 1024) {
                 toast.error(`Файл ${file.name} слишком большой (макс. 10 МБ)`);
@@ -26,10 +25,8 @@ const TaskCompletionModal = ({ task, onClose, onUpdate }) => {
             return true;
         });
 
-        // Добавляем новые фотографии к существующим
         setPhotos(prev => [...prev, ...validFiles]);
 
-        // Создаем превью
         validFiles.forEach(file => {
             const reader = new FileReader();
             reader.onloadend = () => {
@@ -45,7 +42,6 @@ const TaskCompletionModal = ({ task, onClose, onUpdate }) => {
     };
 
     const handleCapture = () => {
-        // Открываем камеру через input[type="file"]
         if (fileInputRef.current) {
             fileInputRef.current.click();
         }

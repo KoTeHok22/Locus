@@ -79,7 +79,6 @@ def validate_ttn_data(recognized_items, planned_materials):
 def process_ttn_recognition(document_id):
     document = Document.query.get(document_id)
     if not document:
-        # Handle error: document not found
         return
 
     document.recognition_status = 'processing'
@@ -98,20 +97,16 @@ def process_ttn_recognition(document_id):
 
         chat_session = api_client.create_chat(title=f"TTN Recognition - {document.id}")
         prompt = '''
-# ROLE
 You are an expert AI system specializing in the automated processing and data extraction from Russian shipping and transport documents. Your function is to meticulously analyze scanned documents and convert unstructured information into a structured JSON format with perfect accuracy.
 
-# CONTEXT
 The user will provide a file containing one or more scanned Russian transport documents (Транспортная накладная - ТН). These documents detail cargo shipments. Your task is to identify each individual document within the file, process it, and extract key information. The documents might have slight variations in layout, stamps, or handwritten notes.
 
-# TASK
 Analyze the provided file step-by-step. For EACH transport document you identify, perform the following actions:
 1.  **Isolate the Document**: Clearly define the boundaries of a single transport document before extracting its data. A document typically consists of the main "ТРАНСПОРТНАЯ НАКЛАДНАЯ" form and may have an associated "ДОКУМЕНТ О КАЧЕСТВЕ" page.
 2.  **Extract Data**: Meticulously extract the specific fields listed below for that single document.
 3.  **Format Output**: Structure the extracted information into a JSON object according to the specified schema.
 4.  **Aggregate Results**: Compile the JSON objects for all processed documents into a single JSON array.
 
-# EXTRACTION SCHEMA & INSTRUCTIONS
 For each document, create a JSON object with the following keys. If a specific piece of information cannot be found, the value for that key must be `null`.
 
 -   `"document_number"`: The number of the transport note (Транспортная накладная №).
@@ -133,7 +128,6 @@ For each document, create a JSON object with the following keys. If a specific p
     -   `"total_weight_gross_kg"`: The gross weight in kilograms (Масса брутто). Extract the numeric value only.
     -   `"volume_m3"`: The volume in cubic meters (Объем). Extract the numeric value only.
 
-# OUTPUT FORMAT
 Your final output must be a single, valid JSON array containing one object for each transport document found in the file. Do NOT include any text, explanations, or markdown formatting outside of the JSON array.
         '''
         stream = api_client.send_message(chat_session, prompt, file_paths=[document.url])
@@ -161,7 +155,6 @@ Your final output must be a single, valid JSON array containing one object for e
     except Exception as e:
         document.recognition_status = 'failed'
         db.session.commit()
-        # Log the error
     finally:
         if 'chat_session' in locals() and chat_session:
             api_client.delete_chat(chat_session)

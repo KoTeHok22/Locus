@@ -20,7 +20,7 @@ def get_projects_status_map():
         
         features.append({
             "type": "Feature",
-            "geometry": project.polygon, # Предполагается, что полигон хранится в формате GeoJSON
+            "geometry": project.polygon,
             "properties": {
                 "project_id": project.id,
                 "name": project.name,

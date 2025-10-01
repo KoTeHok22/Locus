@@ -101,7 +101,6 @@ def resolve_issue(issue_id):
     issue = db.get_or_404(Issue, issue_id)
     data = request.get_json()
     
-    # Статус 'fixing' означает, что прораб отправил решение на проверку
     issue.status = 'fixing' 
     issue.resolution_comment = data.get('comment')
     issue.resolved_by_id = request.current_user['id']

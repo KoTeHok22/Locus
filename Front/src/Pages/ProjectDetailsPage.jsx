@@ -24,7 +24,6 @@ function ProjectDetailsPage() {
     const fetchData = useCallback(async () => {
         try {
             setLoading(true);
-            // Fetch all data in parallel
             const [projectData, documentsData] = await Promise.all([
                 ApiService.getProjectDetails(projectId),
                 ApiService.getProjectDocuments(projectId)

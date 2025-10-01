@@ -23,25 +23,20 @@ def get_tasks():
     """
     query = Task.query
 
-    # Фильтр по проекту
     project_id = request.args.get('project_id')
     if project_id:
         query = query.filter(Task.project_id == project_id)
 
-    # Фильтр по статусу
     status = request.args.get('status')
     if status:
         query = query.filter(Task.status == status)
 
-    # Фильтр по исполнителю (прорабу)
-    # NOTE: В будущем можно добавить логику, чтобы прораб мог запрашивать только свои задачи без указания id
     assignee_id = request.args.get('assignee_id')
     if assignee_id:
         query = query.filter(Task.completed_by_id == assignee_id)
 
     tasks = query.order_by(Task.end_date).all()
 
-    # NOTE: Здесь также нужно обогащать данные (имя проекта и т.д.), но пока оставим так для скорости
     tasks_list = [{
         'id': task.id,
         'project_id': task.project_id,
@@ -52,7 +47,6 @@ def get_tasks():
         'completed_at': task.completed_at.isoformat() if task.completed_at else None,
         'completion_comment': task.completion_comment,
         'completion_photos': task.completion_photos or [],
-        # 'project_name': task.project.name, // Пример обогащения
     } for task in tasks]
 
     return jsonify(tasks_list), 200
@@ -67,26 +61,21 @@ def update_task_status(project_id, task_id):
     """
     task = Task.query.filter_by(id=task_id, project_id=project_id).first_or_404()
     
-    # Проверяем, что это multipart/form-data запрос
     if 'status' not in request.form:
         return jsonify({'message': 'Статус не указан'}), 400
 
     new_status = request.form.get('status')
     
     if new_status == 'completed':
-        # Проверяем наличие фотографий
         photos = request.files.getlist('photos')
         if not photos or len(photos) == 0:
             return jsonify({'message': 'Необходимо прикрепить минимум одно фото'}), 400
         
-        # Создаем директорию для загрузок, если её нет
         os.makedirs(UPLOAD_FOLDER, exist_ok=True)
         
-        # Сохраняем фотографии
         photo_urls = []
         for photo in photos:
             if photo and allowed_file(photo.filename):
-                # Генерируем уникальное имя файла
                 ext = photo.filename.rsplit('.', 1)[1].lower()
                 filename = f"{uuid.uuid4()}.{ext}"
                 filepath = os.path.join(UPLOAD_FOLDER, filename)
@@ -96,7 +85,6 @@ def update_task_status(project_id, task_id):
         if not photo_urls:
             return jsonify({'message': 'Не удалось загрузить фотографии. Проверьте формат файлов.'}), 400
         
-        # Обновляем задачу
         task.status = 'completed'
         task.completed_by_id = request.current_user['id']
         task.completed_at = datetime.utcnow()

@@ -7,30 +7,25 @@ from flask_jwt_extended import JWTManager
 from dotenv import load_dotenv
 from sqlalchemy.exc import OperationalError
 
-# Загрузка переменных окружения
 load_dotenv()
 
-# Инициализация моделей и расширений
 from models import db
 from tasks import make_celery
 
-# Импорт блюпринтов (старые и новые)
 from auth_routes import auth_bp
 from classifier_routes import classifier_bp
 from project_routes import project_bp_v2
 from daily_report_routes import daily_report_bp_v2
 from task_routes import task_bp
 from issue_routes import issue_bp
-# from lab_sample_routes import lab_sample_bp
 from dashboard_routes import dashboard_bp
 from document_routes import document_bp
 from workflow_routes import workflow_bp
 from analytics_routes import analytics_bp
 from map_routes import map_bp
 
-# --- Новые, переписанные блюпринты ---
 from schedule_routes import schedule_bp
-from ttn_routes import recognition_bp # Старый ttn_routes, переименованный для ясности
+from ttn_routes import recognition_bp
 from delivery_routes import delivery_bp
 
 
@@ -39,7 +34,6 @@ def create_app(test_config=None):
     app = Flask(__name__)
     CORS(app, origins="*", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"], allow_headers=["Authorization", "Content-Type", "X-User-Geolocation"])
 
-    # --- Конфигурация --- 
     if test_config is None:
         app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///app.db')
         app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -52,12 +46,10 @@ def create_app(test_config=None):
     app.config.setdefault('JWT_HEADER_NAME', 'Authorization')
     app.config.setdefault('JWT_HEADER_TYPE', 'Bearer')
 
-    # --- Инициализация расширений ---
     db.init_app(app)
     jwt = JWTManager(app)
     celery = make_celery(app)
 
-    # --- Создание таблиц БД с ретраями ---
     def create_tables_with_retry(max_retries=5, delay=2):
         for attempt in range(max_retries):
             try:
@@ -76,18 +68,14 @@ def create_app(test_config=None):
     if test_config is None:
         create_tables_with_retry()
 
-    # --- Регистрация блюпринтов ---
-    # Обновленные и новые блюпринты
     app.register_blueprint(project_bp_v2)
     app.register_blueprint(daily_report_bp_v2)
     app.register_blueprint(task_bp)
     app.register_blueprint(issue_bp)
     app.register_blueprint(schedule_bp)
 
-    # Старые и нетронутые блюпринты
     app.register_blueprint(auth_bp)
     app.register_blueprint(classifier_bp)
-    # app.register_blueprint(lab_sample_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(document_bp)
     app.register_blueprint(workflow_bp)

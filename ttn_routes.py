@@ -34,17 +34,14 @@ def run_recognition_in_background(document_id, app):
             prompt = '''# ROLE
 You are an expert AI system specializing in the automated processing and data extraction from Russian shipping and transport documents. Your function is to meticulously analyze scanned documents and convert unstructured information into a structured JSON format with perfect accuracy.
 
-# CONTEXT
 The user will provide a file containing one or more scanned Russian transport documents (Транспортная накладная - ТН). These documents detail cargo shipments. Your task is to identify each individual document within the file, process it, and extract key information. The documents might have slight variations in layout, stamps, or handwritten notes.
 
-# TASK
 Analyze the provided file step-by-step. For EACH transport document you identify, perform the following actions:
 1.  **Isolate the Document**: Clearly define the boundaries of a single transport document before extracting its data. A document typically consists of the main "ТРАНСПОРТНАЯ НАКЛАДНАЯ" form and may have an associated "ДОКУМЕНТ О КАЧЕСТВЕ" page.
 2.  **Extract Data**: Meticulously extract the specific fields listed below for that single document.
 3.  **Format Output**: Structure the extracted information into a JSON object according to the specified schema and example.
 4.  **Aggregate Results**: Compile the JSON objects for all processed documents into a single JSON array.
 
-# EXTRACTION SCHEMA & INSTRUCTIONS
 For each document, create a JSON object with the following keys. If a specific piece of information cannot be found, the value for that key must be `null`.
 
 -   `"document_number"`: The number of the transport note (Транспортная накладная №).
@@ -66,7 +63,6 @@ For each document, create a JSON object with the following keys. If a specific p
     -   `"total_weight_gross_kg"`: The gross weight in kilograms (Масса брутто). Extract the numeric value only.
     -   `"volume_m3"`: The volume in cubic meters (Объем). Extract the numeric value only.
 
-# EXAMPLE JSON OUTPUT TEMPLATE
 Use the following structure as a strict template for each JSON object you generate. The final output must be an array of objects structured exactly like this example.
 
 ```json
@@ -99,7 +95,6 @@ Use the following structure as a strict template for each JSON object you genera
 ]
 ```
 
-# FINAL OUTPUT INSTRUCTIONS
 
 Your final output must be a single, valid JSON array containing one object for each transport document found in the file, matching the example template perfectly. Do NOT include any text, explanations, or markdown formatting outside of the JSON array.
 '''

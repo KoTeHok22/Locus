@@ -19,13 +19,11 @@ def create_material_delivery(project_id):
     if not data or not data.get('document_id') or not isinstance(data.get('items'), list):
         return jsonify({'message': 'Необходимы поля: document_id и массив items'}), 400
 
-    # Проверяем, что проект и документ существуют
     project = Project.query.get_or_404(project_id)
     document = Document.query.get_or_404(data['document_id'])
     if document.project_id != project.id:
         return jsonify({'message': 'Документ не принадлежит данному проекту'}), 403
 
-    # Проверяем, не была ли эта ТТН уже оприходована
     existing_delivery = MaterialDelivery.query.filter_by(document_id=document.id).first()
     if existing_delivery:
         return jsonify({'message': f'Эта ТТН уже была оприходована в поставке #{existing_delivery.id}'}), 409
@@ -42,7 +40,6 @@ def create_material_delivery(project_id):
     )
 
     try:
-        # Добавляем позиции в поставку
         if not data['items']:
              return jsonify({'message': 'Список материалов (items) не может быть пустым'}), 400
 
@@ -54,12 +51,10 @@ def create_material_delivery(project_id):
             if not material_name or not quantity:
                 raise ValueError('Каждый материал должен содержать name и quantity')
 
-            # Ищем материал в справочнике или создаем новый
             material = Material.query.filter_by(name=material_name).first()
             if not material:
                 material = Material(name=material_name, unit=material_unit or 'шт')
                 db.session.add(material)
-                # Фиксируем, чтобы получить ID для следующего шага
                 db.session.flush()
             
             delivery_item = MaterialDeliveryItem(

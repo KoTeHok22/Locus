@@ -9,12 +9,10 @@ document_bp = Blueprint('document', __name__)
 @token_required
 def get_project_documents(project_id):
     """Возвращает все документы, связанные с проектом."""
-    # Убедимся, что проект существует, чтобы не запрашивать документы для несуществующего проекта
     db.get_or_404(Project, project_id)
 
     documents = Document.query.filter_by(project_id=project_id).order_by(Document.created_at.desc()).all()
     
-    # У модели Document должен быть метод to_dict()
     docs_list = [doc.to_dict() for doc in documents]
     
     return jsonify(docs_list)
@@ -31,8 +29,6 @@ def update_document(document_id):
         return jsonify({'message': 'Отсутствует поле recognized_data'}), 400
 
     doc.recognized_data = data['recognized_data']
-    # Можно добавить флаг, что данные были отредактированы вручную
-    # doc.is_manually_edited = True 
     db.session.commit()
 
     return jsonify(doc.to_dict())
@@ -70,17 +66,14 @@ def upload_document():
     file_id = str(uuid.uuid4())
     filename = f"{file_id}.{file_extension}"
     
-    # Путь для сохранения файла
     upload_folder = os.path.join(current_app.root_path, 'uploads')
     if not os.path.exists(upload_folder):
         os.makedirs(upload_folder)
     file_path = os.path.join(upload_folder, filename)
     
     try:
-        # Сохраняем файл
         file.save(file_path)
 
-        # URL для доступа через API
         file_url = f"/uploads/{filename}"
 
         new_doc = Document(
@@ -88,7 +81,7 @@ def upload_document():
             project_id=project_id,
             uploader_id=request.current_user['id'],
             file_type=file_type,
-            url=file_url, # Сохраняем локальный URL
+            url=file_url,
             linked_entity_id=linked_entity_id
         )
         db.session.add(new_doc)
@@ -98,7 +91,6 @@ def upload_document():
 
     except Exception as e:
         db.session.rollback()
-        # Если файл был создан, но произошла ошибка БД, его можно удалить
         if os.path.exists(file_path):
             os.remove(file_path)
         return jsonify({'message': 'Ошибка сохранения документа', 'error': str(e)}), 500
@@ -129,11 +121,9 @@ def get_document_file(document_id):
     """Отдает файл документа по его ID."""
     doc = db.get_or_404(Document, document_id)
 
-    # Извлекаем имя файла из URL
     filename = os.path.basename(doc.url)
     upload_folder = os.path.join(current_app.root_path, 'uploads')
 
-    # Проверяем, существует ли файл
     if not os.path.exists(os.path.join(upload_folder, filename)):
         return jsonify({'message': 'Файл не найден на сервере'}), 404
 

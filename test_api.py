@@ -6,24 +6,15 @@ import time
 import random
 from pathlib import Path
 
-# --- КОНФИГУРАЦИЯ ---
-# Замените на URL вашего запущенного API
 BASE_URL = "http://127.0.0.1:5000/api"
-# Папка для сохранения результатов
 OUTPUT_DIR = Path("api_responses")
 
-# --- Глобальная сессия и хранилище данных ---
 session = requests.Session()
 
-# Отключаем использование системных прокси, которые могут мешать
-# подключению к локальному серверу и вызывать ошибку "502 Bad Gateway".
 session.trust_env = False
 
-# Словарь для хранения данных, полученных в ходе выполнения скрипта
-# (токены, ID проектов, задач и т.д.)
 test_data_storage = {}
 
-# --- Вспомогательные функции ---
 
 def generate_unique_email(role: str) -> str:
     """Генерирует уникальный email, чтобы избежать конфликтов при повторных запусках."""
@@ -41,7 +32,6 @@ def save_response(response: requests.Response, step_name: str, description: str)
     step_path = OUTPUT_DIR / step_name
     step_path.mkdir(parents=True, exist_ok=True)
     
-    # Сохраняем метаданные
     with open(step_path / "metadata.txt", "w", encoding="utf-8") as f:
         f.write(f"URL: {response.request.url}\n")
         f.write(f"Method: {response.request.method}\n")
@@ -50,7 +40,6 @@ def save_response(response: requests.Response, step_name: str, description: str)
         for key, value in response.headers.items():
             f.write(f"  {key}: {value}\n")
 
-    # Сохраняем тело ответа
     try:
         response_json = response.json()
         with open(step_path / "response.json", "w", encoding="utf-8") as f:
@@ -61,7 +50,6 @@ def save_response(response: requests.Response, step_name: str, description: str)
             f.write(response.text)
         print(f"  [ OK ] Ответ (не JSON) сохранен в {step_path}/response.txt")
         
-    # Создаем README
     with open(step_path / "README.md", "w", encoding="utf-8") as f:
         f.write(f"# Шаг: {step_name}\n\n")
         f.write(f"{description}\n")
@@ -85,7 +73,7 @@ def run_test_step(step_number: int, name: str, description: str, method: str, en
     
     try:
         response = session.request(method, url, **kwargs, timeout=10)
-        response.raise_for_status()  # Вызовет исключение для кодов 4xx/5xx
+        response.raise_for_status()
         
         save_response(response, step_name, description)
         return response.json()
@@ -106,7 +94,6 @@ def set_auth_token(token: str):
             del session.headers["Authorization"]
         print("  [INFO] Токен авторизации удален.")
 
-# --- Основной сценарий ---
 
 def main():
     """Главная функция, запускающая тестовый сценарий."""
@@ -116,7 +103,6 @@ def main():
         shutil.rmtree(OUTPUT_DIR)
     OUTPUT_DIR.mkdir()
 
-    # 1. Регистрация пользователей
     client_data = {"email": generate_unique_email("client"), "password": "Password123", "role": "client"}
     foreman_data = {"email": generate_unique_email("foreman"), "password": "Password123", "role": "foreman"}
     inspector_data = {"email": generate_unique_email("inspector"), "password": "Password123", "role": "inspector"}
@@ -130,7 +116,6 @@ def main():
     inspector_resp = run_test_step(3, "register_inspector", "Регистрация инспектора (inspector)", "post", "/register", json=inspector_data)
     if inspector_resp: test_data_storage['inspector'] = inspector_resp['user']
 
-    # 2. Вход и создание проекта
     login_resp = run_test_step(4, "login_client", "Вход от имени заказчика", "post", "/login", json={"email": client_data['email'], "password": client_data['password']})
     if not login_resp: return
     
@@ -146,29 +131,24 @@ def main():
     test_data_storage['project_id'] = project_resp['id']
     project_id = test_data_storage['project_id']
 
-    # 3. Добавление участников в проект
     run_test_step(6, "add_foreman_to_project", "Добавление прораба в проект", "post", f"/projects/{project_id}/members", json={"email": foreman_data['email'], "role": "foreman"})
     run_test_step(7, "add_inspector_to_project", "Добавление инспектора в проект", "post", f"/projects/{project_id}/members", json={"email": inspector_data['email'], "role": "inspector"})
 
-    # 4. Создание графика работ
     schedule_payload = [{
         "name": "Устройство фундамента", "start_date": "2025-10-01", "end_date": "2025-10-15",
         "materials": [{"name": "Бетон М300", "quantity": 50, "unit": "м³"}]
     }]
     run_test_step(8, "create_schedule", "Создание графика работ", "post", f"/projects/{project_id}/schedule", json=schedule_payload)
 
-    # Получаем ID созданной задачи
     schedule_list_resp = run_test_step(9, "get_schedule", "Получение списка задач", "get", f"/projects/{project_id}/schedule")
     if not schedule_list_resp or not schedule_list_resp: return
     test_data_storage['task_id'] = schedule_list_resp[0]['id']
     task_id = test_data_storage['task_id']
 
-    # 5. Распознавание ТТН (от имени прораба)
     login_resp_foreman = run_test_step(10, "login_foreman", "Вход от имени прораба", "post", "/login", json={"email": foreman_data['email'], "password": foreman_data['password']})
     if not login_resp_foreman: return
     set_auth_token(login_resp_foreman.get("token"))
 
-    # --- Выбор файла ТТН ---
     ttn_dir = Path("ТТН")
     ttn_files = [f for f in ttn_dir.iterdir() if f.is_file()]
     if not ttn_files:
@@ -192,56 +172,19 @@ def main():
 
     print(f"  [INFO] Выбран файл ТТН: {selected_ttn_path.name}")
     
-    # Открываем файл и передаем его
     with open(selected_ttn_path, 'rb') as f:
         files = {'file': (selected_ttn_path.name, f.read(), 'application/pdf')}
         form_data = {'project_id': str(project_id), 'task_id': str(task_id)}
         
         run_test_step(11, "recognize_ttn", "Распознавание ТТН", "post", "/ttn/recognize", data=form_data, files=files)
 
-    # # 6. Создание нарушения (от имени инспектора)
-    # login_resp_inspector = run_test_step(12, "login_inspector", "Вход от имени инспектора", "post", "/login", json={"email": inspector_data['email'], "password": inspector_data['password']})
-    # if not login_resp_inspector: return
-    # set_auth_token(login_resp_inspector.get("token"))
 
-    # issue_payload = {"type": "violation", "description": "Отсутствуют защитные каски у рабочих", "task_id": task_id}
-    # issue_headers = {"X-User-Geolocation": "55.75,37.61"}
     
-    # issue_resp = run_test_step(13, "create_issue", "Создание нарушения инспектором", "post", f"/projects/{project_id}/issues", json=issue_payload, headers=issue_headers)
-    # if not issue_resp: return
-    # test_data_storage['issue_id'] = issue_resp['id']
-    # issue_id = test_data_storage['issue_id']
 
-    # # 7. Попытка закрыть задачу с открытым нарушением (от прораба) -> Ожидаем ошибку
-    # set_auth_token(login_resp_foreman.get("token"))
-    # print("\n--- Шаг 14: Попытка закрыть задачу с нарушением (ожидается ошибка) ---")
-    # try:
-    #     url = f"{BASE_URL}/projects/{project_id}/tasks/{task_id}"
-    #     response = session.patch(url, json={"status": "completed"}, timeout=10)
-    #     # Мы НЕ вызываем raise_for_status, так как ожидаем код 4xx
-    #     save_response(response, "14_fail_close_task", "Попытка закрыть задачу с активным нарушением")
-    #     if response.status_code == 400:
-    #         print("  [ OK ] Сервер вернул ошибку 400, как и ожидалось.")
-    #     else:
-    #         print(f"  [FAIL] Сервер вернул код {response.status_code}, хотя ожидался 400.")
-    # except requests.exceptions.RequestException as e:
-    #     print(f"  [FAIL] Ошибка на шаге 14: {e}")
 
-    # # 8. Устранение и проверка нарушения
-    # run_test_step(15, "resolve_issue", "Прораб устраняет нарушение", "post", f"/issues/{issue_id}/resolve", json={"comment": "Каски выданы"})
     
-    # set_auth_token(login_resp_inspector.get("token")) # Снова инспектор
-    # run_test_step(16, "review_issue", "Инспектор проверяет устранение", "post", f"/issues/{issue_id}/review", json={"status": "approved"}, headers=issue_headers)
 
-    # # 9. Успешное закрытие задачи (от прораба)
-    # set_auth_token(login_resp_foreman.get("token")) # Снова прораб
-    # run_test_step(17, "close_task_success", "Успешное закрытие задачи", "patch", f"/projects/{project_id}/tasks/{task_id}", json={"status": "completed"})
 
-    # # 10. Получение аналитики (от заказчика)
-    # set_auth_token(login_resp.get("token")) # Снова заказчик
-    # run_test_step(18, "get_project_summary", "Получение сводки по проекту", "get", f"/projects/{project_id}/summary")
-    # run_test_step(19, "get_risk_assessment", "Получение оценки рисков проекта", "get", f"/projects/{project_id}/risk_assessment")
-    # run_test_step(20, "get_dashboard_summary", "Получение сводки для дашборда", "get", "/dashboard/summary")
     
     print("\n--- Тестовый прогон завершен! ---")
     print(f"Все ответы сохранены в папку: {OUTPUT_DIR.absolute()}")

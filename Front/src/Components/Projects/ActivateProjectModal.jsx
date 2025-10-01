@@ -16,20 +16,18 @@ const ActivateProjectModal = ({ project, onClose, onSuccess }) => {
         const toastId = toast.loading('Активация проекта...');
 
         try {
-            // Step 1: Add foreman to the project
             await ApiService.addProjectMember(project.id, foremanEmail, 'foreman');
             toast.success('Прораб успешно назначен.', { id: toastId });
 
-            // Step 2: Activate the project
             await ApiService.activateProject(project.id);
             toast.success('Проект активирован и ожидает согласования инспектора.', { id: toastId });
 
-            onSuccess(); // Refresh the projects list
+            onSuccess();
         } catch (err) {
             toast.error(`Ошибка: ${err.message}`, { id: toastId });
         } finally {
             setLoading(false);
-            onClose(); // Close the modal
+            onClose();
         }
     };
 

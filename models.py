@@ -3,20 +3,19 @@ from datetime import datetime, timezone
 
 db = SQLAlchemy()
 
-# --- Таблицы-справочники ---
 
 class Material(db.Model):
     """Справочник строительных материалов."""
     __tablename__ = 'materials'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False, unique=True)
-    unit = db.Column(db.String(50), nullable=False) # e.g., "м³", "шт", "т"
+    unit = db.Column(db.String(50), nullable=False)
 
 class Classifier(db.Model):
     """Модель классификатора для замечаний и нарушений."""
     __tablename__ = 'classifiers'
     id = db.Column(db.Integer, primary_key=True)
-    type = db.Column(db.String(20), nullable=False) # 'violation' or 'remark'
+    type = db.Column(db.String(20), nullable=False)
     code = db.Column(db.String(50), nullable=False, unique=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=True)
@@ -36,7 +35,7 @@ class Checklist(db.Model):
     """Модель чек-листа для задач или инспекций."""
     __tablename__ = 'checklists'
     id = db.Column(db.Integer, primary_key=True)
-    type = db.Column(db.String(50), nullable=False) # e.g., 'safety', 'quality'
+    type = db.Column(db.String(50), nullable=False)
     name = db.Column(db.String(200), nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
@@ -73,7 +72,6 @@ class ChecklistItem(db.Model):
             'order': self.order
         }
 
-# --- Основные сущности ---
 
 class User(db.Model):
     """Модель пользователя системы."""
@@ -142,7 +140,6 @@ class Task(db.Model):
     completed_by = db.relationship('User', foreign_keys=[completed_by_id])
     verified_by = db.relationship('User', foreign_keys=[verified_by_id])
     
-    # Зависимости (многие-ко-многим, сама на себя)
     dependencies = db.relationship('Task',
                                secondary='task_dependencies',
                                primaryjoin='Task.id==task_dependencies.c.task_id',
@@ -155,12 +152,11 @@ class Document(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=False)
     uploader_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    file_type = db.Column(db.String(50), nullable=False) # 'ttn', 'photo', 'act'
+    file_type = db.Column(db.String(50), nullable=False)
     url = db.Column(db.String(500), nullable=False)
     
-    # Для распознанных документов, например ТТН
     recognized_data = db.Column(db.JSON, nullable=True)
-    recognition_status = db.Column(db.String(50), nullable=False, default='pending') # pending, processing, completed, failed
+    recognition_status = db.Column(db.String(50), nullable=False, default='pending')
     
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
@@ -186,9 +182,9 @@ class Issue(db.Model):
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=False)
     task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=True)
     classifier_id = db.Column(db.Integer, db.ForeignKey('classifiers.id'), nullable=True)
-    type = db.Column(db.String(50), nullable=False) # 'remark' or 'violation'
+    type = db.Column(db.String(50), nullable=False)
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    status = db.Column(db.String(50), default='open') # open, resolved, verified
+    status = db.Column(db.String(50), default='open')
     description = db.Column(db.Text, nullable=False)
     due_date = db.Column(db.Date, nullable=True)
     
@@ -204,7 +200,6 @@ class Issue(db.Model):
     resolved_by = db.relationship('User', foreign_keys=[resolved_by_id])
     classifier = db.relationship('Classifier')
     
-    # Связь с документами (многие-ко-многим)
     documents = db.relationship('Document', secondary='issue_documents', backref='issues')
 
     def to_dict(self):
@@ -232,7 +227,7 @@ class DailyReport(db.Model):
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     report_date = db.Column(db.Date, nullable=False)
     workers_count = db.Column(db.Integer, nullable=True)
-    equipment = db.Column(db.Text, nullable=True) # Простое текстовое поле вместо JSON
+    equipment = db.Column(db.Text, nullable=True)
     weather_conditions = db.Column(db.Text, nullable=True)
     notes = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
@@ -245,7 +240,7 @@ class MaterialDelivery(db.Model):
     __tablename__ = 'material_deliveries'
     id = db.Column(db.Integer, primary_key=True)
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=False)
-    document_id = db.Column(db.Integer, db.ForeignKey('documents.id'), nullable=True) # Ссылка на скан ТТН
+    document_id = db.Column(db.Integer, db.ForeignKey('documents.id'), nullable=True)
     foreman_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     delivery_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     
@@ -265,7 +260,6 @@ class MaterialDeliveryItem(db.Model):
     delivery = db.relationship('MaterialDelivery', back_populates='items')
     material = db.relationship('Material')
 
-# --- Таблицы связей (многие-ко-многим) ---
 
 class ProjectUser(db.Model):
     """Связь: Пользователь <-> Проект."""
@@ -296,8 +290,3 @@ issue_documents = db.Table('issue_documents', db.metadata,
     db.Column('document_id', db.Integer, db.ForeignKey('documents.id'), primary_key=True)
 )
 
-# Модели, которые были в старой версии, но требуют переосмысления
-# ChangeRequest - логику можно реализовать через статусы и версионирование Task
-# Checklist, ChecklistItem - можно реализовать как JSON-поле в сущности, если структура простая, или как отдельные таблицы, если сложная
-# LabSampleRequest - хорошая модель, оставим на потом
-# TTN - удалена, ее роль выполняют MaterialDelivery и Document

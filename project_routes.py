@@ -11,10 +11,8 @@ from auth import token_required, role_required
 
 project_bp_v2 = Blueprint('project_bp_v2', __name__)
 
-# Загружаем переменные окружения и инициализируем геокодер
 load_dotenv()
 api_key = os.getenv('YANDEX_GEOCODER_API_KEY') or os.getenv('VITE_YANDEX_MAPS_API_KEY')
-# Проверяем, есть ли ключ, чтобы не создавать геокодер без него
 geolocator = Yandex(api_key=api_key) if api_key else None
 
 @project_bp_v2.route('/api/projects', methods=['GET'])
@@ -27,14 +25,12 @@ def get_projects():
     """
     current_user = request.current_user
     
-    # Алиасы для подсчетов
     tasks_count_query = db.session.query(Task.project_id, func.count(Task.id).label('tasks_count')) \
         .group_by(Task.project_id).subquery()
     
     issues_count_query = db.session.query(Issue.project_id, func.count(Issue.id).label('issues_count')) \
         .filter(Issue.status == 'open').group_by(Issue.project_id).subquery()
 
-    # Основной запрос
     query = db.session.query(
         Project,
         func.coalesce(tasks_count_query.c.tasks_count, 0).label('tasks_count'),
@@ -42,7 +38,6 @@ def get_projects():
     ).outerjoin(tasks_count_query, Project.id == tasks_count_query.c.project_id) \
      .outerjoin(issues_count_query, Project.id == issues_count_query.c.project_id)
 
-    # Фильтрация по роли пользователя
     if current_user['role'] != 'inspector':
         query = query.join(ProjectUser, Project.id == ProjectUser.project_id) \
                      .filter(ProjectUser.user_id == current_user['id'])
@@ -71,7 +66,6 @@ def get_projects():
 @token_required
 def create_project():
     """Создает новый проект с геокодированием адреса."""
-    # Проверка прав доступа
     if request.current_user.get('role') in ['inspector', 'foreman']:
         return jsonify({'message': 'У вас недостаточно прав для выполнения этого действия.'}), 403
 
@@ -79,7 +73,6 @@ def create_project():
     if not data or not data.get('name') or not data.get('address'):
         return jsonify({'message': 'Требуются название и адрес проекта'}), 400
 
-    # Проверка на уникальность названия и адреса
     existing_name = Project.query.filter(func.lower(Project.name) == func.lower(data['name'])).first()
     if existing_name:
         return jsonify({'message': f"Проект с названием '{data['name']}' уже существует."}), 409
@@ -106,7 +99,6 @@ def create_project():
         except (GeocoderTimedOut, GeocoderUnavailable) as e:
             return jsonify({'message': f'Сервис геокодирования временно недоступен: {e}'}), 503
         except Exception as e:
-            # Общая ошибка на случай непредвиденных проблем
             return jsonify({'message': f'Внутренняя ошибка при геокодировании: {e}'}), 500
 
     new_project = Project(
@@ -114,10 +106,9 @@ def create_project():
         address=address,
         latitude=latitude,
         longitude=longitude,
-        polygon=data.get('polygon') # Полигон пока оставляем как есть
+        polygon=data.get('polygon')
     )
     
-    # Добавляем создателя в участники проекта
     creator_id = request.current_user['id']
     project_user_link = ProjectUser(project=new_project, user_id=creator_id)
     
@@ -125,7 +116,6 @@ def create_project():
     db.session.add(project_user_link)
     db.session.commit()
     
-    # Возвращаем полный объект, как в списке проектов
     return jsonify({
         'id': new_project.id,
         'name': new_project.name,
@@ -144,7 +134,6 @@ def create_project():
 def get_project_details(project_id):
     """Возвращает детальную информацию о проекте (пока без изменений)."""
     project = db.get_or_404(Project, project_id)
-    # В будущем этот эндпоинт тоже нужно будет обогатить деталями (списком задач, участников и т.д.)
     project_dict = {
         'id': project.id,
         'name': project.name,
@@ -157,7 +146,6 @@ def get_project_details(project_id):
     }
     return jsonify(project_dict), 200
 
-# NOTE: Эндпоинт /members требует отдельного рефакторинга, пока оставляем его без изменений.
 
 @project_bp_v2.route('/api/projects/<int:project_id>/members', methods=['POST'])
 @token_required
@@ -176,12 +164,10 @@ def add_project_member(project_id):
     if not user_to_add:
         return jsonify({'message': f'Пользователь с email {email} не найден.'}), 404
 
-    # Проверка, не добавлен ли уже пользователь
     existing_link = ProjectUser.query.filter_by(project_id=project.id, user_id=user_to_add.id).first()
     if existing_link:
         return jsonify({'message': 'Пользователь уже является участником проекта'}), 409
 
-    # Добавление пользователя в проект
     new_link = ProjectUser(project_id=project.id, user_id=user_to_add.id)
     db.session.add(new_link)
     db.session.commit()

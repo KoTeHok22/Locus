@@ -11,7 +11,6 @@ def get_daily_reports():
     """Возвращает список ежедневных отчетов с обогащенными данными."""
     query = db.session.query(DailyReport, User.first_name, User.last_name, Project.name).join(User, DailyReport.author_id == User.id).join(Project, DailyReport.project_id == Project.id)
     
-    # NOTE: Здесь можно добавить фильтрацию по дате, проекту и т.д.
     
     results = query.order_by(DailyReport.report_date.desc()).all()
 
@@ -51,7 +50,6 @@ def create_daily_report():
         )
         db.session.add(new_report)
         db.session.commit()
-        # Нужна to_dict модель для DailyReport или формировать словарь вручную
         return jsonify({'message': 'Ежедневный отчет успешно создан', 'id': new_report.id}), 201
     except Exception as e:
         db.session.rollback()
@@ -75,13 +73,11 @@ def get_daily_report(report_id):
         user_role = request.current_user['role']
         user_id = request.current_user['id']
 
-        # Клиент может видеть все, прораб - только свои, инспектор - ничего
         if user_role == 'inspector':
             return jsonify({'message': 'Недостаточно прав для просмотра этого отчета'}), 403
         if user_role == 'foreman' and report.author_id != user_id:
             return jsonify({'message': 'Вы можете просматривать только свои отчеты'}), 403
         
-        # Нужно будет обновить to_dict в модели или формировать словарь здесь
         return jsonify({
             'id': report.id,
             'report_date': report.report_date.isoformat(),
@@ -118,7 +114,6 @@ def update_daily_report(report_id):
             if field in data:
                 setattr(report, field, data[field])
         
-        # report.updated_at = datetime.now(timezone.utc) # Поле updated_at нужно добавить в модель
         db.session.commit()
         
         return jsonify({'message': 'Ежедневный отчет успешно обновлен'}), 200

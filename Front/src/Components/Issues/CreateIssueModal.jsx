@@ -53,7 +53,7 @@ const CreateIssueModal = ({ projects, classifiers, onClose, onUpdate, issueType 
             if (onUpdate) onUpdate();
             onClose();
         } catch (err) {
-            if (err.code === 1) { // Geolocation permission denied
+            if (err.code === 1) {
                 toast.error('Доступ к геолокации запрещен. Пожалуйста, разрешите доступ в настройках браузера.', { id: toastId });
                 setError('Не удалось получить геолокацию. Проверьте разрешения в браузере.');
             } else {
