@@ -1,18 +1,25 @@
 import React, { useState } from 'react';
 
-function CreateProjectForm({ onSubmit, onCancel }) {
+function CreateProjectForm({ onSubmit, onCancel, apiError }) {
     const [name, setName] = useState('');
     const [address, setAddress] = useState('');
     const [polygon, setPolygon] = useState(null);
     const [geocodingError, setGeocodingError] = useState('');
+    const [isGeocoding, setIsGeocoding] = useState(false);
+    const [isGeocoded, setIsGeocoded] = useState(false);
 
     const handleAddressBlur = async () => {
         if (!address) return;
 
+        setIsGeocoding(true);
+        setIsGeocoded(false);
         setGeocodingError('');
+        setPolygon(null);
+
         const apiKey = import.meta.env.VITE_YANDEX_MAPS_API_KEY;
         if (!apiKey) {
             setGeocodingError('API ключ для Яндекс.Карт не найден.');
+            setIsGeocoding(false);
             return;
         }
         const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${apiKey}&format=json&geocode=${address}&kind=house&results=1`;
@@ -26,52 +33,41 @@ function CreateProjectForm({ onSubmit, onCancel }) {
                 return;
             }
 
+            setIsGeocoded(true);
             const geoObject = data.response.GeoObjectCollection.featureMember[0].GeoObject;
-            let polygonCoordinates;
 
             if (geoObject.Polygon && geoObject.Polygon.coordinates) {
                 console.log('Найден точный полигон в ответе геокодера.');
-                polygonCoordinates = geoObject.Polygon.coordinates;
+                setPolygon(geoObject.Polygon.coordinates);
             } else {
-                console.log('Точный полигон не найден, создается квадрат-заглушка.');
-                const point = geoObject.Point.pos.split(' ').map(Number);
-                const [lon, lat] = point;
-
-                const offset = 0.0005;
-                polygonCoordinates = [
-                    [
-                        [lon - offset, lat - offset],
-                        [lon + offset, lat - offset],
-                        [lon + offset, lat + offset],
-                        [lon - offset, lat + offset],
-                        [lon - offset, lat - offset]
-                    ]
-                ];
+                console.log('Точный полигон не найден, будет сохранена только центральная точка.');
+                setPolygon(null);
             }
-            setPolygon(polygonCoordinates);
 
         } catch (error) {
             console.error("Geocoding error:", error);
             setGeocodingError('Ошибка при геокодировании адреса.');
+        } finally {
+            setIsGeocoding(false);
         }
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (!polygon) {
-            setGeocodingError('Координаты не были определены. Проверьте адрес.');
+        if (!isGeocoded) {
+            setGeocodingError('Координаты не были определены. Проверьте адрес и повторите попытку.');
             return;
         }
         onSubmit({
             name,
             address,
-            polygon: {
+            polygon: polygon ? {
                 type: 'Feature',
                 geometry: {
                     type: 'Polygon',
                     coordinates: polygon
                 }
-            }
+            } : null
         });
     };
 
@@ -107,16 +103,26 @@ function CreateProjectForm({ onSubmit, onCancel }) {
                             required
                         />
                         {geocodingError && <p className="text-red-500 text-xs italic">{geocodingError}</p>}
-                        {polygon && !geocodingError && <p className="text-green-500 text-xs italic">Координаты успешно определены.</p>}
+                        {isGeocoded && !geocodingError && (
+                            <p className="text-green-500 text-xs italic">
+                                {polygon ? 'Полигон объекта успешно определен.' : 'Координаты объекта определены (без полигона).'}
+                            </p>
+                        )}
                     </div>
                     
+                    {apiError && (
+                        <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 text-sm rounded">
+                            {apiError}
+                        </div>
+                    )}
+
                     <div className="flex items-center justify-between mt-6">
                         <button
                             type="submit"
-                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                            disabled={!polygon}
+                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:bg-blue-300"
+                            disabled={!isGeocoded || isGeocoding}
                         >
-                            Создать
+                            {isGeocoding ? 'Определение координат...' : 'Создать'}
                         </button>
                         <button
                             type="button"

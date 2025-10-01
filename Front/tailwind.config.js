@@ -1,10 +1,9 @@
-/** @type {import('tailwindcss').Config} */  // ← Одна звездочка и большая C
 export default {
   content: [
     "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",  // ← Правильный синтаксис пути!
+    "./src/**/*.{js,ts,jsx,tsx}",
   ],
-  theme: {  // ← theme как объект!
+  theme: {
     extend: {}
   },
   plugins: [],

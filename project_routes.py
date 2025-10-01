@@ -71,9 +71,22 @@ def get_projects():
 @token_required
 def create_project():
     """Создает новый проект с геокодированием адреса."""
+    # Проверка прав доступа
+    if request.current_user.get('role') in ['inspector', 'foreman']:
+        return jsonify({'message': 'У вас недостаточно прав для выполнения этого действия.'}), 403
+
     data = request.get_json()
     if not data or not data.get('name') or not data.get('address'):
         return jsonify({'message': 'Требуются название и адрес проекта'}), 400
+
+    # Проверка на уникальность названия и адреса
+    existing_name = Project.query.filter(func.lower(Project.name) == func.lower(data['name'])).first()
+    if existing_name:
+        return jsonify({'message': f"Проект с названием '{data['name']}' уже существует."}), 409
+
+    existing_address = Project.query.filter(func.lower(Project.address) == func.lower(data['address'])).first()
+    if existing_address:
+        return jsonify({'message': f"Проект с адресом '{data['address']}' уже существует."}), 409
 
     address = data.get('address')
     latitude, longitude = None, None

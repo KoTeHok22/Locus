@@ -1,13 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ApiService from '../../apiService';
+import AuthService from '../../authService';
 import '../../index.css';
 import CreateProjectForm from './CreateProjectForm';
 
 function ObjectList({ onSwitchToPage }) {
+    const navigate = useNavigate();
+    const userRole = AuthService.getUserRole(); 
     const [projects, setProjects] = useState([]);
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showCreateForm, setShowCreateForm] = useState(false);
+    const [formError, setFormError] = useState(null);
 
     const fetchData = useCallback(async () => {
         try {
@@ -37,12 +42,22 @@ function ObjectList({ onSwitchToPage }) {
 
     const handleCreateProject = async (projectData) => {
         try {
+            setFormError(null); 
             await ApiService.createProject(projectData);
             setShowCreateForm(false);
             fetchData();
         } catch (error) {
-            setError(error.message);
+            if (error.response && error.response.data && error.response.data.message) {
+                setFormError(error.response.data.message);
+            } else {
+                setFormError('Произошла неизвестная ошибка при создании проекта.');
+            }
         }
+    };
+
+    const handleOpenCreateForm = () => {
+        setFormError(null);
+        setShowCreateForm(true);
     };
 
     const getRiskColor = (riskLevel) => {
@@ -86,10 +101,13 @@ function ObjectList({ onSwitchToPage }) {
                 <div className="border-b border-slate-200 px-4 py-3">
                     <div className="flex items-center justify-between">
                         <h3 className="font-semibold text-gray-900">Все объекты</h3>
-                        {!loading && (
-                            <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 border border-gray-200 text-gray-800">
-                                {projects.length}
-                            </div>
+                        {(userRole !== 'inspector' && userRole !== 'foreman') && (
+                            <button 
+                                onClick={handleOpenCreateForm}
+                                className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded text-sm"
+                            >
+                                Создать объект
+                            </button>
                         )}
                     </div>
                 </div>
@@ -100,13 +118,15 @@ function ObjectList({ onSwitchToPage }) {
                         </div>
                     ) : projects.length === 0 ? (
                         <div className="text-center h-full flex flex-col justify-center items-center">
-                            <p className="text-gray-500 mb-4">Объектов пока нет. Создайте новый!</p>
-                            <button 
-                                onClick={() => setShowCreateForm(true)}
-                                className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
-                            >
-                                Создать объект
-                            </button>
+                            <p className="text-gray-500 mb-4">Объектов пока нет.</p>
+                            {(userRole !== 'inspector' && userRole !== 'foreman') && (
+                                <button 
+                                    onClick={handleOpenCreateForm}
+                                    className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+                                >
+                                    Создать объект
+                                </button>
+                            )}
                         </div>
                     ) : (
                         <div className="space-y-3">
@@ -126,7 +146,9 @@ function ObjectList({ onSwitchToPage }) {
                                         </div>
                                     </div>
                                     <div className="flex justify-end">
-                                        <button className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 h-8 px-2 text-xs flex items-center">
+                                        <button 
+                                            onClick={() => navigate(`/projects/${project.id}`)}
+                                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 h-8 px-2 text-xs flex items-center">
                                             <span>Подробнее</span>
                                             <i className="fas fa-chevron-right ml-1 text-xs"></i>
                                         </button>
@@ -141,6 +163,7 @@ function ObjectList({ onSwitchToPage }) {
                 <CreateProjectForm 
                     onSubmit={handleCreateProject}
                     onCancel={() => setShowCreateForm(false)}
+                    apiError={formError}
                 />
             )}
         </>

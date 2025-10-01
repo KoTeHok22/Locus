@@ -6,6 +6,7 @@ import AuthService from './authService';
 import { ReportsPage } from './Pages/ReportsPage';
 import { ProjectsPage } from './Pages/ProjectsPage';
 import { MapPage } from './Pages/MapPage';
+import { ProjectDetailsPage } from './Pages/ProjectDetailsPage';
 import { MainLayout } from './Components/MainLayout';
 import { LoginForm } from './Components/LoginForm/LoginForm';
 import { RegistrationForm } from './Components/RegistrationForm/RegistrationForm';
@@ -46,6 +47,7 @@ function App() {
                 <Route element={<PrivateRoutes />}>
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/projects" element={<ProjectsPage />} />
+                    <Route path="/projects/:projectId" element={<ProjectDetailsPage />} />
                     <Route path="/map" element={<MapPage />} />
                     <Route path="/reports" element={<ReportsPage />} />
                 </Route>

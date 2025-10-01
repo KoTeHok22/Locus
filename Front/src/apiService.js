@@ -42,6 +42,10 @@ class ApiService {
         return request('/projects');
     }
 
+    getProjectDetails(projectId) {
+        return request(`/projects/${projectId}`);
+    }
+
     createProject(projectData) {
         return request('/projects', { 
             method: 'POST', 
@@ -80,9 +84,10 @@ class ApiService {
         });
     }
 
-    getClassifiers(filters = {}) {
+    async getClassifiers(filters = {}) {
         const query = new URLSearchParams(filters).toString();
-        return request(`/classifiers?${query}`);
+        const data = await request(`/classifiers?${query}`);
+        return data.classifiers; 
     }
 
     recognizeDocument(projectId, file) {
