@@ -1,6 +1,6 @@
 import AuthService from './authService';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8181/api';
 
 async function request(endpoint, options = {}) {
     const token = AuthService.getToken();
@@ -39,15 +39,15 @@ async function request(endpoint, options = {}) {
 class ApiService {
 
     getProjects() {
-        return request('/api/v2/projects');
+        return request('/projects');
     }
 
     getProjectDetails(projectId) {
-        return request(`/api/v2/projects/${projectId}`);
+        return request(`/projects/${projectId}`);
     }
 
     createProject(projectData) {
-        return request('/api/v2/projects', { 
+        return request('/projects', { 
             method: 'POST', 
             body: JSON.stringify(projectData) 
         });
@@ -55,11 +55,11 @@ class ApiService {
 
     getTasks(filters = {}) {
         const query = new URLSearchParams(filters).toString();
-        return request(`/api/tasks?${query}`);
+        return request(`/tasks?${query}`);
     }
 
     createTask(taskData) {
-        return request('/api/tasks', {
+        return request('/tasks', {
             method: 'POST',
             body: JSON.stringify(taskData)
         });
@@ -79,14 +79,14 @@ class ApiService {
             });
         }
         
-        return request(`/api/v2/projects/${projectId}/tasks/${taskId}`, {
+        return request(`/projects/${projectId}/tasks/${taskId}`, {
             method: 'PATCH',
             body: formData
         });
     }
 
     verifyTask(projectId, taskId, status) {
-        return request(`/api/v2/projects/${projectId}/tasks/${taskId}/verify`, {
+        return request(`/projects/${projectId}/tasks/${taskId}/verify`, {
             method: 'POST',
             body: JSON.stringify({ status })
         });
@@ -94,7 +94,7 @@ class ApiService {
 
     getIssues(filters = {}) {
         const query = new URLSearchParams(filters).toString();
-        return request(`/api/issues?${query}`);
+        return request(`/issues?${query}`);
     }
 
     createIssue(projectId, issueData, geolocation) {
@@ -108,12 +108,12 @@ class ApiService {
             options.headers['X-User-Geolocation'] = geolocation;
         }
 
-        return request(`/api/v2/projects/${projectId}/issues`, options);
+        return request(`/projects/${projectId}/issues`, options);
     }
 
     async getClassifiers(filters = {}) {
         const query = new URLSearchParams(filters).toString();
-        const data = await request(`/api/classifiers?${query}`);
+        const data = await request(`/classifiers?${query}`);
         return data.classifiers; 
     }
 
@@ -122,18 +122,18 @@ class ApiService {
         formData.append('project_id', projectId);
         formData.append('file', file);
 
-        return request('/api/recognize/document', {
+        return request('/recognize/document', {
             method: 'POST',
             body: formData,
         });
     }
 
     getRecognitionStatus(documentId) {
-        return request(`/api/recognize/status/${documentId}`);
+        return request(`/recognize/status/${documentId}`);
     }
 
     createDelivery(projectId, documentId, items) {
-        return request(`/api/v2/projects/${projectId}/deliveries`, {
+        return request(`/projects/${projectId}/deliveries`, {
             method: 'POST',
             body: JSON.stringify({ document_id: documentId, items })
         });
@@ -141,29 +141,29 @@ class ApiService {
 
     getDailyReports(filters = {}) {
         const query = new URLSearchParams(filters).toString();
-        return request(`/api/v2/daily-reports?${query}`);
+        return request(`/daily-reports?${query}`);
     }
 
     addProjectMember(projectId, email, role) {
-        return request(`/api/v2/projects/${projectId}/members`, {
+        return request(`/projects/${projectId}/members`, {
             method: 'POST',
             body: JSON.stringify({ email, role }),
         });
     }
 
     activateProject(projectId) {
-        return request(`/api/v2/projects/${projectId}/activate`, {
+        return request(`/projects/${projectId}/activate`, {
             method: 'POST',
             body: JSON.stringify({}),
         });
     }
 
     getProjectDocuments(projectId) {
-        return request(`/api/v2/projects/${projectId}/documents`);
+        return request(`/projects/${projectId}/documents`);
     }
 
     updateDocument(documentId, newData) {
-        return request(`/api/documents/${documentId}`, {
+        return request(`/documents/${documentId}`, {
             method: 'PUT',
             body: JSON.stringify({ recognized_data: newData })
         });
@@ -171,12 +171,12 @@ class ApiService {
 
     getDocumentFileUrl(documentId) {
         const token = AuthService.getToken();
-        return `${API_BASE_URL}/api/documents/${documentId}/file?token=${token}`;
+        return `${API_BASE_URL}/documents/${documentId}/file?token=${token}`;
     }
 
     async openDocumentFile(documentId) {
         const token = AuthService.getToken();
-        const url = `${API_BASE_URL}/api/documents/${documentId}/file`;
+        const url = `${API_BASE_URL}/documents/${documentId}/file`;
         
         try {
             const response = await fetch(url, {

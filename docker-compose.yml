@@ -18,7 +18,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "5000:5000"
+      - "8181:8181"
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
@@ -37,7 +37,7 @@ services:
       context: ./Front
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "8282:3000"
     environment:
       - VITE_API_URL=${VITE_API_URL}
       - VITE_YANDEX_MAPS_API_KEY=${VITE_YANDEX_MAPS_API_KEY}
