@@ -1,0 +1,62 @@
+```json
+[
+  {
+    "document_number": "31573/Б",
+    "document_date": "2024-08-05",
+    "order_request_number": "3078",
+    "sender": {
+      "name": "ООО \"Бекам\"",
+      "inn": "7743553262",
+      "kpp": "774301001"
+    },
+    "recipient": {
+      "name": "ГБУ города Москвы \"Автомобильные дороги\"",
+      "inn": "7727656790",
+      "kpp": "771401001"
+    },
+    "carrier": {
+      "name": "ООО \"Крона и К\"",
+      "inn": "5005052629",
+      "kpp": "500501001"
+    },
+    "loading": {
+      "address": "г. Москва, Походный проезд, вл.2 стр.1-1 / обл. Московская, г. Химки, д. Подолино, тер. Промышленная зона, стр. 1",
+      "actual_arrival_datetime": "2024-08-05T00:00:00",
+      "actual_departure_datetime": "2024-08-05T00:00:00",
+      "person_responsible": "Кладовщик Литнева М.Е."
+    },
+    "delivery": {
+      "address": "г. Москва, поселок Некрасовка, пр-зд Проектируемый 4296",
+      "actual_arrival_datetime": "2024-08-05T00:00:00",
+      "actual_departure_datetime": null,
+      "person_responsible": "Мастер Фозилов Ш.О."
+    },
+    "driver": {
+      "full_name": "Александров А.А.",
+      "driving_license_number": "9902 514195",
+      "driving_license_date": "2018-10-19"
+    },
+    "vehicle": {
+      "model": "VOLVO",
+      "type": "Тентованный прицеп",
+      "registration_plate": "Х824КН152"
+    },
+    "packages_count": 11,
+    "items": [
+      {
+        "name": "Бортовой камень 1000х300х150",
+        "quantity": 198,
+        "unit": "шт",
+        "total_weight_net_kg": 19463,
+        "total_weight_gross_kg": 19694,
+        "volume_m3": 8.91,
+        "quality_certificate": {
+          "batch_number": "11010624/5000",
+          "manufacturing_date": "2024-06-02",
+          "unit_weight_kg": 98.3
+        }
+      }
+    ]
+  }
+]
+```
