@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Trash2 } from 'lucide-react';
 import { translate } from '../../utils/translation';
 import AuthService from '../../authService';
 import ApiService from '../../apiService';
@@ -55,7 +54,7 @@ const RecognitionDetailsView = ({ data }) => (
     </div>
 );
 
-const TTNCard = ({ document, onEdit, onDelete }) => {
+const TTNCard = ({ document, onEdit }) => {
     const [showDetails, setShowDetails] = useState(false);
     const [error, setError] = useState(null);
     const recognized = document.recognized_data ? document.recognized_data[0] : null;
@@ -69,12 +68,6 @@ const TTNCard = ({ document, onEdit, onDelete }) => {
         } catch (err) {
             setError(err.message);
             alert(`Ошибка: ${err.message}`);
-        }
-    };
-
-    const handleDelete = () => {
-        if (onDelete && confirm('Удалить этот документ? Это действие нельзя отменить.')) {
-            onDelete(document.id);
         }
     };
 
@@ -99,26 +92,14 @@ const TTNCard = ({ document, onEdit, onDelete }) => {
                 <p className="text-sm text-gray-500 italic">Данные распознавания отсутствуют или документ в обработке.</p>
             )}
 
-            <div className="flex items-center justify-between mt-4 pt-3 border-t">
-                <div className="flex gap-4">
-                    <button onClick={handleOpenFile} className="text-blue-600 hover:underline text-sm font-medium">Открыть файл</button>
-                    {userRole === 'foreman' && document.recognition_status === 'completed' && (
-                        <button onClick={onEdit} className="text-green-600 hover:underline text-sm font-medium">Детали / Редакт.</button>
-                    )}
-                    {document.recognized_data && (
-                        <button onClick={() => setShowDetails(!showDetails)} className="text-blue-600 hover:underline text-sm font-medium">
-                            {showDetails ? 'Скрыть' : 'Показать детали'}
-                        </button>
-                    )}
-                </div>
-                {userRole === 'foreman' && onDelete && (
-                    <button 
-                        onClick={handleDelete}
-                        className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:bg-red-100"
-                        title="Удалить документ"
-                    >
-                        <Trash2 size={14} />
-                        <span>Удалить</span>
+            <div className="flex justify-end gap-4 mt-4 pt-3 border-t">
+                <button onClick={handleOpenFile} className="text-blue-600 hover:underline text-sm font-medium">Открыть файл</button>
+                {userRole === 'foreman' && document.recognition_status === 'completed' && (
+                    <button onClick={onEdit} className="text-green-600 hover:underline text-sm font-medium">Детали / Редакт.</button>
+                )}
+                {document.recognized_data && (
+                    <button onClick={() => setShowDetails(!showDetails)} className="text-blue-600 hover:underline text-sm font-medium">
+                        {showDetails ? 'Скрыть' : 'Показать детали'}
                     </button>
                 )}
             </div>

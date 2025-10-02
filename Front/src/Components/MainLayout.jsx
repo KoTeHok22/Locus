@@ -4,7 +4,6 @@ import { Home, List, Map, FileText, Menu, Bell } from 'lucide-react';
 import AuthService from "../authService.js";
 import logo from '../logo/logo-mini.ico';
 import { translate } from '../utils/translation.js';
-import { MobileBottomNav } from './MobileBottomNav.jsx';
 
 const navigationItems = [
     { key: '/', label: 'Дашборд', icon: Home },
@@ -143,7 +142,7 @@ const MainLayout = ({ children }) => {
 
                     <div className="border-t border-slate-200 p-5">
                         <div className="rounded-xl bg-slate-50 p-4">
-                            <p className="text-xs text-slate-500">© 2024 Locus</p>
+                            <p className="text-xs text-slate-500">© 2025 Locus</p>
                             <p className="text-xs text-slate-400">Интеллектуальная платформа контроля</p>
                         </div>
                     </div>
@@ -190,12 +189,10 @@ const MainLayout = ({ children }) => {
                     </div>
                 </header>
 
-                <main className="flex-1 overflow-y-auto px-4 pb-24 pt-4 md:px-6 md:pb-8 md:pt-6">
+                <main className="flex-1 overflow-y-auto px-4 pb-4 pt-4 md:px-6 md:pb-8 md:pt-6 lg:pb-6">
                     {children}
                 </main>
             </div>
-
-            <MobileBottomNav items={availableNavigation} />
         </div>
     );
 };

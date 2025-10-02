@@ -154,7 +154,7 @@ function Magazine({ onLogout, userRole }) {
 
                     <div className="p-4 border-t border-slate-200">
                         <div className="text-xs text-gray-500">
-                            © 2024 Система контроля
+                            © 2025 Система контроля
                         </div>
                     </div>
                 </div>

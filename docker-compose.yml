@@ -2,7 +2,7 @@ services:
   db:
     image: postgres:13
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_DB: locus
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
@@ -24,12 +24,14 @@ services:
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_DB=locus
     depends_on:
       db:
         condition: service_healthy
     volumes:
       - .:/app
+    stdin_open: true
+    tty: true
 
   frontend:
     build:

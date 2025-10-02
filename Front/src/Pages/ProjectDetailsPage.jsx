@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
+import { MapPin, Calendar, ClipboardCheck, AlertTriangle, FileText, PlusCircle, User, Users } from 'lucide-react';
+import toast from 'react-hot-toast';
 import ApiService from '../apiService';
 import { YandexMap } from '../Components/Map/YandexMap';
 import CreateIssueModal from '../Components/Issues/CreateIssueModal';
@@ -50,20 +52,56 @@ function ProjectDetailsPage() {
         }
     }, [projectId, userRole]);
 
+    const handleDeleteDocument = async (documentId) => {
+        try {
+            // Сначала найдём поставку, связанную с этим документом
+            const deliveries = await ApiService.getProjectDeliveries(projectId);
+            const delivery = deliveries.find(d => d.document_id === documentId);
+            
+            if (delivery) {
+                await ApiService.deleteMaterialDelivery(delivery.id);
+                toast.success('Документ успешно удалён');
+            } else {
+                // Если поставка не найдена, возможно документ был загружен но не распознан
+                // Пробуем удалить сам документ
+                toast.error('Поставка не найдена для этого документа. Документ может быть не распознан.');
+                console.error('Delivery not found for document:', documentId);
+            }
+            
+            // Обновляем данные в любом случае
+            fetchData();
+        } catch (err) {
+            toast.error(err.message || 'Ошибка удаления документа');
+            console.error('Delete error:', err);
+        }
+    };
+
     useEffect(() => {
         fetchData();
     }, [fetchData]);
 
     if (loading) {
-        return <div className="p-8">Загрузка данных о проекте...</div>;
+        return (
+            <div className="flex h-full items-center justify-center rounded-3xl border border-slate-100 bg-white p-8">
+                <p className="text-slate-500">Загрузка данных о проекте...</p>
+            </div>
+        );
     }
 
     if (error) {
-        return <div className="p-8 text-red-500">Ошибка: {error}</div>;
+        return (
+            <div className="flex h-full items-center justify-center rounded-3xl border border-red-200 bg-red-50 p-8">
+                <p className="text-red-500">Ошибка: {error}</p>
+            </div>
+        );
     }
 
     if (!project) {
-        return <div className="p-8">Проект не найден.</div>;
+        return (
+            <div className="flex h-full items-center justify-center rounded-3xl border border-slate-100 bg-slate-50 p-8">
+                <p className="text-slate-500">Проект не найден.</p>
+            </div>
+        );
     }
 
     return (
@@ -93,92 +131,259 @@ function ProjectDetailsPage() {
                     }}
                 />
             )}
-            <div className="p-4 sm:p-6 md:p-8 h-full flex flex-col gap-6">
-                <div className="flex-shrink-0 flex justify-between items-start">
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
-                        <p className="text-sm text-gray-500 mt-1">{project.address}</p>
+            
+            <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-4 rounded-3xl border border-slate-100 bg-white p-4 shadow-sm sm:flex-row sm:items-start sm:justify-between sm:p-6">
+                    <div className="flex-1">
+                        <h1 className="text-2xl font-semibold text-slate-900">{project.name}</h1>
+                        <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-500">
+                            <MapPin size={16} className="text-slate-400" />
+                            {project.address || 'Адрес не указан'}
+                        </p>
+                        <div className="mt-3 flex flex-wrap items-center gap-3">
+                            <span
+                                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${
+                                    project.status === 'active'
+                                        ? 'border-emerald-100 bg-emerald-50 text-emerald-600'
+                                        : project.status === 'pending'
+                                        ? 'border-amber-100 bg-amber-50 text-amber-600'
+                                        : 'border-slate-100 bg-slate-50 text-slate-600'
+                                }`}
+                            >
+                                <span
+                                    className={`h-2 w-2 rounded-full ${
+                                        project.status === 'active'
+                                            ? 'bg-emerald-500'
+                                            : project.status === 'pending'
+                                            ? 'bg-amber-500'
+                                            : 'bg-slate-400'
+                                    }`}
+                                />
+                                {translate(project.status)}
+                            </span>
+                            <span className="flex items-center gap-1.5 text-xs text-slate-500">
+                                <Calendar size={14} className="text-slate-400" />
+                                Создан: {new Date(project.created_at).toLocaleDateString()}
+                            </span>
+                        </div>
                     </div>
                     {userRole === 'client' && (
-                        <div className="flex gap-2">
+                        <div className="flex flex-col gap-2 sm:flex-row">
                             <button 
                                 onClick={() => setTaskModalOpen(true)}
-                                className="bg-green-600 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2">
-                                <i className="fas fa-plus"></i>
-                                <span>Добавить задачу</span>
+                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+                            >
+                                <PlusCircle size={16} />
+                                <span>Задача</span>
                             </button>
                             <button 
                                 onClick={() => setIssueModalOpen(true)}
-                                className="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2">
-                                <i className="fas fa-plus"></i>
-                                <span>Добавить замечание</span>
+                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+                            >
+                                <PlusCircle size={16} />
+                                <span>Замечание</span>
                             </button>
                         </div>
                     )}
                 </div>
                 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
-                    
-                    <div className="lg:col-span-2 flex flex-col gap-6">
-                        <div className="border rounded-lg shadow-sm min-h-[300px] lg:min-h-0 flex-1">
+                <div className="grid gap-4 lg:grid-cols-3">
+                    <div className="flex h-[400px] flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm sm:h-[500px] lg:col-span-2 lg:h-[600px]">
+                        <div className="border-b border-slate-200 px-4 py-3 sm:px-6 sm:py-4">
+                            <h2 className="text-base font-semibold text-slate-900 sm:text-lg">Карта объекта</h2>
+                            <p className="text-xs text-slate-500 sm:text-sm">Расположение и границы территории</p>
+                        </div>
+                        <div className="relative flex-1 bg-slate-100">
                             <YandexMap projects={[project]} />
                         </div>
-                        {userRole === 'client' && tasksToVerify.length > 0 && (
-                            <div className="border rounded-lg shadow-sm">
-                                <h2 className="text-lg font-semibold p-4 border-b">Задачи на верификацию ({tasksToVerify.length})</h2>
-                                <div className="p-4 space-y-4 max-h-96 overflow-y-auto">
-                                    {tasksToVerify.map(task => (
-                                        <VerificationTaskCard key={task.id} task={task} onUpdate={fetchData} />
-                                    ))}
-                                </div>
-                            </div>
-                        )}
                     </div>
 
-                    
-                    <div className="border rounded-lg shadow-sm p-4 flex flex-col">
-                        <h2 className="text-lg font-semibold mb-4 border-b pb-2">Детали проекта</h2>
-                        <div className="space-y-3">
-                            <div>
-                                <span className="font-medium text-gray-700">Статус: </span>
-                                <span className="capitalize px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">{translate(project.status)}</span>
-                            </div>
-                            <div>
-                                <span className="font-medium text-gray-700">Дата создания: </span>
-                                <span>{new Date(project.created_at).toLocaleDateString()}</span>
+                    <div className="flex h-[400px] flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm sm:h-[500px] lg:h-[600px]">
+                        <div className="border-b border-slate-200 px-4 py-3 sm:px-6 sm:py-4">
+                            <h2 className="text-base font-semibold text-slate-900 sm:text-lg">Детали проекта</h2>
+                            <p className="text-xs text-slate-500 sm:text-sm">Полная информация об объекте</p>
+                        </div>
+                        <div className="flex-1 space-y-3 overflow-y-auto p-4 sm:space-y-4 sm:p-6">
+                            <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3">
+                                <ClipboardCheck size={18} className="mt-0.5 flex-shrink-0 text-slate-500" />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-semibold text-slate-500">Статус</p>
+                                    <p className="mt-1 text-sm font-medium capitalize text-slate-900">
+                                        {translate(project.status)}
+                                    </p>
+                                </div>
                             </div>
                             
-                        </div>
+                            <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3">
+                                <MapPin size={18} className="mt-0.5 flex-shrink-0 text-slate-500" />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-semibold text-slate-500">Адрес</p>
+                                    <p className="mt-1 text-sm font-medium text-slate-900">
+                                        {project.address || 'Не указан'}
+                                    </p>
+                                </div>
+                            </div>
 
-                        {userRole === 'inspector' && issues.length > 0 && (
-                            <div className="border-t mt-4 pt-4">
-                                <h2 className="text-lg font-semibold mb-4">Нарушения на объекте ({issues.length})</h2>
-                                <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
-                                    {issues.map(issue => (
-                                        <div key={issue.id} className="border-b pb-2">
-                                            <p className="text-sm font-medium text-gray-800">{issue.description}</p>
-                                            <div className="flex justify-between items-center mt-1">
-                                                <span className={`text-xs capitalize px-2 py-0.5 rounded-full ${issue.status === 'open' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>
-                                                    {translate(issue.status)}
-                                                </span>
-                                                <span className="text-xs text-gray-500">{issue.due_date ? `до ${issue.due_date}` : ''}</span>
+                            <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3">
+                                <Calendar size={18} className="mt-0.5 flex-shrink-0 text-slate-500" />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-semibold text-slate-500">Дата создания</p>
+                                    <p className="mt-1 text-sm font-medium text-slate-900">
+                                        {new Date(project.created_at).toLocaleDateString('ru-RU', {
+                                            day: 'numeric',
+                                            month: 'long',
+                                            year: 'numeric'
+                                        })}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {project.latitude && project.longitude && (
+                                <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-3">
+                                    <MapPin size={18} className="mt-0.5 flex-shrink-0 text-slate-500" />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-semibold text-slate-500">Координаты</p>
+                                        <p className="mt-1 text-xs font-mono text-slate-900">
+                                            {project.latitude.toFixed(6)}, {project.longitude.toFixed(6)}
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="rounded-xl border border-slate-200 bg-white p-3">
+                                <p className="mb-3 text-xs font-semibold text-slate-500">Статистика</p>
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs text-slate-600">Документы</span>
+                                        <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-600">
+                                            {documents.length}
+                                        </span>
+                                    </div>
+                                    {userRole === 'inspector' && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs text-slate-600">Нарушения</span>
+                                            <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-600">
+                                                {issues.length}
+                                            </span>
+                                        </div>
+                                    )}
+                                    {userRole === 'client' && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs text-slate-600">На верификацию</span>
+                                            <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-600">
+                                                {tasksToVerify.length}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Блоки под картой */}
+                <div className={`grid gap-4 lg:grid-cols-2 ${userRole === 'client' ? 'xl:grid-cols-3' : 'xl:grid-cols-2'}`}>
+                    {userRole === 'client' && (
+                        <div className="rounded-3xl border border-slate-100 bg-white shadow-sm">
+                            <div className="border-b border-slate-200 px-4 py-3 sm:px-6 sm:py-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h2 className="text-base font-semibold text-slate-900 sm:text-lg">Задачи на верификацию</h2>
+                                        <p className="text-xs text-slate-500 sm:text-sm">Требуют подтверждения выполнения</p>
+                                    </div>
+                                    <span className="inline-flex h-7 items-center justify-center rounded-full bg-blue-50 px-3 text-[10px] font-semibold text-blue-600 sm:h-9 sm:px-4 sm:text-xs">
+                                        {tasksToVerify.length}
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="max-h-96 space-y-3 overflow-y-auto p-4 sm:space-y-4 sm:p-6">
+                                {tasksToVerify.length > 0 ? (
+                                    tasksToVerify.map(task => (
+                                        <VerificationTaskCard key={task.id} task={task} onUpdate={fetchData} />
+                                    ))
+                                ) : (
+                                    <div className="flex items-center justify-center rounded-xl bg-slate-50 p-6 text-center">
+                                        <p className="text-sm text-slate-500">Задач на подтверждение нет</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="rounded-3xl border border-slate-100 bg-white shadow-sm">
+                        <div className="border-b border-slate-200 px-4 py-3 sm:px-6 sm:py-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-base font-semibold text-slate-900 sm:text-lg">Нарушения</h2>
+                                    <p className="text-xs text-slate-500 sm:text-sm">Зафиксированные на объекте</p>
+                                </div>
+                                <span className="inline-flex h-7 items-center justify-center rounded-full bg-red-50 px-3 text-[10px] font-semibold text-red-600 sm:h-9 sm:px-4 sm:text-xs">
+                                    {issues.length}
+                                </span>
+                            </div>
+                        </div>
+                        <div className="max-h-96 space-y-3 overflow-y-auto p-4 sm:p-6">
+                                {issues.length > 0 ? (
+                                    issues.map(issue => (
+                                        <div key={issue.id} className="rounded-2xl border border-red-100 bg-red-50/70 p-4">
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="flex-1">
+                                                    <p className="text-sm font-semibold text-slate-900">{issue.description}</p>
+                                                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                                                        <span
+                                                            className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                                                                issue.status === 'open'
+                                                                    ? 'border-red-200 bg-red-100 text-red-700'
+                                                                    : 'border-slate-200 bg-slate-100 text-slate-600'
+                                                            }`}
+                                                        >
+                                                            {translate(issue.status)}
+                                                        </span>
+                                                        {issue.due_date && (
+                                                            <span className="text-xs text-slate-500">до {issue.due_date}</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <AlertTriangle size={18} className="text-red-500" />
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+                                    ))
+                                ) : (
+                                    <div className="flex items-center justify-center rounded-xl bg-slate-50 p-6 text-center">
+                                        <p className="text-sm text-slate-500">Нарушений нет</p>
+                                    </div>
+                            )}
+                        </div>
+                    </div>
 
-                        {documents.length > 0 && (
-                            <div className="border-t mt-4 pt-4">
-                                <h2 className="text-lg font-semibold mb-4">Документы ({documents.length})</h2>
-                                <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
-                                    {documents.map(doc => (
-                                        <TTNCard key={doc.id} document={doc} onEdit={() => setEditingDocument(doc)} />
-                                    ))}
+                    <div className="rounded-3xl border border-slate-100 bg-white shadow-sm">
+                        <div className="border-b border-slate-200 px-4 py-3 sm:px-6 sm:py-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-base font-semibold text-slate-900 sm:text-lg">Документы</h2>
+                                    <p className="text-xs text-slate-500 sm:text-sm">ТТН и накладные</p>
                                 </div>
+                                <span className="inline-flex h-7 items-center justify-center rounded-full bg-blue-50 px-3 text-[10px] font-semibold text-blue-600 sm:h-9 sm:px-4 sm:text-xs">
+                                    {documents.length}
+                                </span>
                             </div>
-                        )}
+                        </div>
+                        <div className="max-h-96 space-y-3 overflow-y-auto p-4 sm:p-6">
+                            {documents.length > 0 ? (
+                                documents.map(doc => (
+                                    <TTNCard 
+                                        key={doc.id} 
+                                        document={doc} 
+                                        onEdit={() => setEditingDocument(doc)}
+                                        onDelete={userRole === 'foreman' ? handleDeleteDocument : null}
+                                    />
+                                ))
+                            ) : (
+                                <div className="flex items-center justify-center rounded-xl bg-slate-50 p-6 text-center">
+                                    <p className="text-sm text-slate-500">Документов нет</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>

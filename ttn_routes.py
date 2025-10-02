@@ -44,21 +44,17 @@ Your mission is to process the entire file, identify each unique document set, a
 
 # INSTRUCTIONS
 
-**1. Initial Scan & Count (Mandatory First Step):**
-* Before any data extraction, perform a complete scan of the entire file.
-* Count the total number of distinct "ТРАНСПОРТНАЯ НАКЛАДНАЯ" documents present.
-* In your `<thinking>` block, you **must** begin with the line: "Found [X] total documents to process.", where [X] is the number you counted.
-
-**2. Iterative Extraction & Chain-of-Thought (CoT) Reasoning:**
-* After the initial count, begin processing from the start of the file.
-* For **EACH** of the [X] documents you identified, perform the following step-by-step analysis inside a `<thinking>` block (do not output this block in the final response):
-    a.  **Document Identification:** Announce the start of a new document by its number and date (e.g., "Processing Document 1 of [X]: Транспортная накладная №18674/Б from 2024-06-10.").
+**1. Chain-of-Thought (CoT) Reasoning:**
+Before generating any JSON, you MUST perform a step-by-step analysis inside a `<thinking>` block. For EACH document set you identify, follow this internal monologue:
+    a.  **Document Identification:** Announce the start of a new document by its number and date (e.g., "Processing Транспортная накладная №18674/Б from 2024-06-10.").
     b.  **Field Extraction:** Go through each required field in the JSON schema one by one. State the field name, the Russian label you are looking for (e.g., `sender` -> "Грузоотправитель"), the exact text you found, and the final processed value.
-    c.  **Data Transformation Logic:** Explicitly state any conversions. For example: "Found Gross Weight: '19,694 т.'. Converting tons to kg: 19.694 * 1000 = 19694."
+    c.  **Data Transformation Logic:** Explicitly state any conversions. For example: "Found Gross Weight: '19,694 т.'. Converting tons to kg: 19.694 * 1000 = 19694." or "Found Document Date: '10.06.2024'. Formatting to YYYY-MM-DD: '2024-06-10'."
     d.  **Associated Document Linkage:** Explicitly state when you are linking the Quality Certificate. "Found 'ДОКУМЕНТ О КАЧЕСТВЕ №18674/Б'. This corresponds to the current waybill. Extracting batch number and manufacturing date from it."
     e.  **Handling Missing Data:** If a field is not found, explicitly state it. "Field `vehicle.model` not found. Setting to null."
+This thinking process is mandatory and improves accuracy. Do not output the `<thinking>` block in the final JSON response.
 
-**3. Document Processing Rules:**
+**2. Document Processing Rules:**
+* **Iteration:** Process the file sequentially. When a new "ТРАНСПОРТНАЯ НАКЛАДНАЯ" header with a new number is detected, begin a new JSON object.
 * **Data Standardization:**
     * **Dates & Times:** All dates must be in `YYYY-MM-DD` format. All datetimes must be in `YYYY-MM-DDTHH:MM:SS` ISO 8601 format. If time is missing, use `T00:00:00`.
     * **Weights:** All weights must be numeric (integer or float) and in **kilograms**. If the source value is in tons (`т.`), multiply it by 1000.
@@ -66,9 +62,8 @@ Your mission is to process the entire file, identify each unique document set, a
 * **Null Values:** If any field is not present in the document, its corresponding JSON value MUST be `null`. Do not omit the key.
 * **Entity Details:** For all companies (sender, recipient, carrier), you must extract the Name, ИНН (TIN), and КПП (Tax Registration Reason Code) into a structured object.
 
-**4. Output Format:**
+**3. Output Format:**
 * The final output MUST be a single, valid JSON array enclosed in a ```json code block.
-* The number of objects in the final JSON array **must** match the count [X] from your initial scan.
 * Do NOT include the `<thinking>` block or any other text, explanation, or markdown outside of the JSON array.
 
 # JSON SCHEMA & EXAMPLE
@@ -134,8 +129,7 @@ For each document set, create a JSON object with the following deeply nested str
         }
       }
     ]
-  },
-  { /* Данные из последующего документа */ },
+  }
 ]'''
 
             stream = api_client.send_message(chat_session, prompt, file_paths=[document.url])

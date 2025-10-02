@@ -199,6 +199,16 @@ class ApiService {
             throw error;
         }
     }
+    getProjectDeliveries(projectId) {
+        return request(`/projects/${projectId}/deliveries`);
+    }
+
+    deleteMaterialDelivery(deliveryId) {
+        return request(`/deliveries/${deliveryId}`, {
+            method: 'DELETE',
+        });
+    }
+
 }
 
 export default new ApiService();

@@ -21,5 +21,4 @@ COPY . .
 
 EXPOSE 5000
 
-RUN python init_db.py
 CMD ["python", "main.py"]
