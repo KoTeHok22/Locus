@@ -316,7 +316,6 @@ const MaterialDeliveryFlow = ({ projects, onUpdate }) => {
     );
 }
 
-
 function ForemanDHB(){
     const [data, setData] = useState({ projects: [], tasks: [], issues: [] });
     const [loading, setLoading] = useState(true);

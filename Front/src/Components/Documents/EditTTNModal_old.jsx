@@ -8,7 +8,6 @@ const EditTTNModal = ({ document, onClose, onUpdate }) => {
 
     useEffect(() => {
         if (document && document.recognized_data) {
-            // Глубокое копирование, чтобы избежать мутаций исходного объекта
             setEditableData(JSON.parse(JSON.stringify(document.recognized_data[0])));
         }
     }, [document]);
@@ -41,7 +40,6 @@ const EditTTNModal = ({ document, onClose, onUpdate }) => {
         setIsSubmitting(true);
         const toastId = toast.loading('Сохранение изменений...');
         try {
-            // Оборачиваем объект обратно в массив, как он хранится в БД
             await ApiService.updateDocument(document.id, [editableData]);
             toast.success('Данные документа успешно обновлены!', { id: toastId });
             onUpdate();

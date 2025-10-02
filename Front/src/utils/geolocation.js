@@ -1,11 +1,4 @@
-/**
- * Утилиты для работы с геолокацией пользователя
- */
 
-/**
- * Получить текущую геолокацию пользователя
- * @returns {Promise<{latitude: number, longitude: number, accuracy: number}>}
- */
 export const getCurrentGeolocation = () => {
     return new Promise((resolve, reject) => {
         if (!navigator.geolocation) {
@@ -49,27 +42,15 @@ export const getCurrentGeolocation = () => {
     });
 };
 
-/**
- * Получить геолокацию в формате строки "latitude,longitude"
- * @returns {Promise<string>}
- */
 export const getGeolocationString = async () => {
     const { latitude, longitude } = await getCurrentGeolocation();
     return `${latitude},${longitude}`;
 };
 
-/**
- * Проверить, доступна ли геолокация
- * @returns {boolean}
- */
 export const isGeolocationAvailable = () => {
     return 'geolocation' in navigator;
 };
 
-/**
- * Запросить разрешение на доступ к геолокации
- * @returns {Promise<boolean>} true если разрешение получено
- */
 export const requestGeolocationPermission = async () => {
     try {
         await getCurrentGeolocation();
@@ -79,16 +60,8 @@ export const requestGeolocationPermission = async () => {
     }
 };
 
-/**
- * Рассчитать расстояние между двумя точками (в метрах)
- * @param {number} lat1 
- * @param {number} lon1 
- * @param {number} lat2 
- * @param {number} lon2 
- * @returns {number} расстояние в метрах
- */
 export const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371e3; // радиус Земли в метрах
+    const R = 6371e3;
     const φ1 = lat1 * Math.PI / 180;
     const φ2 = lat2 * Math.PI / 180;
     const Δφ = (lat2 - lat1) * Math.PI / 180;

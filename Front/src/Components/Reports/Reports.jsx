@@ -1,6 +1,5 @@
 import '../../index.css'
 
-
 function Reports ({ onSwitchToPage }){
     return(
         <div>

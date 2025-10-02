@@ -1,6 +1,5 @@
 import '../../index.css'
 
-
 function NavButton({ children, active, onClick, name }) {
     return (
         <button 
@@ -18,6 +17,5 @@ function NavButton({ children, active, onClick, name }) {
         </button>
     );
 }
-
 
 export { NavButton }

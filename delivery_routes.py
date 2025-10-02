@@ -89,36 +89,29 @@ def delete_material_delivery(delivery_id):
     try:
         delivery = MaterialDelivery.query.get_or_404(delivery_id)
         
-        # Проверяем, что прораб удаляет свою поставку
         current_user_id = request.current_user['id']
         if delivery.foreman_id != current_user_id:
             return jsonify({'message': 'Вы можете удалять только свои поставки'}), 403
         
-        # Получаем связанный документ ДО удаления
         document_id = delivery.document_id
         if document_id:
             document = Document.query.get(document_id)
             if document and document.url:
                 document_file_path = document.url
         
-        # Удаляем позиции поставки (cascade должен сработать, но на всякий случай явно)
         MaterialDeliveryItem.query.filter_by(delivery_id=delivery_id).delete()
         
-        # Удаляем поставку
         db.session.delete(delivery)
         
-        # Удаляем документ
         if document_id:
             document = Document.query.get(document_id)
             if document:
                 db.session.delete(document)
                 print(f"[Delete Delivery] Документ {document_id} помечен на удаление")
         
-        # Коммитим изменения в БД
         db.session.commit()
         print(f"[Delete Delivery] Поставка {delivery_id} и документ {document_id} успешно удалены из БД")
         
-        # Удаляем файл документа с диска ПОСЛЕ успешного commit
         if document_file_path:
             if os.path.exists(document_file_path):
                 try:
@@ -160,7 +153,6 @@ def get_project_deliveries(project_id):
             'items': []
         }
         
-        # Добавляем информацию о документе
         if delivery.document:
             delivery_dict['document'] = {
                 'id': delivery.document.id,
@@ -169,7 +161,6 @@ def get_project_deliveries(project_id):
                 'recognized_data': delivery.document.recognized_data
             }
         
-        # Добавляем позиции
         for item in delivery.items:
             delivery_dict['items'].append({
                 'id': item.id,

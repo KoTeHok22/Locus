@@ -32,5 +32,4 @@ function useNavigation() {
     };
 }
 
-
 export { useNavigation }

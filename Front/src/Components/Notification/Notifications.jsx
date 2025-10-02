@@ -9,7 +9,6 @@ function Notifications({ isOpen, onClose, notifications: initialNotifications })
         setNotifications(initialNotifications || []);
     }, [initialNotifications]);
 
-    
     useEffect(() => {
         const checkMobile = () => {
             setIsMobile(window.innerWidth < 768); 
@@ -38,7 +37,6 @@ function Notifications({ isOpen, onClose, notifications: initialNotifications })
 
     if (!isOpen) return null;
 
-    
     if (isMobile) {
         return (
             <div className="fixed inset-0 z-50 bg-white flex flex-col">
@@ -63,7 +61,6 @@ function Notifications({ isOpen, onClose, notifications: initialNotifications })
                     </button>
                 </div>
 
-                
                 {unreadCount > 0 && (
                     <div className="px-4 py-3 border-b border-gray-100 bg-blue-50">
                         <button 
@@ -75,7 +72,6 @@ function Notifications({ isOpen, onClose, notifications: initialNotifications })
                     </div>
                 )}
 
-                
                 <div className="flex-1 overflow-y-auto">
                     {notifications.length > 0 ? (
                         <div className="divide-y divide-gray-100">
@@ -127,7 +123,6 @@ function Notifications({ isOpen, onClose, notifications: initialNotifications })
                     )}
                 </div>
 
-                
                 <div className="p-4 border-t border-gray-200 bg-white">
                     <button 
                         onClick={onClose}
@@ -140,7 +135,6 @@ function Notifications({ isOpen, onClose, notifications: initialNotifications })
         );
     }
 
-    
     return (
         <>
             <div 

@@ -23,12 +23,10 @@ def get_issues():
     """
     query = db.session.query(Issue, Project).join(Project, Issue.project_id == Project.id)
 
-    # Фильтрация по проектам прораба
     user_role = request.current_user['role']
     user_id = request.current_user['id']
     
     if user_role == 'foreman':
-        # Получаем проекты, к которым прикреплен прораб
         foreman_projects = db.session.query(ProjectUser.project_id).filter(
             ProjectUser.user_id == user_id
         ).all()
@@ -37,7 +35,6 @@ def get_issues():
         if foreman_project_ids:
             query = query.filter(Issue.project_id.in_(foreman_project_ids))
         else:
-            # Если прораб не прикреплен ни к одному проекту, возвращаем пустой список
             return jsonify([]), 200
 
     status = request.args.get('status')
@@ -56,7 +53,7 @@ def get_issues():
         issue_dict['project_name'] = project.name
         issues_list.append(issue_dict)
 
-    return jsonify(issues_list), 200# Дополнительные роуты для issue_routes.py
+    return jsonify(issues_list), 200
 
 @issue_bp.route('/api/issues/<int:issue_id>/resolve', methods=['POST'])
 @token_required
@@ -74,7 +71,6 @@ def resolve_issue(issue_id):
     if issue.status == 'resolved':
         return jsonify({'message': 'Нарушение уже устранено'}), 400
     
-    # Проверка фотографий
     photos = request.files.getlist('photos')
     if not photos or len(photos) == 0:
         return jsonify({'message': 'Необходимо прикрепить минимум одно фото устранения'}), 400
@@ -93,8 +89,7 @@ def resolve_issue(issue_id):
     if not photo_urls:
         return jsonify({'message': 'Не удалось загрузить фотографии. Проверьте формат файлов.'}), 400
     
-    # Обновление нарушения
-    issue.status = 'pending_verification'  # Ожидает верификации инспектором
+    issue.status = 'pending_verification'
     issue.resolved_by_id = request.current_user['id']
     issue.resolved_at = datetime.now(timezone.utc)
     issue.resolution_comment = request.form.get('comment', '')
@@ -125,7 +120,7 @@ def verify_resolution(issue_id):
         return jsonify({'message': 'Нарушение не ожидает верификации'}), 400
     
     data = request.get_json()
-    verification_status = data.get('status')  # 'verified' or 'rejected'
+    verification_status = data.get('status')
     
     if verification_status not in ['verified', 'rejected']:
         return jsonify({'message': 'Некорректный статус верификации. Используйте verified или rejected'}), 400
@@ -136,9 +131,9 @@ def verify_resolution(issue_id):
     issue.verification_comment = data.get('comment', '')
     
     if verification_status == 'verified':
-        issue.status = 'resolved'  # Окончательно устранено
+        issue.status = 'resolved'
     else:
-        issue.status = 'open'  # Вернуть в открытые, если отклонено
+        issue.status = 'open'
     
     db.session.commit()
     

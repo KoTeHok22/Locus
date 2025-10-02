@@ -116,7 +116,6 @@ function Magazine({ onLogout, userRole }) {
         }
     }, [isMobileMenuOpen]);
 
-
     return (
         <div className={`h-screen bg-slate-50 flex ${isMobileMenuOpen ? 'sidebar-open' : ''}`}>
             <div className="sidebar-overlay fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" onClick={() => setIsMobileMenuOpen(false)}></div>

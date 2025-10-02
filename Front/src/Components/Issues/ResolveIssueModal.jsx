@@ -88,7 +88,7 @@ const ResolveIssueModal = ({ issue, onClose, onUpdate }) => {
                         <p className="text-sm text-gray-600 mt-1">{issue.description}</p>
                     </div>
 
-                    {/* Комментарий */}
+                    {}
                     <div className="mb-4">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Комментарий об устранении (необязательно)
@@ -102,14 +102,14 @@ const ResolveIssueModal = ({ issue, onClose, onUpdate }) => {
                         />
                     </div>
 
-                    {/* Фотографии */}
+                    {}
                     <div className="mb-6">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Фотографии устранения <span className="text-red-500">*</span>
                             <span className="text-xs text-gray-500 ml-2">(минимум 1 фото)</span>
                         </label>
                         
-                        {/* Превью фотографий */}
+                        {}
                         {photoPreviews.length > 0 && (
                             <div className="grid grid-cols-3 gap-2 mb-3">
                                 {photoPreviews.map((preview, index) => (
@@ -131,37 +131,12 @@ const ResolveIssueModal = ({ issue, onClose, onUpdate }) => {
                             </div>
                         )}
 
-                        {/* Кнопки добавления фото */}
+                        {}
                         <div className="flex gap-2">
                             <input
                                 ref={fileInputRef}
                                 type="file"
-                                accept="image/*"
-                                multiple
-                                capture="environment"
-                                onChange={handlePhotoSelect}
-                                className="hidden"
-                            />
-                            <button
-                                type="button"
-                                onClick={handleCapture}
-                                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2"
-                            >
-                                <i className="fas fa-camera"></i>
-                                Сделать фото
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => fileInputRef.current?.click()}
-                                className="flex-1 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition flex items-center justify-center gap-2"
-                            >
-                                <i className="fas fa-image"></i>
-                                Выбрать из галереи
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Кнопки действий */}
+                                accept="image}
                     <div className="flex gap-3">
                         <button
                             onClick={handleSubmit}

@@ -4,16 +4,11 @@ function PriorityObjectList({  }){
 
     function createObject(){
 
-        
-
     }
     
-
     return(
 
         <div>
-
-
 
         </div>
 

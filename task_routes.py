@@ -88,7 +88,6 @@ def create_task():
     db.session.add(new_task)
     db.session.commit()
     
-    # Возвращаем задачу в том же формате, что и get_tasks
     task_dict = {
         'id': new_task.id,
         'project_id': new_task.project_id,

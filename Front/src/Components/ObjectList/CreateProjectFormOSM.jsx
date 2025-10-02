@@ -3,7 +3,6 @@ import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// Fix для иконок маркеров Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
     iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
@@ -11,7 +10,6 @@ L.Icon.Default.mergeOptions({
     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-// Компонент для обработки кликов на карте
 function MapClickHandler({ onMapClick }) {
     useMapEvents({
         click: (e) => {
@@ -37,7 +35,6 @@ function CreateProjectFormOSM({ onSubmit, onCancel, apiError }) {
         setGeocodingError('');
 
         try {
-            // Используем Nominatim для геокодирования
             const response = await fetch(
                 `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`
             );
@@ -51,7 +48,6 @@ function CreateProjectFormOSM({ onSubmit, onCancel, apiError }) {
                 setPlacemarkCoords([lat, lon]);
                 setIsGeocoded(true);
                 
-                // Создаем небольшой полигон вокруг точки
                 const offset = 0.001;
                 setPolygon([[
                     [lon - offset, lat - offset],
@@ -78,7 +74,6 @@ function CreateProjectFormOSM({ onSubmit, onCancel, apiError }) {
         setGeocodingError('');
 
         try {
-            // Обратное геокодирование
             const response = await fetch(
                 `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}`
             );
@@ -88,7 +83,6 @@ function CreateProjectFormOSM({ onSubmit, onCancel, apiError }) {
                 setAddress(data.display_name);
                 setIsGeocoded(true);
                 
-                // Создаем полигон
                 const offset = 0.001;
                 setPolygon([[
                     [latlng.lng - offset, latlng.lat - offset],

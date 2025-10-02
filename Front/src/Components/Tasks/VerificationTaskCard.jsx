@@ -55,7 +55,7 @@ const VerificationTaskCard = ({ task, onUpdate }) => {
                     Выполнена прорабом: {task.completed_at ? new Date(task.completed_at).toLocaleString() : '-'}
                 </p>
 
-                {/* Комментарий прораба */}
+                {}
                 {task.completion_comment && (
                     <div className="mb-3 p-3 bg-gray-50 rounded-lg">
                         <p className="text-xs font-medium text-gray-700 mb-1">Комментарий прораба:</p>
@@ -63,7 +63,7 @@ const VerificationTaskCard = ({ task, onUpdate }) => {
                     </div>
                 )}
 
-                {/* Фотографии */}
+                {}
                 {hasPhotos && (
                     <div className="mb-3">
                         <button

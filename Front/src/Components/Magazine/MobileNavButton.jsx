@@ -1,7 +1,5 @@
 import '../../index.css'
 
-
-
 function MobileNavButton({ children, onClick, name }) {
     return (
         <button 
@@ -18,6 +16,5 @@ function MobileNavButton({ children, onClick, name }) {
         </button>
     );
 }
-
 
 export { MobileNavButton }

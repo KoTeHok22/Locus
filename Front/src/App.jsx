@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import AuthService from './authService';
 
-
 import { ReportsPage } from './Pages/ReportsPage';
 import { ProjectsPage } from './Pages/ProjectsPage';
 import { MapPage } from './Pages/MapPage';
@@ -35,7 +34,6 @@ const PrivateRoutes = () => {
 
     return isAuth ? <MainLayout><Outlet /></MainLayout> : <Navigate to="/login" />;
 };
-
 
 function App() {
     return (

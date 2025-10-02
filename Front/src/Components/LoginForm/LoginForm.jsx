@@ -38,7 +38,7 @@ function LoginForm() {
     <div className="min-h-screen flex items-center justify-center p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))]">
       <div className='back'></div>
       
-      {/* Mobile version */}
+      {}
       <div className="flex w-full max-w-md flex-col md:hidden relative z-10">
         <div className="rounded-t-3xl bg-gradient-to-br from-blue-600 to-blue-800 p-6 text-white">
           <div className="flex items-center justify-center gap-3">
@@ -111,7 +111,7 @@ function LoginForm() {
         </div>
       </div>
 
-      {/* Desktop version */}
+      {}
       <div className="hidden w-full max-w-5xl overflow-hidden rounded-3xl bg-white/95 backdrop-blur-sm shadow-2xl md:flex relative z-10">
         <div className="relative w-2/5 bg-gradient-to-br from-blue-600 to-blue-800 p-10 text-white">
           <div className="absolute inset-0 bg-black/10"></div>

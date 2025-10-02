@@ -58,7 +58,6 @@ function ProjectDetailsPage() {
 
     const handleDeleteDocument = async (documentId) => {
         try {
-            // Сначала найдём поставку, связанную с этим документом
             const deliveries = await ApiService.getProjectDeliveries(projectId);
             const delivery = deliveries.find(d => d.document_id === documentId);
             
@@ -66,13 +65,10 @@ function ProjectDetailsPage() {
                 await ApiService.deleteMaterialDelivery(delivery.id);
                 toast.success('Документ успешно удалён');
             } else {
-                // Если поставка не найдена, возможно документ был загружен но не распознан
-                // Пробуем удалить сам документ
                 toast.error('Поставка не найдена для этого документа. Документ может быть не распознан.');
                 console.error('Delivery not found for document:', documentId);
             }
             
-            // Обновляем данные в любом случае
             fetchData();
         } catch (err) {
             toast.error(err.message || 'Ошибка удаления документа');
@@ -301,7 +297,7 @@ function ProjectDetailsPage() {
                     </div>
                 </div>
 
-                {/* Блоки под картой */}
+                {}
                 <div className={`grid gap-4 lg:grid-cols-2 ${userRole === 'client' ? 'xl:grid-cols-3' : 'xl:grid-cols-2'}`}>
                     {userRole === 'client' && (
                         <div className="rounded-3xl border border-slate-100 bg-white shadow-sm">
@@ -365,7 +361,7 @@ function ProjectDetailsPage() {
                                                             <span className="text-xs text-slate-500">до {issue.due_date}</span>
                                                         )}
                                                     </div>
-                                                    {/* Кнопки действий */}
+                                                    {}
                                                     <div className="mt-3 flex gap-2">
                                                         {userRole === 'foreman' && issue.status === 'open' && (
                                                             <button

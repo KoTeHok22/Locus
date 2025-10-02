@@ -3,7 +3,6 @@ import { MapContainer, TileLayer, Marker, Polygon, Popup, useMap } from 'react-l
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// Fix для иконок маркеров Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
     iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
@@ -52,9 +51,7 @@ const MapObject = ({ project }) => {
         </div>
     );
 
-    // Если есть полигон
     if (project.polygon?.geometry?.coordinates) {
-        // GeoJSON использует [longitude, latitude], а Leaflet использует [latitude, longitude]
         const positions = project.polygon.geometry.coordinates[0].map(coord => [coord[1], coord[0]]);
         
         const options = project.issues_count > 0
@@ -68,7 +65,6 @@ const MapObject = ({ project }) => {
         );
     }
 
-    // Если есть координаты точки
     if (project.latitude && project.longitude) {
         return (
             <Marker position={[project.latitude, project.longitude]}>
@@ -80,7 +76,6 @@ const MapObject = ({ project }) => {
     return null;
 };
 
-// Компонент для автоматической подстройки границ карты
 const AutoBounds = ({ projects }) => {
     const map = useMap();
 
@@ -91,7 +86,6 @@ const AutoBounds = ({ projects }) => {
 
         projects.forEach(project => {
             if (project.polygon?.geometry?.coordinates) {
-                // Добавляем все точки полигона
                 project.polygon.geometry.coordinates[0].forEach(coord => {
                     bounds.push([coord[1], coord[0]]);
                 });
@@ -109,11 +103,9 @@ const AutoBounds = ({ projects }) => {
 };
 
 const OSMMap = ({ projects }) => {
-    // Центр по умолчанию (Москва)
     const defaultCenter = [55.75, 37.61];
     const defaultZoom = 10;
 
-    // Вычисляем начальный центр если есть проекты
     const initialCenter = useMemo(() => {
         if (!projects || projects.length === 0) return defaultCenter;
 

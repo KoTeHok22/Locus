@@ -1,6 +1,5 @@
 import '../../index.css'
 
-
 function Settings ({ onSwitchToPage }){
     return(
         <div>

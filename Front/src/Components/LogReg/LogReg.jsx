@@ -10,7 +10,6 @@ function LogReg(){
     const switchToLogin = () => setCurrentPage('login');
     const switchToRegistration = () => setCurrentPage('registration');
 
-
     return(
 
         <div className="min-h-screen flex items-center justify-center p-4">

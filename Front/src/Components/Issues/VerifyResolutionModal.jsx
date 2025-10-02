@@ -6,7 +6,7 @@ import { X, CheckCircle, XCircle } from 'lucide-react';
 const VerifyResolutionModal = ({ issue, onClose, onUpdate }) => {
     const [comment, setComment] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [selectedStatus, setSelectedStatus] = useState(null); // 'verified' or 'rejected'
+    const [selectedStatus, setSelectedStatus] = useState(null);
 
     const handleVerify = async (status) => {
         if (status === 'rejected' && !comment.trim()) {
@@ -48,13 +48,13 @@ const VerifyResolutionModal = ({ issue, onClose, onUpdate }) => {
                         </button>
                     </div>
                     
-                    {/* Описание нарушения */}
+                    {}
                     <div className="mb-4 p-3 bg-slate-50 rounded-lg">
                         <p className="text-sm font-medium text-gray-700">Описание нарушения:</p>
                         <p className="text-sm text-gray-600 mt-1">{issue.description}</p>
                     </div>
 
-                    {/* Комментарий прораба */}
+                    {}
                     {issue.resolution_comment && (
                         <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
                             <p className="text-sm font-medium text-blue-900">Комментарий прораба:</p>
@@ -62,7 +62,7 @@ const VerifyResolutionModal = ({ issue, onClose, onUpdate }) => {
                         </div>
                     )}
 
-                    {/* Фото устранения */}
+                    {}
                     {issue.resolution_photos && issue.resolution_photos.length > 0 && (
                         <div className="mb-6">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -89,7 +89,7 @@ const VerifyResolutionModal = ({ issue, onClose, onUpdate }) => {
                         </div>
                     )}
 
-                    {/* Комментарий верификации */}
+                    {}
                     <div className="mb-6">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Комментарий {selectedStatus === 'rejected' && <span className="text-red-500">*</span>}
@@ -107,7 +107,7 @@ const VerifyResolutionModal = ({ issue, onClose, onUpdate }) => {
                         />
                     </div>
 
-                    {/* Кнопки действий */}
+                    {}
                     <div className="flex gap-3">
                         <button
                             onClick={() => {

@@ -18,7 +18,6 @@ const CreateProjectModal = ({ onCancel, onUpdate }) => {
         setLoading(true);
         setError('');
         try {
-            // Используем Nominatim для геокодирования адреса
             const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`);
             const data = await response.json();
             if (data.length === 0) {
@@ -28,7 +27,6 @@ const CreateProjectModal = ({ onCancel, onUpdate }) => {
             const lat = parseFloat(location.lat);
             const lon = parseFloat(location.lon);
             
-            // Создаем небольшой полигон вокруг точки
             const offset = 0.001;
             const polygonCoordinates = [[ 
                 [lon - offset, lat - offset], 

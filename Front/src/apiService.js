@@ -144,7 +144,6 @@ class ApiService {
         return request(`/issues/${issueId}`);
     }
 
-
     async getClassifiers(filters = {}) {
         const query = new URLSearchParams(filters).toString();
         const data = await request(`/classifiers?${query}`);
