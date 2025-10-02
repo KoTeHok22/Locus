@@ -1,8 +1,8 @@
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 class AuthService {
   async register(userData) {
-    const response = await fetch(`${API_BASE_URL}/api/register`, {
+    const response = await fetch(`${API_BASE_URL}/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -24,7 +24,7 @@ class AuthService {
   }
 
   async login(email, password) {
-    const response = await fetch(`${API_BASE_URL}/api/login`, {
+    const response = await fetch(`${API_BASE_URL}/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -50,7 +50,7 @@ class AuthService {
   }
 
   async inviteUser(email, role, token) {
-    const response = await fetch(`${API_BASE_URL}/api/invite-user`, {
+    const response = await fetch(`${API_BASE_URL}/invite-user`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -69,7 +69,7 @@ class AuthService {
   }
 
   async setPassword(token, password) {
-    const response = await fetch(`${API_BASE_URL}/api/set-password`, {
+    const response = await fetch(`${API_BASE_URL}/set-password`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -91,7 +91,7 @@ class AuthService {
   }
 
   async getProfile(token) {
-    const response = await fetch(`${API_BASE_URL}/api/profile`, {
+    const response = await fetch(`${API_BASE_URL}/profile`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -122,7 +122,7 @@ class AuthService {
 
   async verifyToken(token) {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/verify-token`, {
+      const response = await fetch(`${API_BASE_URL}/verify-token`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
