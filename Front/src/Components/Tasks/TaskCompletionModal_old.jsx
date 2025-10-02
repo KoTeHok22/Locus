@@ -55,33 +55,20 @@ const TaskCompletionModal = ({ task, onClose, onUpdate }) => {
         }
 
         setIsSubmitting(true);
-        const toastId = toast.loading('Получение геолокации...');
-        
         try {
-            // Получаем геолокацию
-            const { latitude, longitude } = await getCurrentGeolocation();
-            const geolocation = `${latitude},${longitude}`;
-            
-            toast.loading('Завершение задачи...', { id: toastId });
-            
             await ApiService.updateTaskStatus(
                 task.project_id,
                 task.id,
                 'completed',
                 photos,
-                comment,
-                geolocation
+                comment
             );
-            toast.success('Задача успешно завершена!', { id: toastId });
+            toast.success('Задача успешно завершена!');
             onUpdate();
             onClose();
         } catch (error) {
             console.error('Ошибка при завершении задачи:', error);
-            if (error.message.includes('геолокац')) {
-                toast.error(`${error.message}`, { id: toastId });
-            } else {
-                toast.error(`Не удалось завершить задачу: ${error.message}`, { id: toastId });
-            }
+            toast.error(`Не удалось завершить задачу: ${error.message}`);
         } finally {
             setIsSubmitting(false);
         }

@@ -82,7 +82,8 @@ def upload_document():
             uploader_id=request.current_user['id'],
             file_type=file_type,
             url=file_url,
-            linked_entity_id=linked_entity_id
+            linked_entity_id=linked_entity_id,
+            upload_geolocation=request.form.get('geolocation'),
         )
         db.session.add(new_doc)
         db.session.commit()

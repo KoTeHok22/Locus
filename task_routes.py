@@ -141,6 +141,7 @@ def update_task_status(project_id, task_id):
         task.completed_at = datetime.utcnow()
         task.completion_comment = request.form.get('comment', '')
         task.completion_photos = photo_urls
+        task.completion_geolocation = request.form.get('geolocation')
     else:
         task.status = new_status
 

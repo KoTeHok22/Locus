@@ -135,6 +135,7 @@ class Task(db.Model):
     completed_at = db.Column(db.DateTime, nullable=True)
     completion_comment = db.Column(db.Text, nullable=True)
     completion_photos = db.Column(db.JSON, nullable=True)
+    completion_geolocation = db.Column(db.String(100), nullable=True)
     
     project = db.relationship('Project', back_populates='tasks')
     completed_by = db.relationship('User', foreign_keys=[completed_by_id])
@@ -157,6 +158,7 @@ class Document(db.Model):
     
     recognized_data = db.Column(db.JSON, nullable=True)
     recognition_status = db.Column(db.String(50), nullable=False, default='pending')
+    upload_geolocation = db.Column(db.String(100), nullable=True)
     
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
@@ -191,6 +193,7 @@ class Issue(db.Model):
     resolution_comment = db.Column(db.Text, nullable=True)
     resolved_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     resolved_at = db.Column(db.DateTime, nullable=True)
+    geolocation = db.Column(db.String(100), nullable=True)
     
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
@@ -230,6 +233,7 @@ class DailyReport(db.Model):
     equipment = db.Column(db.Text, nullable=True)
     weather_conditions = db.Column(db.Text, nullable=True)
     notes = db.Column(db.Text, nullable=True)
+    geolocation = db.Column(db.String(100), nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     
     author = db.relationship('User', backref='daily_reports')

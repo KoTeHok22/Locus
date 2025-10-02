@@ -46,7 +46,8 @@ def create_daily_report():
             workers_count=data.get('workers_count'),
             equipment=data.get('equipment'),
             weather_conditions=data.get('weather_conditions'),
-            notes=data['notes']
+            notes=data['notes'],
+            geolocation=data.get('geolocation')
         )
         db.session.add(new_report)
         db.session.commit()

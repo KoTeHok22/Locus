@@ -3,39 +3,36 @@ import toast from 'react-hot-toast';
 import ApiService from '../../apiService';
 
 const EditTTNModal = ({ document, onClose, onUpdate }) => {
-    const [allDocuments, setAllDocuments] = useState([]);
-    const [currentDocIndex, setCurrentDocIndex] = useState(0);
+    const [editableData, setEditableData] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         if (document && document.recognized_data) {
-            setAllDocuments(JSON.parse(JSON.stringify(document.recognized_data)));
+            setEditableData(JSON.parse(JSON.stringify(document.recognized_data[0])));
         }
     }, [document]);
 
-    const currentDoc = allDocuments[currentDocIndex];
-
     const handleFieldChange = (path, value) => {
-        setAllDocuments(prevDocs => {
-            const newDocs = [...prevDocs];
-            let current = newDocs[currentDocIndex];
+        setEditableData(prevData => {
+            const newData = { ...prevData };
+            let current = newData;
             for (let i = 0; i < path.length - 1; i++) {
                 current = current[path[i]];
             }
             current[path[path.length - 1]] = value;
-            return newDocs;
+            return newData;
         });
     };
 
     const handleItemChange = (itemIndex, path, value) => {
-        setAllDocuments(prevDocs => {
-            const newDocs = [...prevDocs];
-            let current = newDocs[currentDocIndex].items[itemIndex];
+        setEditableData(prevData => {
+            const newData = { ...prevData };
+            let current = newData.items[itemIndex];
             for (let i = 0; i < path.length - 1; i++) {
                 current = current[path[i]];
             }
             current[path[path.length - 1]] = value;
-            return newDocs;
+            return newData;
         });
     };
 
@@ -43,8 +40,8 @@ const EditTTNModal = ({ document, onClose, onUpdate }) => {
         setIsSubmitting(true);
         const toastId = toast.loading('Сохранение изменений...');
         try {
-            await ApiService.updateDocument(document.id, allDocuments);
-            toast.success('Данные документов успешно обновлены!', { id: toastId });
+            await ApiService.updateDocument(document.id, [editableData]);
+            toast.success('Данные документа успешно обновлены!', { id: toastId });
             onUpdate();
             onClose();
         } catch (error) {
@@ -54,7 +51,7 @@ const EditTTNModal = ({ document, onClose, onUpdate }) => {
         }
     };
 
-    if (!currentDoc) return null;
+    if (!editableData) return null;
 
     const renderSection = (title, fields) => (
         <div className="p-3 border rounded-lg bg-slate-50">
@@ -78,62 +75,37 @@ const EditTTNModal = ({ document, onClose, onUpdate }) => {
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
             <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-                <div className="flex items-center justify-between mb-4 flex-shrink-0">
-                    <h2 className="text-xl font-bold">
-                        Детали ТТН №{currentDoc.document_number || document.id}
-                    </h2>
-                    {allDocuments.length > 1 && (
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => setCurrentDocIndex(prev => Math.max(0, prev - 1))}
-                                disabled={currentDocIndex === 0}
-                                className="px-3 py-1 bg-gray-200 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300"
-                            >
-                                ← Назад
-                            </button>
-                            <span className="text-sm text-gray-600">
-                                {currentDocIndex + 1} из {allDocuments.length}
-                            </span>
-                            <button
-                                onClick={() => setCurrentDocIndex(prev => Math.min(allDocuments.length - 1, prev + 1))}
-                                disabled={currentDocIndex === allDocuments.length - 1}
-                                className="px-3 py-1 bg-gray-200 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300"
-                            >
-                                Вперед →
-                            </button>
-                        </div>
-                    )}
-                </div>
+                <h2 className="text-xl font-bold mb-4 flex-shrink-0">Детали ТТН (ID: {document.id})</h2>
                 
                 <div className="space-y-4 flex-1 overflow-y-auto pr-2">
                     {renderSection('Основная информация', [
-                        { label: 'Номер документа', path: ['document_number'], value: currentDoc.document_number },
-                        { label: 'Дата документа', path: ['document_date'], value: currentDoc.document_date, type: 'date' },
+                        { label: 'Номер документа', path: ['document_number'], value: editableData.document_number },
+                        { label: 'Дата документа', path: ['document_date'], value: editableData.document_date, type: 'date' },
                     ])}
                     {renderSection('Отправитель', [
-                        { label: 'Наименование', path: ['sender', 'name'], value: currentDoc.sender?.name },
-                        { label: 'ИНН', path: ['sender', 'inn'], value: currentDoc.sender?.inn },
-                        { label: 'КПП', path: ['sender', 'kpp'], value: currentDoc.sender?.kpp },
+                        { label: 'Наименование', path: ['sender', 'name'], value: editableData.sender?.name },
+                        { label: 'ИНН', path: ['sender', 'inn'], value: editableData.sender?.inn },
+                        { label: 'КПП', path: ['sender', 'kpp'], value: editableData.sender?.kpp },
                     ])}
                     {renderSection('Получатель', [
-                        { label: 'Наименование', path: ['recipient', 'name'], value: currentDoc.recipient?.name },
-                        { label: 'ИНН', path: ['recipient', 'inn'], value: currentDoc.recipient?.inn },
-                        { label: 'КПП', path: ['recipient', 'kpp'], value: currentDoc.recipient?.kpp },
+                        { label: 'Наименование', path: ['recipient', 'name'], value: editableData.recipient?.name },
+                        { label: 'ИНН', path: ['recipient', 'inn'], value: editableData.recipient?.inn },
+                        { label: 'КПП', path: ['recipient', 'kpp'], value: editableData.recipient?.kpp },
                     ])}
                      {renderSection('Перевозчик', [
-                        { label: 'Наименование', path: ['carrier', 'name'], value: currentDoc.carrier?.name },
-                        { label: 'ИНН', path: ['carrier', 'inn'], value: currentDoc.carrier?.inn },
-                        { label: 'КПП', path: ['carrier', 'kpp'], value: currentDoc.carrier?.kpp },
+                        { label: 'Наименование', path: ['carrier', 'name'], value: editableData.carrier?.name },
+                        { label: 'ИНН', path: ['carrier', 'inn'], value: editableData.carrier?.inn },
+                        { label: 'КПП', path: ['carrier', 'kpp'], value: editableData.carrier?.kpp },
                     ])}
                     {renderSection('Водитель и ТС', [
-                        { label: 'ФИО водителя', path: ['driver', 'full_name'], value: currentDoc.driver?.full_name },
-                        { label: 'Модель ТС', path: ['vehicle', 'model'], value: currentDoc.vehicle?.model },
-                        { label: 'Тип ТС', path: ['vehicle', 'type'], value: currentDoc.vehicle?.type },
+                        { label: 'ФИО водителя', path: ['driver', 'full_name'], value: editableData.driver?.full_name },
+                        { label: 'Модель ТС', path: ['vehicle', 'model'], value: editableData.vehicle?.model },
+                        { label: 'Тип ТС', path: ['vehicle', 'type'], value: editableData.vehicle?.type },
                     ])}
 
                     <div className="p-3 border rounded-lg bg-slate-50">
                         <h4 className="font-medium text-md mb-2 text-gray-800">Позиции</h4>
-                        {currentDoc.items?.map((item, itemIndex) => (
+                        {editableData.items?.map((item, itemIndex) => (
                             <div key={itemIndex} className="p-3 border-t space-y-3">
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                     <div>
@@ -171,27 +143,20 @@ const EditTTNModal = ({ document, onClose, onUpdate }) => {
                     </div>
                 </div>
                 
-                <div className="flex justify-between items-center gap-4 mt-6 pt-4 border-t flex-shrink-0">
-                    {allDocuments.length > 1 && (
-                        <div className="text-sm text-gray-600">
-                            Всего документов: {allDocuments.length}
-                        </div>
-                    )}
-                    <div className="flex gap-3 ml-auto">
-                        <button 
-                            onClick={onClose} 
-                            className="bg-gray-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-300 transition"
-                        >
-                            Отмена
-                        </button>
-                        <button 
-                            onClick={handleSubmit} 
-                            disabled={isSubmitting} 
-                            className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:bg-gray-400 hover:bg-green-700 transition"
-                        >
-                            {isSubmitting ? 'Сохранение...' : `Сохранить все (${allDocuments.length})`}
-                        </button>
-                    </div>
+                <div className="flex justify-end gap-4 mt-6 pt-4 border-t flex-shrink-0">
+                    <button 
+                        onClick={onClose} 
+                        className="bg-gray-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-300 transition"
+                    >
+                        Отмена
+                    </button>
+                    <button 
+                        onClick={handleSubmit} 
+                        disabled={isSubmitting} 
+                        className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:bg-gray-400 hover:bg-green-700 transition"
+                    >
+                        {isSubmitting ? 'Сохранение...' : 'Сохранить изменения'}
+                    </button>
                 </div>
             </div>
         </div>

@@ -65,12 +65,16 @@ class ApiService {
         });
     }
 
-    updateTaskStatus(projectId, taskId, status, photos, comment) {
+    updateTaskStatus(projectId, taskId, status, photos, comment, geolocation) {
         const formData = new FormData();
         formData.append('status', status);
         
         if (comment) {
             formData.append('comment', comment);
+        }
+        
+        if (geolocation) {
+            formData.append('geolocation', geolocation);
         }
         
         if (photos && photos.length > 0) {
