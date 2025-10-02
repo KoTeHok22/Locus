@@ -19,8 +19,7 @@ RUN playwright install
 
 COPY . .
 
-RUN chmod +x boot.sh
-
 EXPOSE 5000
 
-CMD ["./boot.sh"]
+RUN python init_db.py
+CMD ["python", "main.py"]
