@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { MapPin, Layers } from 'lucide-react';
 import ApiService from "../apiService";
-import { YandexMap } from '../Components/Map/YandexMap';
+import { OSMMap } from '../Components/Map/OSMMap';
 
 const MapPage = () => {
     const [projects, setProjects] = useState([]);
@@ -59,7 +59,7 @@ const MapPage = () => {
                 )}
                 {!loading && !error && (
                     <div className="h-full w-full bg-slate-100">
-                        <YandexMap projects={projects} />
+                        <OSMMap projects={projects} />
                     </div>
                 )}
             </div>

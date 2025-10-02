@@ -18,15 +18,25 @@ const CreateProjectModal = ({ onCancel, onUpdate }) => {
         setLoading(true);
         setError('');
         try {
-            const response = await fetch(`https://geocode-maps.yandex.ru/1.x/?apikey=${import.meta.env.VITE_YANDEX_MAPS_API_KEY}&format=json&geocode=${address}`);
+            // Используем Nominatim для геокодирования адреса
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`);
             const data = await response.json();
-            if (data.response.GeoObjectCollection.featureMember.length === 0) {
+            if (data.length === 0) {
                 throw new Error('Адрес не найден. Проверьте правильность ввода.');
             }
-            const geoObject = data.response.GeoObjectCollection.featureMember[0].GeoObject;
-            const [lon, lat] = geoObject.Point.pos.split(' ').map(Number);
+            const location = data[0];
+            const lat = parseFloat(location.lat);
+            const lon = parseFloat(location.lon);
+            
+            // Создаем небольшой полигон вокруг точки
             const offset = 0.001;
-            const polygonCoordinates = [[ [lon - offset, lat - offset], [lon + offset, lat - offset], [lon + offset, lat + offset], [lon - offset, lat + offset], [lon - offset, lat - offset] ]];
+            const polygonCoordinates = [[ 
+                [lon - offset, lat - offset], 
+                [lon + offset, lat - offset], 
+                [lon + offset, lat + offset], 
+                [lon - offset, lat + offset], 
+                [lon - offset, lat - offset] 
+            ]];
             
             const projectData = {
                 name,

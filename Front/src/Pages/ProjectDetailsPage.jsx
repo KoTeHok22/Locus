@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { MapPin, Calendar, ClipboardCheck, AlertTriangle, FileText, PlusCircle, User, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ApiService from '../apiService';
-import { YandexMap } from '../Components/Map/YandexMap';
+import { OSMMap } from '../Components/Map/OSMMap';
 import CreateIssueModal from '../Components/Issues/CreateIssueModal';
 import CreateTaskModal from '../Components/Tasks/CreateTaskModal';
 import AuthService from '../authService';
@@ -194,7 +194,7 @@ function ProjectDetailsPage() {
                             <p className="text-xs text-slate-500 sm:text-sm">Расположение и границы территории</p>
                         </div>
                         <div className="relative flex-1 bg-slate-100">
-                            <YandexMap projects={[project]} />
+                            <OSMMap projects={[project]} />
                         </div>
                     </div>
 

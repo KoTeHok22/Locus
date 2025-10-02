@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TrendingUp, HardHat, AlertTriangle, Clock3, ArrowRight, MapPin, ClipboardCheck, ClipboardList } from 'lucide-react';
 import ApiService from '../../apiService';
-import { YandexMap } from '../Map/YandexMap';
+import { OSMMap } from '../Map/OSMMap';
 import { translate } from '../../utils/translation.js';
 import '../../index.css';
 
@@ -214,7 +214,7 @@ function ManagerDHB() {
                         </div>
                         <div className="relative flex-1 overflow-hidden bg-slate-100 min-h-[300px] sm:min-h-[400px]">
                             {mapData ? (
-                                <YandexMap mapData={mapData} projects={projects} />
+                                <OSMMap mapData={mapData} projects={projects} />
                             ) : (
                                 <div className="flex h-full items-center justify-center text-xs text-slate-500 sm:text-sm">
                                     Нет данных карты

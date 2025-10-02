@@ -10,12 +10,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@pbe/react-yandex-maps": "^1.2.5",
     "@tailwindcss/postcss": "^4.1.13",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.544.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-hot-toast": "^2.4.1",
+    "react-leaflet": "^5.0.0",
     "react-router-dom": "^6.23.1",
     "recharts": "^3.2.1",
     "tailwindcss": "^4.1.13",
