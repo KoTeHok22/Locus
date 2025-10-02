@@ -51,6 +51,57 @@ def get_tasks():
 
     return jsonify(tasks_list), 200
 
+@task_bp.route('/api/tasks', methods=['POST'])
+@token_required
+@role_required('client')
+def create_task():
+    """
+    Создает новую плановую задачу.
+    Доступно для роли 'client' (заказчик).
+    """
+    data = request.get_json()
+    if not data:
+        return jsonify({"message": "Пустое тело запроса"}), 400
+
+    project_id = data.get('project_id')
+    name = data.get('name')
+    start_date_str = data.get('start_date')
+    end_date_str = data.get('end_date')
+
+    if not all([project_id, name, start_date_str, end_date_str]):
+        return jsonify({"message": "Необходимые поля: project_id, name, start_date, end_date"}), 400
+
+    try:
+        start_date = datetime.fromisoformat(start_date_str.split('T')[0]).date()
+        end_date = datetime.fromisoformat(end_date_str.split('T')[0]).date()
+    except (ValueError, TypeError):
+        return jsonify({"message": "Неверный формат даты. Ожидается ISO 8601 (YYYY-MM-DD)."}), 400
+
+    new_task = Task(
+        project_id=project_id,
+        name=name,
+        start_date=start_date,
+        end_date=end_date,
+        status='pending'
+    )
+
+    db.session.add(new_task)
+    db.session.commit()
+    
+    # Возвращаем задачу в том же формате, что и get_tasks
+    task_dict = {
+        'id': new_task.id,
+        'project_id': new_task.project_id,
+        'name': new_task.name,
+        'status': new_task.status,
+        'start_date': new_task.start_date.isoformat(),
+        'end_date': new_task.end_date.isoformat(),
+        'completed_at': None,
+        'completion_comment': None,
+        'completion_photos': [],
+    }
+
+    return jsonify(task_dict), 201
 @task_bp.route('/api/projects/<int:project_id>/tasks/<int:task_id>', methods=['PATCH'])
 @token_required
 def update_task_status(project_id, task_id):

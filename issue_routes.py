@@ -1,4 +1,3 @@
-
 from flask import Blueprint, request, jsonify
 from models import db, Issue, Project
 from auth import token_required

@@ -31,20 +31,26 @@ const RecognizedDataItem = ({ label, value }) => {
 
 const RecognitionDetailsView = ({ data }) => (
     <div className="mt-4 bg-slate-50 p-3 rounded-md border space-y-3">
-        {data.map((doc, index) => (
-            <div key={index} className="space-y-2">
-                <h5 className="font-semibold text-sm">Документ #{index + 1}</h5>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                    <RecognizedDataItem label="Номер документа" value={doc.document_number} />
-                    <RecognizedDataItem label="Дата документа" value={doc.document_date} />
-                    <RecognizedDataItem label="Отправитель" value={doc.sender} />
-                    <RecognizedDataItem label="Получатель" value={doc.recipient} />
-                    <RecognizedDataItem label="Перевозчик" value={doc.carrier} />
-                    <RecognizedDataItem label="Водитель" value={doc.driver?.full_name} />
-                    <RecognizedDataItem label="Автомобиль" value={doc.vehicle?.registration_plate} />
-                </div>
+        <div key={data.document_number} className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                <RecognizedDataItem label="Отправитель" value={data.sender?.name} />
+                <RecognizedDataItem label="Получатель" value={data.recipient?.name} />
+                <RecognizedDataItem label="Перевозчик" value={data.carrier?.name} />
+                <RecognizedDataItem label="Водитель" value={data.driver?.full_name} />
+                <RecognizedDataItem label="ТС" value={`${data.vehicle?.model || ''} (${data.vehicle?.type || ''})`} />
             </div>
-        ))}
+            <div className="pt-2 border-t">
+                <h5 className="font-semibold text-sm mt-2">Позиции:</h5>
+                {data.items?.map((item, index) => (
+                    <div key={index} className="text-sm mt-1 border-b pb-2">
+                        <p className='font-medium'>{item.name} - {item.quantity} {item.unit}</p>
+                        {item.quality_certificate && 
+                            <p className='text-xs text-gray-600 pl-2'>Паспорт: №{item.quality_certificate.batch_number} от {item.quality_certificate.manufacturing_date}</p>
+                        }
+                    </div>
+                ))}
+            </div>
+        </div>
     </div>
 );
 
@@ -69,43 +75,37 @@ const TTNCard = ({ document, onEdit }) => {
         <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
             <div className="flex justify-between items-start mb-3">
                 <div>
-                    <p className="font-semibold text-blue-700">ТТН (ID: {document.id})</p>
+                    <p className="font-semibold text-blue-700">
+                        ТТН №{recognized?.document_number || document.id}
+                    </p>
                     <p className="text-xs text-gray-500">Загружен: {new Date(document.created_at).toLocaleString()}</p>
                 </div>
                 <StatusBadge status={document.recognition_status} />
             </div>
 
             {document.recognition_status === 'completed' && recognized ? (
-                <div className="space-y-2">
-                    <RecognizedDataItem label="Номер документа" value={recognized.document_number} />
-                    <RecognizedDataItem label="Дата документа" value={recognized.document_date} />
-                    <div className="pt-2">
-                        <h4 className="font-medium text-sm mb-1">Позиции:</h4>
-                        <ul className="list-disc list-inside space-y-1 text-sm">
-                            {recognized.items.map((item, index) => (
-                                <li key={index}>{item.name} - {item.quantity} {item.unit}</li>
-                            ))}
-                        </ul>
-                    </div>
+                <div className="space-y-2 text-sm">
+                    <RecognizedDataItem label="Отправитель" value={recognized.sender?.name} />
+                    <RecognizedDataItem label="Дата" value={recognized.document_date} />
                 </div>
             ) : (
                 <p className="text-sm text-gray-500 italic">Данные распознавания отсутствуют или документ в обработке.</p>
             )}
 
             <div className="flex justify-end gap-4 mt-4 pt-3 border-t">
-                <button onClick={handleOpenFile} className="text-blue-600 hover:underline text-sm">Открыть файл</button>
+                <button onClick={handleOpenFile} className="text-blue-600 hover:underline text-sm font-medium">Открыть файл</button>
                 {userRole === 'foreman' && document.recognition_status === 'completed' && (
-                    <button onClick={onEdit} className="text-green-600 hover:underline text-sm">Отредактировать</button>
+                    <button onClick={onEdit} className="text-green-600 hover:underline text-sm font-medium">Детали / Редакт.</button>
                 )}
                 {document.recognized_data && (
-                    <button onClick={() => setShowDetails(!showDetails)} className="text-blue-600 hover:underline text-sm">
-                        {showDetails ? 'Скрыть детали' : 'Показать детали'}
+                    <button onClick={() => setShowDetails(!showDetails)} className="text-blue-600 hover:underline text-sm font-medium">
+                        {showDetails ? 'Скрыть' : 'Показать детали'}
                     </button>
                 )}
             </div>
 
-            {showDetails && document.recognized_data && (
-               <RecognitionDetailsView data={document.recognized_data} />
+            {showDetails && recognized && (
+               <RecognitionDetailsView data={recognized} />
             )}
         </div>
     );

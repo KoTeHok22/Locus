@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import ApiService from '../apiService';
 import { YandexMap } from '../Components/Map/YandexMap';
 import CreateIssueModal from '../Components/Issues/CreateIssueModal';
+import CreateTaskModal from '../Components/Tasks/CreateTaskModal';
 import AuthService from '../authService';
 import VerificationTaskCard from '../Components/Tasks/VerificationTaskCard';
 import TTNCard from '../Components/Documents/TTNCard';
@@ -19,6 +20,7 @@ function ProjectDetailsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isIssueModalOpen, setIssueModalOpen] = useState(false);
+    const [isTaskModalOpen, setTaskModalOpen] = useState(false);
     const userRole = AuthService.getUserRole();
 
     const fetchData = useCallback(async () => {
@@ -74,6 +76,13 @@ function ProjectDetailsPage() {
                     onUpdate={fetchData}
                 />
             )}
+            {isTaskModalOpen && (
+                <CreateTaskModal
+                    projectId={projectId}
+                    onClose={() => setTaskModalOpen(false)}
+                    onUpdate={fetchData}
+                />
+            )}
             {editingDocument && (
                 <EditTTNModal 
                     document={editingDocument}
@@ -91,12 +100,20 @@ function ProjectDetailsPage() {
                         <p className="text-sm text-gray-500 mt-1">{project.address}</p>
                     </div>
                     {userRole === 'client' && (
-                        <button 
-                            onClick={() => setIssueModalOpen(true)}
-                            className="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2">
-                            <i className="fas fa-plus"></i>
-                            <span>Добавить замечание</span>
-                        </button>
+                        <div className="flex gap-2">
+                            <button 
+                                onClick={() => setTaskModalOpen(true)}
+                                className="bg-green-600 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2">
+                                <i className="fas fa-plus"></i>
+                                <span>Добавить задачу</span>
+                            </button>
+                            <button 
+                                onClick={() => setIssueModalOpen(true)}
+                                className="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2">
+                                <i className="fas fa-plus"></i>
+                                <span>Добавить замечание</span>
+                            </button>
+                        </div>
                     )}
                 </div>
                 

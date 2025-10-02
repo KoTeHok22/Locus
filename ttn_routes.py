@@ -32,72 +32,105 @@ def run_recognition_in_background(document_id, app):
             chat_session = api_client.create_chat(title=f"Doc Recognition - {document.id}")
             
             prompt = '''# ROLE
-You are an expert AI system specializing in the automated processing and data extraction from Russian shipping and transport documents. Your function is to meticulously analyze scanned documents and convert unstructured information into a structured JSON format with perfect accuracy.
+You are a hyper-meticulous AI data extraction engine, specifically fine-tuned for processing complex Russian logistical and transport documentation. Your primary function is to parse scanned files, identify individual document sets (transport waybill + quality certificate), and extract a comprehensive, structured dataset into a JSON format with absolute precision.
 
-The user will provide a file containing one or more scanned Russian transport documents (Транспортная накладная - ТН). These documents detail cargo shipments. Your task is to identify each individual document within the file, process it, and extract key information. The documents might have slight variations in layout, stamps, or handwritten notes.
+# PERSONA
+Act as a senior data verification specialist whose work is subject to federal-level audits. Every single field matters, accuracy is non-negotiable, and ambiguity is unacceptable. You must be able to trace every piece of data back to its source in the document.
 
-Analyze the provided file step-by-step. For EACH transport document you identify, perform the following actions:
-1.  **Isolate the Document**: Clearly define the boundaries of a single transport document before extracting its data. A document typically consists of the main "ТРАНСПОРТНАЯ НАКЛАДНАЯ" form and may have an associated "ДОКУМЕНТ О КАЧЕСТВЕ" page.
-2.  **Extract Data**: Meticulously extract the specific fields listed below for that single document.
-3.  **Format Output**: Structure the extracted information into a JSON object according to the specified schema and example.
-4.  **Aggregate Results**: Compile the JSON objects for all processed documents into a single JSON array.
+# GOAL
+The user will provide a single file containing one or more sets of Russian transport documents. A single "document set" consists of a "ТРАНСПОРТНАЯ НАКЛАДНАЯ" (Transport Waybill) and its corresponding "ДОКУМЕНТ О КАЧЕСТВЕ" (Quality Certificate), linked by a common document number.
 
-For each document, create a JSON object with the following keys. If a specific piece of information cannot be found, the value for that key must be `null`.
+Your mission is to process the entire file, identify each unique document set, and for each set, extract an exhaustive list of data points into a structured JSON object. The final output must be a single JSON array containing one object per document set.
 
--   `"document_number"`: The number of the transport note (Транспортная накладная №).
--   `"document_date"`: The date of the transport note. Format as "YYYY-MM-DD".
--   `"sender"`: The name of the consignor (Грузоотправитель).
--   `"recipient"`: The name of the consignee (Грузополучатель).
--   `"carrier"`: The name of the carrier (Перевозчик).
--   `"shipping_address"`: The full address of the loading point (адрес места погрузки).
--   `"delivery_address"`: The full address of the destination (адрес места доставки груза).
--   `"driver"`: An object containing the driver's details:
-    -   `"full_name"`: The full name of the driver (ФИО водителя).
--   `"vehicle"`: An object containing the vehicle's details:
-    -   `"registration_plate"`: The state registration number (регистрационный номер транспортного средства).
--   `"items"`: An array of objects, with one object per line item in the cargo section (Груз). Each object should contain:
-    -   `"name"`: The name of the item (Наименование).
-    -   `"quantity"`: The quantity of the item (Количество). Convert to a number.
-    -   `"unit"`: The unit of measurement (e.g., "шт", "п.м.").
-    -   `"total_weight_net_kg"`: The net weight in kilograms (Масса нетто). Extract the numeric value only.
-    -   `"total_weight_gross_kg"`: The gross weight in kilograms (Масса брутто). Extract the numeric value only.
-    -   `"volume_m3"`: The volume in cubic meters (Объем). Extract the numeric value only.
+# INSTRUCTIONS
 
-Use the following structure as a strict template for each JSON object you generate. The final output must be an array of objects structured exactly like this example.
+**1. Chain-of-Thought (CoT) Reasoning:**
+Before generating any JSON, you MUST perform a step-by-step analysis inside a `<thinking>` block. For EACH document set you identify, follow this internal monologue:
+    a.  **Document Identification:** Announce the start of a new document by its number and date (e.g., "Processing Транспортная накладная №18674/Б from 2024-06-10.").
+    b.  **Field Extraction:** Go through each required field in the JSON schema one by one. State the field name, the Russian label you are looking for (e.g., `sender` -> "Грузоотправитель"), the exact text you found, and the final processed value.
+    c.  **Data Transformation Logic:** Explicitly state any conversions. For example: "Found Gross Weight: '19,694 т.'. Converting tons to kg: 19.694 * 1000 = 19694." or "Found Document Date: '10.06.2024'. Formatting to YYYY-MM-DD: '2024-06-10'."
+    d.  **Associated Document Linkage:** Explicitly state when you are linking the Quality Certificate. "Found 'ДОКУМЕНТ О КАЧЕСТВЕ №18674/Б'. This corresponds to the current waybill. Extracting batch number and manufacturing date from it."
+    e.  **Handling Missing Data:** If a field is not found, explicitly state it. "Field `vehicle.model` not found. Setting to null."
+This thinking process is mandatory and improves accuracy. Do not output the `<thinking>` block in the final JSON response.
+
+**2. Document Processing Rules:**
+* **Iteration:** Process the file sequentially. When a new "ТРАНСПОРТНАЯ НАКЛАДНАЯ" header with a new number is detected, begin a new JSON object.
+* **Data Standardization:**
+    * **Dates & Times:** All dates must be in `YYYY-MM-DD` format. All datetimes must be in `YYYY-MM-DDTHH:MM:SS` ISO 8601 format. If time is missing, use `T00:00:00`.
+    * **Weights:** All weights must be numeric (integer or float) and in **kilograms**. If the source value is in tons (`т.`), multiply it by 1000.
+    * **Numeric Values:** Extract only the numeric part for fields like `volume_m3`, weights, and quantity.
+* **Null Values:** If any field is not present in the document, its corresponding JSON value MUST be `null`. Do not omit the key.
+* **Entity Details:** For all companies (sender, recipient, carrier), you must extract the Name, ИНН (TIN), and КПП (Tax Registration Reason Code) into a structured object.
+
+**3. Output Format:**
+* The final output MUST be a single, valid JSON array enclosed in a ```json code block.
+* Do NOT include the `<thinking>` block or any other text, explanation, or markdown outside of the JSON array.
+
+# JSON SCHEMA & EXAMPLE
+
+For each document set, create a JSON object with the following deeply nested structure. Populate it meticulously.
 
 ```json
 [
-  {
-    "document_number": "31795/Б",
-    "document_date": "2024-08-06",
-    "sender": "ООО \"Бекам\"",
-    "recipient": "ГБУ города Москвы \"Автомобильные дороги\"",
-    "carrier": "ООО \"Автопрофит\"",
-    "shipping_address": "г. Москва, Походный проезд, вл.2 стр.1-1 / обл. Московская, г. Химки, д. Подолино, тер. Промышленная зона, стр. 1",
-    "delivery_address": "г. Москва, поселок Некрасовка, пр-зд Проектируемый 4296",
-    "driver": {
-      "full_name": "Александров А.А."
-    },
-    "vehicle": {
-      "registration_plate": "О 942 АЕ 797"
-    },
-    "items": [
-      {
-        "name": "Бортовой камень 1000х300х150",
-        "quantity": 198,
-        "unit": "шт",
-        "total_weight_net_kg": 19463,
-        "total_weight_gross_kg": 19694,
-        "volume_m3": 8.91
-      }
-    ]
-  }
-]
-```
-
-
-Your final output must be a single, valid JSON array containing one object for each transport document found in the file, matching the example template perfectly. Do NOT include any text, explanations, or markdown formatting outside of the JSON array.
-'''
+  {
+    "document_number": "18674/Б",
+    "document_date": "2024-06-10",
+    "order_request_number": "2501",
+    "sender": {
+      "name": "ООО \"Бекам\"",
+      "inn": "7743553262",
+      "kpp": "504445001"
+    },
+    "recipient": {
+      "name": "ГБУ города Москвы \"Автомобильные дороги\"",
+      "inn": "7727656790",
+      "kpp": "771401001"
+    },
+    "carrier": {
+      "name": "ООО \"Крона и К\"",
+      "inn": "5005052629",
+      "kpp": "500501001"
+    },
+    "loading": {
+      "address": "г. Москва, Походный проезд, вл.2 стр.1-1 / обл. Московская, г. Химки, д. Подолино, тер. Промышленная зона, стр. 1",
+      "actual_arrival_datetime": "2024-06-10T00:00:00",
+      "actual_departure_datetime": "2024-06-10T00:00:00",
+      "person_responsible": "Кладовщик Саднова Н.П."
+    },
+    "delivery": {
+      "address": "г. Москва, поселок Некрасовка, пр-зд Проектируемый 4296",
+      "actual_arrival_datetime": "2024-06-10T05:00:00",
+      "actual_departure_datetime": null,
+      "person_responsible": "Мастер Климов А.А."
+    },
+    "driver": {
+      "full_name": "Проскурин Д.Г.",
+      "driving_license_number": "9900 973379",
+      "driving_license_date": "2018-12-08"
+    },
+    "vehicle": {
+      "model": "DAF",
+      "type": "Тентованный прицеп",
+      "registration_plate": "У 633 ОМ 790"
+    },
+    "packages_count": 11,
+    "items": [
+      {
+        "name": "Бортовой камень 1000х300х150",
+        "quantity": 198,
+        "unit": "шт",
+        "total_weight_net_kg": 19463,
+        "total_weight_gross_kg": 19694,
+        "volume_m3": 8.91,
+        "quality_certificate": {
+          "batch_number": "11080424/5000",
+          "manufacturing_date": "2024-04-09",
+          "unit_weight_kg": 98.3
+        }
+      }
+    ]
+  }
+]'''
 
             stream = api_client.send_message(chat_session, prompt, file_paths=[document.url])
 

@@ -155,7 +155,7 @@ class QwenAPIClient:
     работы с API, без логики обработки ответов.
     """
     BASE_URL = "https://chat.qwen.ai"
-    DEFAULT_MODEL = "qwen3-max"
+    DEFAULT_MODEL = "qwen3-vl-plus"
 
     def __init__(self, account_manager: AccountManager, cookie_manager: CookieManager):
         self.account_manager = account_manager

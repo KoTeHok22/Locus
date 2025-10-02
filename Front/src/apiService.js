@@ -58,6 +58,13 @@ class ApiService {
         return request(`/tasks?${query}`);
     }
 
+    createTask(taskData) {
+        return request('/tasks', {
+            method: 'POST',
+            body: JSON.stringify(taskData)
+        });
+    }
+
     updateTaskStatus(projectId, taskId, status, photos, comment) {
         const formData = new FormData();
         formData.append('status', status);
