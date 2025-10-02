@@ -3,19 +3,22 @@ import { AlertTriangle, MapPin, PlusCircle, ClipboardList, ShieldAlert } from 'l
 import ApiService from '../../../apiService';
 import '../../../index.css';
 import CreateIssueModal from '../../Issues/CreateIssueModal';
+import VerifyResolutionModal from '../../Issues/VerifyResolutionModal';
+import { translate } from '../../../utils/translation.js';
 
 const InspectorDHB = () => {
     const [data, setData] = useState({ projects: [], issues: [], classifiers: [] });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [verifyingIssue, setVerifyingIssue] = useState(null);
 
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
             const [projects, issues, classifiers] = await Promise.all([
                 ApiService.getProjects(),
-                ApiService.getIssues({ status: 'open' }),
+                ApiService.getIssues(),
                 ApiService.getClassifiers({ type: 'violation' })
             ]);
             setData({ projects, issues, classifiers });
@@ -113,34 +116,61 @@ const InspectorDHB = () => {
                     </div>
                     <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4 sm:space-y-4 sm:px-6 sm:py-5">
                         {data.issues.length > 0 ? (
-                            data.issues.map(issue => (
-                                <div
-                                    key={issue.id}
-                                    className="rounded-xl border border-slate-100 bg-white p-3 shadow-sm transition-all hover:border-blue-200 hover:shadow-md sm:rounded-2xl sm:p-4"
-                                >
-                                    <div className="flex items-start justify-between gap-2 sm:gap-3">
-                                        <div className="min-w-0 flex-1">
-                                            <div className="flex items-center gap-1.5 text-red-500 sm:gap-2">
-                                                <AlertTriangle size={14} className="sm:hidden" />
-                                                <AlertTriangle size={16} className="hidden sm:block" />
-                                                <span className="text-[10px] font-semibold uppercase sm:text-xs">Нарушение #{issue.id}</span>
+                            data.issues.map(issue => {
+                                const statusColors = {
+                                    'open': 'border-red-100 bg-white',
+                                    'pending_verification': 'border-amber-100 bg-amber-50/30',
+                                    'resolved': 'border-green-100 bg-green-50/30'
+                                };
+                                const statusBadges = {
+                                    'open': 'bg-red-100 text-red-700 border-red-200',
+                                    'pending_verification': 'bg-amber-100 text-amber-700 border-amber-200',
+                                    'resolved': 'bg-green-100 text-green-700 border-green-200'
+                                };
+                                return (
+                                    <div
+                                        key={issue.id}
+                                        className={`rounded-xl border p-3 shadow-sm transition-all hover:shadow-md sm:rounded-2xl sm:p-4 ${statusColors[issue.status] || statusColors['open']}`}
+                                    >
+                                        <div className="flex items-start justify-between gap-2 sm:gap-3">
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <div className="flex items-center gap-1.5 text-red-500 sm:gap-2">
+                                                        <AlertTriangle size={14} className="sm:hidden" />
+                                                        <AlertTriangle size={16} className="hidden sm:block" />
+                                                        <span className="text-[10px] font-semibold uppercase sm:text-xs">Нарушение #{issue.id}</span>
+                                                    </div>
+                                                    <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${statusBadges[issue.status] || statusBadges['open']}`}>
+                                                        {translate(issue.status)}
+                                                    </span>
+                                                </div>
+                                                <p className="mt-1.5 text-xs font-medium text-slate-900 sm:mt-2 sm:text-sm">{issue.description}</p>
+                                                {issue.project_name && (
+                                                    <p className="mt-1.5 flex items-center gap-1.5 text-[10px] text-slate-500 sm:mt-2 sm:text-xs">
+                                                        <MapPin size={12} className="flex-shrink-0 text-slate-400 sm:hidden" />
+                                                        <MapPin size={14} className="hidden flex-shrink-0 text-slate-400 sm:block" />
+                                                        {issue.project_name}
+                                                    </p>
+                                                )}
                                             </div>
-                                            <p className="mt-1.5 text-xs font-medium text-slate-900 sm:mt-2 sm:text-sm">{issue.description}</p>
-                                            {issue.project_name && (
-                                                <p className="mt-1.5 flex items-center gap-1.5 text-[10px] text-slate-500 sm:mt-2 sm:text-xs">
-                                                    <MapPin size={12} className="flex-shrink-0 text-slate-400 sm:hidden" />
-                                                    <MapPin size={14} className="hidden flex-shrink-0 text-slate-400 sm:block" />
-                                                    {issue.project_name}
-                                                </p>
-                                            )}
+                                            <span className="inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600 sm:h-10 sm:w-10">
+                                                <ShieldAlert size={14} className="sm:hidden" />
+                                                <ShieldAlert size={18} className="hidden sm:block" />
+                                            </span>
                                         </div>
-                                        <span className="inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600 sm:h-10 sm:w-10">
-                                            <ShieldAlert size={14} className="sm:hidden" />
-                                            <ShieldAlert size={18} className="hidden sm:block" />
-                                        </span>
+                                        {issue.status === 'pending_verification' && (
+                                            <button
+                                                onClick={() => setVerifyingIssue(issue)}
+                                                className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-700 sm:mt-4 sm:rounded-xl sm:px-3 sm:py-2 sm:text-sm"
+                                            >
+                                                <ClipboardList size={12} className="sm:hidden" />
+                                                <ClipboardList size={14} className="hidden sm:block" />
+                                                Верифицировать
+                                            </button>
+                                        )}
                                     </div>
-                                </div>
-                            ))
+                                );
+                            })
                         ) : (
                             <div className="flex h-full flex-col items-center justify-center rounded-xl bg-slate-50 py-10 text-center text-xs text-slate-500 sm:rounded-2xl sm:text-sm">
                                 Нарушений не обнаружено
@@ -149,6 +179,14 @@ const InspectorDHB = () => {
                     </div>
                 </section>
             </div>
+
+            {verifyingIssue && (
+                <VerifyResolutionModal
+                    issue={verifyingIssue}
+                    onClose={() => setVerifyingIssue(null)}
+                    onUpdate={fetchData}
+                />
+            )}
         </div>
     );
 };

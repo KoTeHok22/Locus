@@ -1,9 +1,9 @@
 import React, { useState, useRef } from 'react';
 import toast from 'react-hot-toast';
 import ApiService from '../../apiService';
-import { getCurrentGeolocation } from '../../utils/geolocation';
+import { X } from 'lucide-react';
 
-const TaskCompletionModal = ({ task, onClose, onUpdate }) => {
+const ResolveIssueModal = ({ issue, onClose, onUpdate }) => {
     const [comment, setComment] = useState('');
     const [photos, setPhotos] = useState([]);
     const [photoPreviews, setPhotoPreviews] = useState([]);
@@ -50,38 +50,21 @@ const TaskCompletionModal = ({ task, onClose, onUpdate }) => {
 
     const handleSubmit = async () => {
         if (photos.length === 0) {
-            toast.error('Необходимо прикрепить минимум одно фото');
+            toast.error('Необходимо прикрепить минимум одно фото устранения');
             return;
         }
 
         setIsSubmitting(true);
-        const toastId = toast.loading('Получение геолокации...');
-        
+        const toastId = toast.loading('Отправка...');
+
         try {
-            // Получаем геолокацию
-            const { latitude, longitude } = await getCurrentGeolocation();
-            const geolocation = `${latitude},${longitude}`;
-            
-            toast.loading('Завершение задачи...', { id: toastId });
-            
-            await ApiService.updateTaskStatus(
-                task.project_id,
-                task.id,
-                'completed',
-                photos,
-                comment,
-                geolocation
-            );
-            toast.success('Задача успешно завершена!', { id: toastId });
+            await ApiService.resolveIssue(issue.id, photos, comment);
+            toast.success('Нарушение отмечено как устраненное и отправлено на верификацию!', { id: toastId });
             onUpdate();
             onClose();
         } catch (error) {
-            console.error('Ошибка при завершении задачи:', error);
-            if (error.message.includes('геолокац')) {
-                toast.error(`${error.message}`, { id: toastId });
-            } else {
-                toast.error(`Не удалось завершить задачу: ${error.message}`, { id: toastId });
-            }
+            console.error('Ошибка при устранении нарушения:', error);
+            toast.error(`Не удалось устранить нарушение: ${error.message}`, { id: toastId });
         } finally {
             setIsSubmitting(false);
         }
@@ -91,20 +74,29 @@ const TaskCompletionModal = ({ task, onClose, onUpdate }) => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
             <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
-                    <h2 className="text-xl font-bold text-gray-900 mb-2">
-                        Завершить задачу
-                    </h2>
-                    <p className="text-sm text-gray-600 mb-4">{task.name}</p>
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-xl font-bold text-gray-900">
+                            Устранить нарушение
+                        </h2>
+                        <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+                            <X size={24} />
+                        </button>
+                    </div>
+                    
+                    <div className="mb-4 p-3 bg-slate-50 rounded-lg">
+                        <p className="text-sm font-medium text-gray-700">Описание нарушения:</p>
+                        <p className="text-sm text-gray-600 mt-1">{issue.description}</p>
+                    </div>
 
                     {/* Комментарий */}
                     <div className="mb-4">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Комментарий (необязательно)
+                            Комментарий об устранении (необязательно)
                         </label>
                         <textarea
                             value={comment}
                             onChange={(e) => setComment(e.target.value)}
-                            placeholder="Опишите выполненные работы..."
+                            placeholder="Опишите, как было устранено нарушение..."
                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                             rows="3"
                         />
@@ -113,7 +105,7 @@ const TaskCompletionModal = ({ task, onClose, onUpdate }) => {
                     {/* Фотографии */}
                     <div className="mb-6">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Фотографии <span className="text-red-500">*</span>
+                            Фотографии устранения <span className="text-red-500">*</span>
                             <span className="text-xs text-gray-500 ml-2">(минимум 1 фото)</span>
                         </label>
                         
@@ -132,7 +124,7 @@ const TaskCompletionModal = ({ task, onClose, onUpdate }) => {
                                             onClick={() => handleRemovePhoto(index)}
                                             className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                                         >
-                                            <i className="fas fa-times text-xs"></i>
+                                            <X size={14} />
                                         </button>
                                     </div>
                                 ))}
@@ -176,7 +168,7 @@ const TaskCompletionModal = ({ task, onClose, onUpdate }) => {
                             disabled={isSubmitting || photos.length === 0}
                             className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition font-medium"
                         >
-                            {isSubmitting ? 'Отправка...' : 'Завершить задачу'}
+                            {isSubmitting ? 'Отправка...' : 'Отметить как устраненное'}
                         </button>
                         <button
                             onClick={onClose}
@@ -192,4 +184,4 @@ const TaskCompletionModal = ({ task, onClose, onUpdate }) => {
     );
 };
 
-export default TaskCompletionModal;
+export default ResolveIssueModal;

@@ -32,7 +32,7 @@ const ActivateProjectModal = ({ project, onClose, onSuccess }) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
             <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
                 <h2 className="text-xl font-bold mb-4">Активация проекта: {project.name}</h2>
                 <p className="text-sm text-gray-600 mb-6">Чтобы активировать проект, назначьте ответственного прораба. Ему будет отправлено приглашение.</p>

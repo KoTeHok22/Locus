@@ -191,9 +191,15 @@ class Issue(db.Model):
     due_date = db.Column(db.Date, nullable=True)
     
     resolution_comment = db.Column(db.Text, nullable=True)
+    resolution_photos = db.Column(db.JSON, nullable=True)
     resolved_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     resolved_at = db.Column(db.DateTime, nullable=True)
     geolocation = db.Column(db.String(100), nullable=True)
+    
+    verified_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    verified_at = db.Column(db.DateTime, nullable=True)
+    verification_status = db.Column(db.String(50), nullable=True)
+    verification_comment = db.Column(db.Text, nullable=True)
     
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
@@ -201,6 +207,7 @@ class Issue(db.Model):
     task = db.relationship('Task', backref='issues')
     author = db.relationship('User', foreign_keys=[author_id])
     resolved_by = db.relationship('User', foreign_keys=[resolved_by_id])
+    verified_by = db.relationship('User', foreign_keys=[verified_by_id])
     classifier = db.relationship('Classifier')
     
     documents = db.relationship('Document', secondary='issue_documents', backref='issues')

@@ -115,6 +115,36 @@ class ApiService {
         return request(`/projects/${projectId}/issues`, options);
     }
 
+    resolveIssue(issueId, photos, comment = "") {
+        const formData = new FormData();
+        
+        photos.forEach(photo => {
+            formData.append("photos", photo);
+        });
+        
+        if (comment) {
+            formData.append("comment", comment);
+        }
+
+        return request(`/issues/${issueId}/resolve`, {
+            method: "POST",
+            body: formData,
+            isFormData: true
+        });
+    }
+
+    verifyIssueResolution(issueId, status, comment = "") {
+        return request(`/issues/${issueId}/verify`, {
+            method: "POST",
+            body: JSON.stringify({ status, comment })
+        });
+    }
+
+    getIssueDetails(issueId) {
+        return request(`/issues/${issueId}`);
+    }
+
+
     async getClassifiers(filters = {}) {
         const query = new URLSearchParams(filters).toString();
         const data = await request(`/classifiers?${query}`);

@@ -5,6 +5,8 @@ import toast from 'react-hot-toast';
 import ApiService from '../apiService';
 import { OSMMap } from '../Components/Map/OSMMap';
 import CreateIssueModal from '../Components/Issues/CreateIssueModal';
+import ResolveIssueModal from '../Components/Issues/ResolveIssueModal';
+import VerifyResolutionModal from '../Components/Issues/VerifyResolutionModal';
 import CreateTaskModal from '../Components/Tasks/CreateTaskModal';
 import AuthService from '../authService';
 import VerificationTaskCard from '../Components/Tasks/VerificationTaskCard';
@@ -23,6 +25,8 @@ function ProjectDetailsPage() {
     const [error, setError] = useState(null);
     const [isIssueModalOpen, setIssueModalOpen] = useState(false);
     const [isTaskModalOpen, setTaskModalOpen] = useState(false);
+    const [resolvingIssue, setResolvingIssue] = useState(null);
+    const [verifyingIssue, setVerifyingIssue] = useState(null);
     const userRole = AuthService.getUserRole();
 
     const fetchData = useCallback(async () => {
@@ -40,7 +44,7 @@ function ProjectDetailsPage() {
                 setTasksToVerify(tasksData);
             }
 
-            if (userRole === 'inspector') {
+            if (userRole === 'inspector' || userRole === 'foreman') {
                 const issuesData = await ApiService.getIssues({ project_id: projectId });
                 setIssues(issuesData);
             }
@@ -129,6 +133,22 @@ function ProjectDetailsPage() {
                         setEditingDocument(null);
                         fetchData();
                     }}
+                />
+            )}
+
+            {resolvingIssue && (
+                <ResolveIssueModal
+                    issue={resolvingIssue}
+                    onClose={() => setResolvingIssue(null)}
+                    onUpdate={fetchData}
+                />
+            )}
+
+            {verifyingIssue && (
+                <VerifyResolutionModal
+                    issue={verifyingIssue}
+                    onClose={() => setVerifyingIssue(null)}
+                    onUpdate={fetchData}
                 />
             )}
             
@@ -334,13 +354,34 @@ function ProjectDetailsPage() {
                                                             className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
                                                                 issue.status === 'open'
                                                                     ? 'border-red-200 bg-red-100 text-red-700'
-                                                                    : 'border-slate-200 bg-slate-100 text-slate-600'
+                                                                    : issue.status === 'pending_verification'
+                                                                    ? 'border-amber-200 bg-amber-100 text-amber-700'
+                                                                    : 'border-green-200 bg-green-100 text-green-700'
                                                             }`}
                                                         >
                                                             {translate(issue.status)}
                                                         </span>
                                                         {issue.due_date && (
                                                             <span className="text-xs text-slate-500">до {issue.due_date}</span>
+                                                        )}
+                                                    </div>
+                                                    {/* Кнопки действий */}
+                                                    <div className="mt-3 flex gap-2">
+                                                        {userRole === 'foreman' && issue.status === 'open' && (
+                                                            <button
+                                                                onClick={() => setResolvingIssue(issue)}
+                                                                className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 transition"
+                                                            >
+                                                                Устранить
+                                                            </button>
+                                                        )}
+                                                        {userRole === 'inspector' && issue.status === 'pending_verification' && (
+                                                            <button
+                                                                onClick={() => setVerifyingIssue(issue)}
+                                                                className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 transition"
+                                                            >
+                                                                Верифицировать
+                                                            </button>
                                                         )}
                                                     </div>
                                                 </div>

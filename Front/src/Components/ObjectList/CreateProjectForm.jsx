@@ -86,7 +86,7 @@ function CreateProjectForm({ onSubmit, onCancel, apiError }) {
     };
 
     return (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-[9999]">
             <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-2xl">
                 <h2 className="text-2xl font-bold mb-6">Создать новый объект</h2>
                 <form onSubmit={handleSubmit} className="space-y-4">

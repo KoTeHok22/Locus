@@ -5,10 +5,8 @@ const translations = {
 
   'active': 'Активен',
   'pending': 'В ожидании',
-  'pending_verification': 'На верификации',
   'completed': 'Завершено',
   'verified': 'Проверено',
-  'resolved': 'Устранено',
   'open': 'Открыто',
   'processing': 'В обработке',
   'failed': 'Ошибка',

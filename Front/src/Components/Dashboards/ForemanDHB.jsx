@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import ApiService from '../../apiService';
 import { translate } from '../../utils/translation.js';
 import TaskCompletionModal from '../Tasks/TaskCompletionModal';
+import ResolveIssueModal from '../Issues/ResolveIssueModal';
 import '../../index.css';
 
 const taskStatusStyles = {
@@ -79,28 +80,29 @@ const TaskCard = ({ index, task, onComplete }) => {
     );
 };
 
-const IssueCard = ({ issue }) => {
-    const fileInputRef = useRef(null);
-    const [selectedFileName, setSelectedFileName] = useState('');
-
-    const handleUploadClick = () => {
-        fileInputRef.current?.click();
+const IssueCard = ({ issue, onResolve }) => {
+    const statusColors = {
+        'open': 'border-red-100 bg-red-50/70',
+        'pending_verification': 'border-amber-100 bg-amber-50/70',
+        'resolved': 'border-green-100 bg-green-50/70'
     };
 
-    const handleFileChange = (event) => {
-        const file = event.target.files?.[0];
-        if (!file) {
-            return;
-        }
-        setSelectedFileName(file.name);
-        toast.success('Фото добавлено. Отправьте отчет через систему.');
+    const statusBadges = {
+        'open': 'bg-red-100 text-red-700 border-red-200',
+        'pending_verification': 'bg-amber-100 text-amber-700 border-amber-200',
+        'resolved': 'bg-green-100 text-green-700 border-green-200'
     };
 
     return (
-        <div className="rounded-xl border border-red-100 bg-red-50/70 p-3 shadow-sm transition-all hover:border-red-200 hover:shadow-md sm:rounded-2xl sm:p-4">
+        <div className={`rounded-xl border p-3 shadow-sm transition-all hover:shadow-md sm:rounded-2xl sm:p-4 ${statusColors[issue.status] || statusColors['open']}`}>
             <div className="flex items-start justify-between gap-2 sm:gap-3">
                 <div className="min-w-0 flex-1">
-                    <h3 className="text-xs font-semibold text-slate-900 sm:text-sm">Замечание #{issue.id}</h3>
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-xs font-semibold text-slate-900 sm:text-sm">Замечание #{issue.id}</h3>
+                        <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${statusBadges[issue.status] || statusBadges['open']}`}>
+                            {translate(issue.status)}
+                        </span>
+                    </div>
                     <p className="mt-1.5 text-xs text-slate-600 sm:mt-2 sm:text-sm">{issue.description}</p>
                     {issue.project_name && (
                         <p className="mt-1.5 text-[10px] text-slate-500 sm:mt-2 sm:text-xs">Проект: {issue.project_name}</p>
@@ -108,31 +110,22 @@ const IssueCard = ({ issue }) => {
                     {issue.due_date && (
                         <p className="mt-1 text-[10px] text-slate-500 sm:text-xs">Срок: до {issue.due_date}</p>
                     )}
-                    {selectedFileName && (
-                        <p className="mt-1.5 text-[10px] text-blue-600 sm:mt-2 sm:text-xs">Прикреплено: {selectedFileName}</p>
-                    )}
                 </div>
                 <span className="inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600 sm:h-10 sm:w-10">
                     <AlertTriangle size={14} className="sm:hidden" />
                     <AlertTriangle size={18} className="hidden sm:block" />
                 </span>
             </div>
-            <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                className="hidden"
-                onChange={handleFileChange}
-            />
-            <button
-                onClick={handleUploadClick}
-                className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-700 sm:mt-4 sm:rounded-xl sm:px-3 sm:py-2 sm:text-sm"
-            >
-                <Camera size={12} className="sm:hidden" />
-                <Camera size={14} className="hidden sm:block" />
-                Устранить
-            </button>
+            {issue.status === 'open' && onResolve && (
+                <button
+                    onClick={() => onResolve(issue)}
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-green-700 sm:mt-4 sm:rounded-xl sm:px-3 sm:py-2 sm:text-sm"
+                >
+                    <Camera size={12} className="sm:hidden" />
+                    <Camera size={14} className="hidden sm:block" />
+                    Устранить
+                </button>
+            )}
         </div>
     );
 };
@@ -329,6 +322,7 @@ function ForemanDHB(){
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [completingTask, setCompletingTask] = useState(null);
+    const [resolvingIssue, setResolvingIssue] = useState(null);
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -432,7 +426,7 @@ function ForemanDHB(){
                             </div>
                             <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4 sm:space-y-4 sm:px-6 sm:py-5">
                                 {data.issues.length > 0 ? (
-                                    data.issues.map(issue => <IssueCard key={issue.id} issue={issue} />)
+                                    data.issues.map(issue => <IssueCard key={issue.id} issue={issue} onResolve={setResolvingIssue} />)
                                 ) : (
                                     <div className="flex h-full flex-col items-center justify-center rounded-xl bg-slate-50 py-8 text-center text-xs text-slate-500 sm:rounded-2xl sm:py-10 sm:text-sm">
                                         Нарушений не обнаружено
@@ -443,6 +437,22 @@ function ForemanDHB(){
                     </aside>
                 </div>
             </div>
+
+            {completingTask && (
+                <TaskCompletionModal
+                    task={completingTask}
+                    onClose={() => setCompletingTask(null)}
+                    onUpdate={fetchData}
+                />
+            )}
+
+            {resolvingIssue && (
+                <ResolveIssueModal
+                    issue={resolvingIssue}
+                    onClose={() => setResolvingIssue(null)}
+                    onUpdate={fetchData}
+                />
+            )}
         </>
     );
 }

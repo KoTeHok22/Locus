@@ -135,11 +135,66 @@ def create_fixtures():
 
             print("Создание демонстрационных нарушений...")
             issues = [
-                Issue(project_id=project1.id, author_id=inspector.id, type='violation', classifier_id=tb_classifier_id, description="Отсутствуют ограждения на краю монолитной плиты перекрытия 3-го этажа.", status='open', due_date=today + timedelta(days=3)),
-                Issue(project_id=project2.id, author_id=client.id, type='remark', description="Необходимо ускорить темпы работ по благоустройству.", status='open')
+                # Открытое нарушение - требует устранения прорабом
+                Issue(
+                    project_id=project1.id, 
+                    author_id=inspector.id, 
+                    type='violation', 
+                    classifier_id=tb_classifier_id, 
+                    description="Отсутствуют ограждения на краю монолитной плиты перекрытия 3-го этажа.", 
+                    status='open', 
+                    due_date=today + timedelta(days=3)
+                ),
+                # Замечание от заказчика
+                Issue(
+                    project_id=project2.id, 
+                    author_id=client.id, 
+                    type='remark', 
+                    description="Необходимо ускорить темпы работ по благоустройству.", 
+                    status='open'
+                ),
+                # Нарушение устранено прорабом, ожидает верификации инспектором
+                Issue(
+                    project_id=project1.id,
+                    author_id=inspector.id,
+                    type='violation',
+                    classifier_id=violation_classifiers[2].id,  # Качество работ
+                    description="Обнаружены трещины в штукатурке на стене в помещении 205",
+                    status='pending_verification',
+                    due_date=today + timedelta(days=5),
+                    resolved_by_id=foreman.id,
+                    resolution_comment="Трещины заделаны, штукатурка восстановлена. Использована цементно-песчаная смесь М150.",
+                    resolution_photos=["/uploads/issue_photos/example_resolution_1.jpg", "/uploads/issue_photos/example_resolution_2.jpg"]
+                ),
+                # Устраненное и подтвержденное нарушение
+                Issue(
+                    project_id=project1.id,
+                    author_id=inspector.id,
+                    type='violation',
+                    classifier_id=violation_classifiers[3].id,  # Складирование материалов
+                    description="Материалы складированы с нарушением требований ТБ, перекрыт проход",
+                    status='resolved',
+                    due_date=today - timedelta(days=1),
+                    resolved_by_id=foreman.id,
+                    resolution_comment="Материалы перемещены в специально отведенное место. Проход освобожден.",
+                    resolution_photos=["/uploads/issue_photos/example_storage_fixed.jpg"],
+                    verified_by_id=inspector.id,
+                    verification_status='verified',
+                    verification_comment="Устранение подтверждено. Материалы размещены правильно."
+                ),
+                # Нарушение с отклоненной верификацией
+                Issue(
+                    project_id=project1.id,
+                    author_id=inspector.id,
+                    type='violation',
+                    classifier_id=violation_classifiers[4].id,  # Документация
+                    description="Не предоставлены акты скрытых работ по устройству фундамента",
+                    status='open',
+                    due_date=today + timedelta(days=2)
+                )
             ]
             db.session.add_all(issues)
-            print("Нарушения созданы.")
+            print("Нарушения созданы (включая примеры устранения и верификации).")
 
             db.session.commit()
             print("Фикстуры успешно созданы!")
