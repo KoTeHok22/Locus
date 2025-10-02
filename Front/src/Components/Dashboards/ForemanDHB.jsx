@@ -1,54 +1,139 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { CheckCircle, AlertTriangle, PackageCheck, Camera, UploadCloud, ClipboardList, Clock, Loader2, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ApiService from '../../apiService';
 import { translate } from '../../utils/translation.js';
 import TaskCompletionModal from '../Tasks/TaskCompletionModal';
 import '../../index.css';
 
-const TaskCard = ({ task, onUpdate, onComplete }) => {
+const taskStatusStyles = {
+    pending: {
+        badge: 'bg-amber-100 text-amber-700 border-amber-200',
+        dot: 'bg-amber-500',
+    },
+    completed: {
+        badge: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+        dot: 'bg-emerald-500',
+    },
+    verified: {
+        badge: 'bg-blue-100 text-blue-700 border-blue-200',
+        dot: 'bg-blue-500',
+    },
+};
 
-    const getStatusBadgeClass = (status) => {
-        switch(status) {
-            case 'pending': return 'bg-yellow-100 text-yellow-800';
-            case 'completed': return 'bg-blue-100 text-blue-800';
-            case 'verified': return 'bg-green-100 text-green-800';
-            default: return 'bg-gray-100 text-gray-800';
-        }
+const TaskCard = ({ index, task, onComplete }) => {
+    const styles = taskStatusStyles[task.status] || {
+        badge: 'bg-slate-100 text-slate-600 border-slate-200',
+        dot: 'bg-slate-400',
     };
 
     return (
-        <div className={`border rounded-lg p-4 transition-all bg-white ${task.status === 'pending' ? 'hover:shadow-md' : 'opacity-75 bg-slate-50'}`}>
-            <div className="flex justify-between items-start mb-2">
-                <h3 className="font-semibold text-gray-900">{task.name}</h3>
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(task.status)}`}>
+        <div
+            className={`rounded-2xl border border-slate-100 bg-white/70 p-4 transition-all ${
+                task.status === 'pending' ? 'hover:border-blue-200 hover:shadow-lg' : 'opacity-80'
+            }`}
+        >
+            <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white`}>
+                        {index + 1}
+                    </div>
+                    <div>
+                        <h3 className={`text-base font-semibold text-slate-900 ${task.status !== 'pending' ? 'line-through text-slate-500' : ''}`}>
+                            {task.name}
+                        </h3>
+                        <p className="mt-1 text-xs text-slate-500">{task.project_name || 'Без проекта'}</p>
+                    </div>
+                </div>
+                <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${styles.badge}`}>
+                    <span className={`h-2 w-2 rounded-full ${styles.dot}`} />
                     {translate(task.status)}
                 </span>
             </div>
-            <p className="text-sm text-gray-500 mb-1">Проект: {task.project_name}</p>
-            <p className="text-xs text-gray-500 mb-3">Срок: до {task.end_date}</p>
+
+            {task.description && (
+                <p className={`mt-3 text-sm text-slate-600 ${task.status !== 'pending' ? 'line-through text-slate-400' : ''}`}>
+                    {task.description}
+                </p>
+            )}
+
+            {task.end_date && (
+                <p className="mt-2 flex items-center gap-2 text-xs text-slate-500">
+                    <Clock size={14} className="text-slate-400" />
+                    Срок: {task.end_date}
+                </p>
+            )}
+
             {task.status === 'pending' && (
-                <button 
-                    onClick={() => onComplete(task)}
-                    className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700 h-8">
-                    <i className="fas fa-check-circle mr-1"></i>
-                    Готово
-                </button>
+                <div className="mt-4 flex items-center gap-3">
+                    <button
+                        onClick={() => onComplete(task)}
+                        className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-emerald-700"
+                    >
+                        <CheckCircle size={14} />
+                        Готово
+                    </button>
+                </div>
             )}
         </div>
     );
 };
 
-const IssueCard = ({ issue }) => (
-    <div className="border rounded-lg p-4 transition-all hover:shadow-md border-red-200 bg-red-50">
-        <h3 className="font-semibold text-gray-900 mb-1">Замечание #{issue.id}</h3>
-        <p className="text-sm text-gray-600 mb-2">{issue.description}</p>
-        <p className="text-xs text-gray-500 mb-3">Срок: до {issue.due_date}</p>
-        <button className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 h-8">
-            <i className="fas fa-camera mr-2"></i>
-            Устранить
-        </button>
-    </div>
-);
+const IssueCard = ({ issue }) => {
+    const fileInputRef = useRef(null);
+    const [selectedFileName, setSelectedFileName] = useState('');
+
+    const handleUploadClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (event) => {
+        const file = event.target.files?.[0];
+        if (!file) {
+            return;
+        }
+        setSelectedFileName(file.name);
+        toast.success('Фото добавлено. Отправьте отчет через систему.');
+    };
+
+    return (
+        <div className="rounded-2xl border border-red-100 bg-red-50/70 p-4 shadow-sm transition-all hover:border-red-200 hover:shadow-lg">
+            <div className="flex items-start justify-between gap-3">
+                <div>
+                    <h3 className="text-sm font-semibold text-slate-900">Замечание #{issue.id}</h3>
+                    <p className="mt-2 text-sm text-slate-600">{issue.description}</p>
+                    {issue.project_name && (
+                        <p className="mt-2 text-xs text-slate-500">Проект: {issue.project_name}</p>
+                    )}
+                    {issue.due_date && (
+                        <p className="mt-1 text-xs text-slate-500">Срок: до {issue.due_date}</p>
+                    )}
+                    {selectedFileName && (
+                        <p className="mt-2 text-xs text-blue-600">Прикреплено: {selectedFileName}</p>
+                    )}
+                </div>
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-red-100 text-red-600">
+                    <AlertTriangle size={18} />
+                </span>
+            </div>
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={handleFileChange}
+            />
+            <button
+                onClick={handleUploadClick}
+                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-700"
+            >
+                <Camera size={14} />
+                Устранить
+            </button>
+        </div>
+    );
+};
 
 const MaterialDeliveryFlow = ({ projects, onUpdate }) => {
     const [file, setFile] = useState(null);
@@ -130,71 +215,101 @@ const MaterialDeliveryFlow = ({ projects, onUpdate }) => {
 
     if (recognizedData) {
         return (
-            <div className="p-6">
-                <h3 className="text-lg font-semibold mb-4">Проверьте и исправьте данные</h3>
-                <div className="space-y-4 max-h-64 overflow-y-auto pr-2">
+            <div className="flex h-full flex-col gap-4">
+                <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                    <div className="flex items-center gap-2">
+                        <PackageCheck size={18} className="text-emerald-600" />
+                        <h3 className="text-lg font-semibold text-slate-900">Проверьте данные поставки</h3>
+                    </div>
+                    <p className="mt-1 text-sm text-slate-500">Отредактируйте позиции перед подтверждением</p>
+                </div>
+                <div className="flex-1 space-y-3 overflow-y-auto rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
                     {editableItems.map((item, index) => (
-                        <div key={index} className="p-3 border rounded-lg bg-slate-50 space-y-2">
-                            <div className="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label className="text-xs text-gray-600">Наименование</label>
-                                    <input 
-                                        type="text" 
+                        <div key={index} className="rounded-xl border border-slate-200 bg-white p-4">
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                <label className="text-xs font-semibold text-slate-500">
+                                    Наименование
+                                    <input
+                                        type="text"
                                         value={item.name || ''}
                                         onChange={(e) => handleItemChange(index, 'name', e.target.value)}
-                                        className="w-full p-1.5 border rounded-md text-sm"
+                                        className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-100"
                                     />
-                                </div>
-                                <div>
-                                    <label className="text-xs text-gray-600">Количество</label>
-                                    <input 
-                                        type="number" 
+                                </label>
+                                <label className="text-xs font-semibold text-slate-500">
+                                    Количество
+                                    <input
+                                        type="number"
                                         value={item.quantity || ''}
                                         onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
-                                        className="w-full p-1.5 border rounded-md text-sm"
+                                        className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-100"
                                     />
-                                </div>
+                                </label>
                             </div>
-                            <div>
-                                <label className="text-xs text-gray-600">Ед. изм.</label>
-                                <input 
-                                    type="text" 
+                            <label className="mt-3 block text-xs font-semibold text-slate-500">
+                                Ед. изм.
+                                <input
+                                    type="text"
                                     value={item.unit || ''}
                                     onChange={(e) => handleItemChange(index, 'unit', e.target.value)}
-                                    className="w-full p-1.5 border rounded-md text-sm"
+                                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-100"
                                 />
-                            </div>
+                            </label>
                         </div>
                     ))}
                 </div>
-                <div className="flex gap-4 mt-4">
-                    <button onClick={handleConfirmDelivery} className="bg-green-600 text-white px-4 py-2 rounded-lg">Подтвердить поставку</button>
-                    <button onClick={() => setRecognizedData(null)} className="bg-gray-300 px-4 py-2 rounded-lg">Отмена</button>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                    <button
+                        onClick={handleConfirmDelivery}
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+                    >
+                        <PackageCheck size={16} />
+                        Подтвердить поставку
+                    </button>
+                    <button
+                        onClick={() => setRecognizedData(null)}
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 transition-colors hover:border-slate-300"
+                    >
+                        <XCircle size={16} />
+                        Отмена
+                    </button>
                 </div>
             </div>
-        )
+        );
     }
 
     return (
-        <div className="p-6">
-            <h2 className="text-xl font-semibold text-gray-900">Принять материал</h2>
-            <p className="text-sm text-gray-600 mt-1 mb-4">Загрузите фото ТТН для автоматического распознавания.</p>
-            
-            <select 
+        <div className="flex h-full flex-col gap-4">
+            <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                <div className="flex items-center gap-2">
+                    <PackageCheck size={18} className="text-blue-600" />
+                    <h2 className="text-lg font-semibold text-slate-900">Принять материал</h2>
+                </div>
+                <p className="mt-1 text-sm text-slate-500">Загрузите фото ТТН для автоматического распознавания поставки.</p>
+            </div>
+
+            <select
                 value={selectedProject}
                 onChange={e => setSelectedProject(e.target.value)}
-                className="w-full p-2 border border-slate-300 rounded-lg mb-4"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-100"
             >
                 <option value="" disabled>Выберите проект</option>
                 {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
 
-            <input type="file" onChange={handleFileChange} className="w-full text-sm" />
+            <label className="flex cursor-pointer flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 px-6 py-5 text-center text-sm text-slate-500 transition-all hover:border-blue-300 hover:bg-blue-50">
+                <UploadCloud size={24} className="text-blue-500" />
+                <span>Перетащите файл или выберите вручную</span>
+                <input type="file" onChange={handleFileChange} className="hidden" />
+                {file && <span className="text-xs text-blue-600">Выбран файл: {file.name}</span>}
+            </label>
 
-            <button 
-                onClick={handleRecognition} 
+            <button
+                onClick={handleRecognition}
                 disabled={isRecognizing || !file || !selectedProject}
-                className="w-full mt-4 bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg disabled:bg-gray-400">
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+            >
+                {isRecognizing ? <Loader2 className="h-4 w-4 animate-spin" /> : <PackageCheck size={16} />}
                 {isRecognizing ? 'Распознавание...' : 'Начать распознавание'}
             </button>
         </div>
@@ -239,50 +354,79 @@ function ForemanDHB(){
     return(
         <>
             {completingTask && (
-                <TaskCompletionModal 
+                <TaskCompletionModal
                     task={completingTask}
                     onClose={() => setCompletingTask(null)}
                     onUpdate={fetchData}
                 />
             )}
-            <div className="p-6 h-full bg-slate-50" id="foreman-dashboard">
-                <div className="grid grid-cols-3 gap-6 h-full">
-                    <div className="col-span-2 min-h-0 flex flex-col gap-6">
-                        <div className="bg-white rounded-lg border border-slate-200 shadow-sm flex-1 flex flex-col">
-                            <div className="border-b border-slate-200 p-4">
-                                <h2 className="text-lg font-semibold text-gray-900">Мои задачи ({data.tasks.length})</h2>
+            <div className="flex h-full flex-col gap-6 bg-slate-50" id="foreman-dashboard">
+                <div className="grid flex-1 gap-6 px-4 pb-6 lg:grid-cols-[2fr_1fr] lg:px-0">
+                    <section className="flex flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
+                        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+                            <div>
+                                <div className="flex items-center gap-2 text-slate-500">
+                                    <ClipboardList size={16} />
+                                    <span className="text-sm font-semibold">Мои задачи</span>
+                                </div>
+                                <h2 className="mt-1 text-xl font-semibold text-slate-900">Сегодня {data.tasks.length} задач</h2>
+                                <p className="text-sm text-slate-500">Контролируйте выполнение ключевых работ</p>
                             </div>
-                            <div className="p-4 overflow-y-auto space-y-4">
-                                {data.tasks.length > 0 ? (
-                                    data.tasks.map(task => <TaskCard key={task.id} task={task} onUpdate={fetchData} onComplete={setCompletingTask} />)
+                            <span className="inline-flex h-10 items-center justify-center rounded-full bg-blue-50 px-4 text-sm font-semibold text-blue-600">
+                                {data.tasks.filter(task => task.status !== 'completed').length} в процессе
+                            </span>
+                        </div>
+                        <div className="flex-1 space-y-4 overflow-y-auto px-6 py-5">
+                            {data.tasks.length > 0 ? (
+                                data.tasks.map((task, index) => (
+                                    <TaskCard
+                                        key={task.id}
+                                        index={index}
+                                        task={task}
+                                        onComplete={setCompletingTask}
+                                    />
+                                ))
+                            ) : (
+                                <div className="flex h-full flex-col items-center justify-center rounded-2xl bg-slate-50 py-10 text-center text-sm text-slate-500">
+                                    <CheckCircle size={32} className="mb-3 text-emerald-500" />
+                                    Все задачи выполнены
+                                </div>
+                            )}
+                        </div>
+                    </section>
+
+                    <aside className="flex flex-col gap-6">
+                        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+                            <MaterialDeliveryFlow projects={data.projects} onUpdate={fetchData} />
+                        </div>
+                        <div className="flex-1 overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
+                            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+                                <div>
+                                    <div className="flex items-center gap-2 text-red-500">
+                                        <AlertTriangle size={16} />
+                                        <span className="text-sm font-semibold">Замечания</span>
+                                    </div>
+                                    <h2 className="mt-1 text-lg font-semibold text-slate-900">{data.issues.length} открыто</h2>
+                                </div>
+                                <span className="inline-flex h-9 items-center justify-center rounded-full bg-red-50 px-4 text-xs font-semibold text-red-600">
+                                    Срочно
+                                </span>
+                            </div>
+                            <div className="flex-1 space-y-4 overflow-y-auto px-6 py-5">
+                                {data.issues.length > 0 ? (
+                                    data.issues.map(issue => <IssueCard key={issue.id} issue={issue} />)
                                 ) : (
-                                    <p className="text-center text-gray-500 pt-10">Нет назначенных задач.</p>
+                                    <div className="flex h-full flex-col items-center justify-center rounded-2xl bg-slate-50 py-10 text-center text-sm text-slate-500">
+                                        Нарушений не обнаружено
+                                    </div>
                                 )}
                             </div>
                         </div>
-                    </div>
-
-                    <div className="col-span-1 flex flex-col gap-6 min-h-0">
-                    <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
-                         <MaterialDeliveryFlow projects={data.projects} onUpdate={fetchData} />
-                    </div>
-                    <div className="bg-white rounded-lg border border-slate-200 shadow-sm flex-1 flex flex-col">
-                        <div className="border-b border-slate-200 p-4">
-                            <h2 className="text-lg font-semibold text-gray-900">Замечания ({data.issues.length})</h2>
-                        </div>
-                        <div className="p-4 overflow-y-auto space-y-4">
-                            {data.issues.length > 0 ? (
-                                data.issues.map(issue => <IssueCard key={issue.id} issue={issue} />)
-                            ) : (
-                                <p className="text-center text-gray-500 pt-10">Нет открытых замечаний.</p>
-                            )}
-                        </div>
-                    </div>
+                    </aside>
                 </div>
             </div>
-            </div>
         </>
-    )
+    );
 }
 
 export { ForemanDHB };
