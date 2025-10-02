@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import AuthService from '../AuthService.js';
+import AuthService from "../authService.js";
 import logo from '../logo/logo-mini.ico';
 import { translate } from '../utils/translation.js';
 
