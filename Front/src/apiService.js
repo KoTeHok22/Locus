@@ -318,23 +318,33 @@ class ApiService {
     }
 
     completeChecklist(projectId, checklistId, itemsResponses, notes, photos, geolocation, initializationGeolocation) {
-        const data = {
-            project_id: projectId,
-            responses: itemsResponses,
-            notes: notes || '',
-            geolocation: geolocation || null,
-            initialization_geolocation: initializationGeolocation || null,
-            photos: photos || [],
-            items_data: {}
-        };
+        const formData = new FormData();
 
+        const items_data = {};
         itemsResponses.forEach(item => {
-            data.items_data[item.item_id] = item.response === 'yes';
+            items_data[item.item_id] = item.response === 'yes';
         });
+
+        formData.append('project_id', projectId);
+        formData.append('responses', JSON.stringify(itemsResponses));
+        formData.append('items_data', JSON.stringify(items_data));
+        formData.append('notes', notes || '');
+        if (geolocation) {
+            formData.append('geolocation', geolocation);
+        }
+        if (initializationGeolocation) {
+            formData.append('initialization_geolocation', initializationGeolocation);
+        }
+
+        if (photos && photos.length > 0) {
+            photos.forEach(file => {
+                formData.append('photos', file);
+            });
+        }
         
         return request(`/checklists/${checklistId}/complete`, {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: formData
         });
     }
 

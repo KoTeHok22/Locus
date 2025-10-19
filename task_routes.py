@@ -201,7 +201,7 @@ def update_task_status(project_id, task_id):
             task.status = new_status
 
         db.session.commit()
-        db.session.refresh(task) # Обновляем объект task, чтобы подтянуть новые связи
+        db.session.refresh(task)
         
         recalculate_project_risk(task.project_id, triggering_user_id=request.current_user['id'])
         

@@ -179,6 +179,8 @@ def get_project_risk_analysis(project_id):
     if not work_plan:
         return jsonify({'message': 'План работ для этого проекта не найден'}), 404
     
+    db.session.refresh(work_plan)
+
     material_risks = []
     schedule_risks = []
     today = date.today()

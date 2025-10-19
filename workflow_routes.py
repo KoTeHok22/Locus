@@ -75,6 +75,15 @@ def create_issue(project_id):
         except ValueError:
             return jsonify({'message': 'Неверный формат даты. Ожидается YYYY-MM-DD'}), 400
 
+    existing_issue = Issue.query.filter_by(
+        project_id=project_id,
+        description=data['description'],
+        classifier_id=data.get('classifier_id')
+    ).filter(Issue.status.in_(['open', 'fixing'])).first()
+
+    if existing_issue:
+        return jsonify({'message': 'Такое замечание уже существует и находится в работе'}), 409
+
     new_issue = Issue(
         project_id=project_id,
         author_id=request.current_user['id'],
@@ -82,7 +91,8 @@ def create_issue(project_id):
         classifier_id=data.get('classifier_id'),
         description=data['description'],
         due_date=due_date_obj,
-        task_id=data.get('task_id')
+        task_id=data.get('task_id'),
+        geolocation=request.headers.get('X-User-Geolocation')
     )
     db.session.add(new_issue)
     db.session.commit()
@@ -90,9 +100,9 @@ def create_issue(project_id):
     recalculate_project_risk(project_id, triggering_user_id=request.current_user['id'])
 
     project = db.session.get(Project, project_id)
-    foreman_assignment = db.session.query(ProjectUser).filter_by(
-        project_id=project_id,
-        role='foreman'
+    foreman_assignment = db.session.query(ProjectUser).join(User).filter(
+        ProjectUser.project_id == project_id,
+        User.role == 'foreman'
     ).first()
     
     if foreman_assignment:

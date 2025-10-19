@@ -64,4 +64,19 @@ def get_risk_history(project_id):
 
     history = RiskEvent.query.filter_by(project_id=project_id).order_by(RiskEvent.timestamp.desc()).all()
     
-    return jsonify([event.to_dict() for event in history]), 200
+    result = []
+    for event in history:
+        event_dict = event.to_dict()
+        initiator_name = "Система"
+        if event.triggering_user:
+            if event.triggering_user.first_name and event.triggering_user.last_name:
+                initiator_name = f"{event.triggering_user.first_name} {event.triggering_user.last_name}"
+            else:
+                initiator_name = event.triggering_user.email
+        elif event.triggering_user_id:
+            initiator_name = f"Пользователь {event.triggering_user_id}"
+
+        event_dict['initiator_name'] = initiator_name
+        result.append(event_dict)
+    
+    return jsonify(result), 200

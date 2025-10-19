@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from models import db, DailyReport, User, Project
 from auth import token_required, role_required
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from risk_calculator import recalculate_project_risk
 
 daily_report_bp_v2 = Blueprint('daily_report_bp_v2', __name__)
@@ -10,7 +10,12 @@ daily_report_bp_v2 = Blueprint('daily_report_bp_v2', __name__)
 @token_required
 def get_daily_reports():
     """Возвращает список ежедневных отчетов с обогащенными данными."""
+    project_id = request.args.get('project_id', type=int)
+
     query = db.session.query(DailyReport, User.first_name, User.last_name, Project.name).join(User, DailyReport.author_id == User.id).join(Project, DailyReport.project_id == Project.id)
+    
+    if project_id:
+        query = query.filter(DailyReport.project_id == project_id)
     
     
     results = query.order_by(DailyReport.report_date.desc()).all()
@@ -51,7 +56,9 @@ def create_daily_report():
     ).order_by(DailyReport.report_date.desc()).first()
 
     if last_report:
-        time_since_last = datetime.utcnow() - last_report.report_date
+        last_report_time_utc = last_report.report_date.replace(tzinfo=timezone.utc)
+        now_utc = datetime.now(timezone.utc)
+        time_since_last = now_utc - last_report_time_utc
         if time_since_last < timedelta(hours=12):
             hours_left = 12 - (time_since_last.total_seconds() / 3600)
             return jsonify({
@@ -63,7 +70,7 @@ def create_daily_report():
         new_report = DailyReport(
             project_id=project_id,
             author_id=author_id,
-            report_date=datetime.utcnow(),
+            report_date=datetime.now(timezone.utc),
             workers_count=data.get('workers_count'),
             equipment=data.get('equipment'),
             weather_conditions=data.get('weather_conditions'),

@@ -295,18 +295,42 @@ def create_fixtures():
                 {'address': 'г. Москва, Некрасовка', 'name': 'Замена дорожного бортового камня в рамках благоустройства территории', 'quantity': 3500, 'unit': 'Погонный метр', 'start': date(2024, 6, 25), 'end': date(2024, 8, 25)},
             ]
 
-            for project in projects:
+            for i, project in enumerate(projects):
                 project_works = [w for w in all_work_items_data if w['address'] == project.address]
                 if not project_works:
                     continue
 
                 min_date = min(w['start'] for w in project_works)
                 max_date = max(w['end'] for w in project_works)
-                work_plan = WorkPlan(project_id=project.id, start_date=min_date, end_date=max_date)
+
+                if i == 0:  # Для первого проекта сделаем план "отредактированным"
+                    work_plan = WorkPlan(
+                        project_id=project.id, 
+                        start_date=min_date, 
+                        end_date=max_date,
+                        editing_status='edited',
+                        created_at=datetime.now(timezone.utc) - timedelta(days=5),
+                        updated_at=datetime.now(timezone.utc) - timedelta(days=2)
+                    )
+                else:
+                    work_plan = WorkPlan(
+                        project_id=project.id, 
+                        start_date=min_date, 
+                        end_date=max_date,
+                        editing_status='original'
+                    )
+                
                 db.session.add(work_plan)
                 db.session.flush()
 
-                for i, work_data in enumerate(project_works):
+                for j, work_data in enumerate(project_works):
+                    item_created_at = datetime.now(timezone.utc) - timedelta(days=10 - j)
+                    item_updated_at = item_created_at
+
+                    # Для первого элемента первого проекта имитируем редактирование
+                    if i == 0 and j == 0:
+                        item_updated_at = item_created_at + timedelta(days=3)
+
                     work_plan_item = WorkPlanItem(
                         work_plan_id=work_plan.id,
                         name=work_data['name'],
@@ -314,7 +338,9 @@ def create_fixtures():
                         unit=work_data['unit'],
                         start_date=work_data['start'],
                         end_date=work_data['end'],
-                        order=i
+                        order=j,
+                        created_at=item_created_at,
+                        updated_at=item_updated_at
                     )
                     db.session.add(work_plan_item)
             

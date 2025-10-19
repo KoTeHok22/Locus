@@ -106,69 +106,69 @@ def get_work_plan(project_id):
 @token_required
 @role_required('client')
 def update_work_plan(project_id):
-    """Обновляет план работ для проекта."""
-    current_user = request.current_user
-    
-    access_error = require_project_access(project_id, current_user['id'], current_user['role'])
-    if access_error:
-        return access_error
-    
+    """Обновляет план работ для проекта, обрабатывая изменения в элементах."""
     work_plan = WorkPlan.query.filter_by(project_id=project_id).first()
     if not work_plan:
         return jsonify({'message': 'План работ не найден'}), 404
-    
+
     data = request.get_json()
-    if not data:
+    if not data or 'items' not in data:
         return jsonify({'message': 'Отсутствуют данные для обновления'}), 400
-    
-    if 'start_date' in data and 'end_date' in data:
-        try:
-            start_date = datetime.fromisoformat(data['start_date'].replace('Z', '+00:00')).date()
-            end_date = datetime.fromisoformat(data['end_date'].replace('Z', '+00:00')).date()
-        except ValueError:
-            return jsonify({'message': 'Неверный формат даты'}), 400
-        
-        if start_date >= end_date:
-            return jsonify({'message': 'Дата начала должна быть раньше даты окончания'}), 400
-        
-        work_plan.start_date = start_date
-        work_plan.end_date = end_date
-    
-    if 'items' in data:
-        WorkPlanItem.query.filter_by(work_plan_id=work_plan.id).delete()
-        
+
+    try:
+        # Обновление дат плана работ
+        if 'start_date' in data and 'end_date' in data:
+            work_plan.start_date = datetime.fromisoformat(data['start_date'].replace('Z', '+00:00')).date()
+            work_plan.end_date = datetime.fromisoformat(data['end_date'].replace('Z', '+00:00')).date()
+
+        existing_items = {item.id: item for item in work_plan.items}
+        incoming_item_ids = {item['id'] for item in data['items'] if 'id' in item}
+
+        # Удаление элементов, которых нет во входящих данных
+        for item_id, item in existing_items.items():
+            if item_id not in incoming_item_ids:
+                db.session.delete(item)
+
+        # Обновление и добавление элементов
         for index, item_data in enumerate(data['items']):
-            if not item_data.get('name') or not item_data.get('quantity') or not item_data.get('unit'):
-                return jsonify({'message': f'Элемент {index + 1}: требуются name, quantity и unit'}), 400
-            
-            if not item_data.get('start_date') or not item_data.get('end_date'):
-                return jsonify({'message': f'Элемент {index + 1}: требуются start_date и end_date'}), 400
-            
-            try:
-                item_start = datetime.fromisoformat(item_data['start_date'].replace('Z', '+00:00')).date()
-                item_end = datetime.fromisoformat(item_data['end_date'].replace('Z', '+00:00')).date()
-            except ValueError:
-                return jsonify({'message': f'Элемент {index + 1}: неверный формат даты'}), 400
-            
+            item_start = datetime.fromisoformat(item_data['start_date'].replace('Z', '+00:00')).date()
+            item_end = datetime.fromisoformat(item_data['end_date'].replace('Z', '+00:00')).date()
+
             if item_start >= item_end:
-                return jsonify({'message': f'Элемент {index + 1}: дата начала должна быть раньше даты окончания'}), 400
-            
-            if item_start < work_plan.start_date or item_end > work_plan.end_date:
-                return jsonify({'message': f'Элемент {index + 1}: сроки работы должны быть в пределах общего плана'}), 400
-            
-            work_plan_item = WorkPlanItem(
-                work_plan_id=work_plan.id,
-                name=item_data['name'],
-                quantity=float(item_data['quantity']),
-                unit=item_data['unit'],
-                start_date=item_start,
-                end_date=item_end,
-                order=index
-            )
-            db.session.add(work_plan_item)
-    
-    db.session.commit()
-    
+                db.session.rollback()
+                return jsonify({'message': f'Элемент \'{item_data["name"]}\': дата начала должна быть раньше даты окончания'}), 400
+
+            if 'id' in item_data:  # Обновление существующего элемента
+                item = existing_items.get(item_data['id'])
+                if item:
+                    item.name = item_data['name']
+                    item.quantity = float(item_data['quantity'])
+                    item.unit = item_data['unit']
+                    item.start_date = item_start
+                    item.end_date = item_end
+                    item.order = index
+            else:  # Создание нового элемента
+                new_item = WorkPlanItem(
+                    work_plan_id=work_plan.id,
+                    name=item_data['name'],
+                    quantity=float(item_data['quantity']),
+                    unit=item_data['unit'],
+                    start_date=item_start,
+                    end_date=item_end,
+                    order=index
+                )
+                db.session.add(new_item)
+
+        work_plan.editing_status = 'edited'
+        db.session.commit()
+
+    except (ValueError, KeyError) as e:
+        db.session.rollback()
+        return jsonify({'message': f'Ошибка в данных: {str(e)}'}), 400
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': f'Внутренняя ошибка сервера: {str(e)}'}), 500
+
     return jsonify(work_plan.to_dict()), 200
 
 

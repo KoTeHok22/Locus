@@ -21,6 +21,7 @@ import RiskDetailsModal from '../Components/Risk/RiskDetailsModal';
 import MaterialDeliveryBlock from '../Components/Documents/MaterialDeliveryBlock';
 import IssueDetailsModal from '../Components/Issues/IssueDetailsModal';
 import WorkPlanView from '../Components/WorkPlan/WorkPlanView';
+import DailyReportBlock from '../Components/Reports/DailyReportBlock';
 import { translate } from '../utils/translation.js';
 
 function ProjectDetailsPage() {
@@ -205,7 +206,6 @@ function ProjectDetailsPage() {
                     onClose={() => setActivatingProject(null)}
                     onSuccess={async (projectId, email) => {
                         setActivatingProject(null);
-                        
                         try {
                             const data = await ApiService.getChecklists();
                             const checklistsArray = Array.isArray(data) ? data : (data.checklists || []);
@@ -218,11 +218,8 @@ function ProjectDetailsPage() {
                             } else {
                                 toast.error('Чек-лист открытия объекта не найден');
                             }
-                            
-                            fetchData();
                         } catch (err) {
                             toast.error('Не удалось загрузить чек-лист: ' + err.message);
-                            fetchData();
                         }
                     }}
                 />
@@ -253,7 +250,11 @@ function ProjectDetailsPage() {
                                 await ApiService.activateProject(pId);
                                 toast.success('Чек-лист отправлен на согласование! Прораб назначен.');
                             } catch (err) {
-                                toast.error('Чек-лист отправлен, но ошибка при назначении прораба: ' + err.message);
+                                if (err.message.includes('уже назначен прораб')) {
+                                  toast.success('Чек-лист отправлен на согласование! Прораб был назначен ранее.');
+                                } else {
+                                  toast.error('Чек-лист отправлен, но ошибка при назначении прораба: ' + err.message);
+                                }
                             }
                         } else {
                             toast.success('Чек-лист отправлен на согласование!');
@@ -613,6 +614,10 @@ function ProjectDetailsPage() {
 
                 {userRole === 'foreman' && (
                     <MaterialDeliveryBlock projectId={projectId} onUpdate={fetchData} />
+                )}
+
+                {userRole === 'foreman' && (
+                    <DailyReportBlock project={project} />
                 )}
 
                 <div className={`grid gap-4 lg:grid-cols-2 ${userRole === 'client' ? 'xl:grid-cols-3' : 'xl:grid-cols-2'}`}>

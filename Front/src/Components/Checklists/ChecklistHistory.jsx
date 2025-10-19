@@ -233,13 +233,13 @@ const ChecklistHistory = ({ projectId, checklistType, onClose }) => {
                                     {selectedCompletion.photos.map((photo, index) => (
                                         <a
                                             key={index}
-                                            href={photo}
+                                            href={`${import.meta.env.VITE_API_URL}/uploads/${photo}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="block"
                                         >
                                             <img
-                                                src={photo}
+                                                src={`${import.meta.env.VITE_API_URL}/uploads/${photo}`}
                                                 alt={`Фото ${index + 1}`}
                                                 className="w-full h-40 object-cover rounded-lg hover:opacity-90 transition-opacity"
                                             />

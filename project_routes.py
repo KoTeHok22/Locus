@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from sqlalchemy import func
 from sqlalchemy.orm import aliased
 from geopy.geocoders import Nominatim
+from risk_calculator import recalculate_project_risk
 from geopy.exc import GeocoderQueryError, GeocoderTimedOut, GeocoderUnavailable
 
 from models import db, Project, User, ProjectUser, Task, Issue
@@ -143,6 +144,9 @@ def get_project_details(project_id):
     """Возвращает детальную информацию о проекте с проверкой доступа."""
     current_user = request.current_user
     
+    # Recalculate risk on project view
+    recalculate_project_risk(project_id, triggering_user_id=current_user['id'])
+    
     access_error = require_project_access(project_id, current_user['id'], current_user['role'])
     if access_error:
         return access_error
@@ -214,3 +218,16 @@ def activate_project(project_id):
         'message': 'Проект готов к заполнению чек-листа.',
         'project_status': project.status
     }), 200
+
+
+@project_bp_v2.route('/api/projects/<int:project_id>/check-access', methods=['GET'])
+@token_required
+def check_project_access(project_id):
+    """Проверяет, имеет ли текущий пользователь доступ к проекту."""
+    current_user = request.current_user
+    
+    access_error = require_project_access(project_id, current_user['id'], current_user['role'])
+    if access_error:
+        return access_error
+    
+    return jsonify({'access': True}), 200

@@ -50,12 +50,11 @@ def recognize_document():
             uploader_id=current_user_id,
             file_type=file.content_type,
             url=file_path, 
-            recognition_status='pending'  # Статус "pending" до запуска задачи
+            recognition_status='pending'
         )
         db.session.add(document)
         db.session.commit()
 
-        # Запуск Celery задачи вместо threading
         from tasks import recognize_document_task
         task = recognize_document_task.delay(document.id)
         

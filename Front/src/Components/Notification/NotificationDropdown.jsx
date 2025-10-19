@@ -70,7 +70,7 @@ const NotificationDropdown = ({ onClose, onUnreadCountChange }) => {
     return (
         <div
             ref={dropdownRef}
-            className="fixed inset-0 z-[100] flex flex-col bg-white sm:absolute sm:inset-auto sm:right-0 sm:mt-3 sm:w-96 sm:max-w-[calc(100vw-2rem)] sm:rounded-2xl sm:border sm:border-slate-200 sm:shadow-xl sm:shadow-slate-500/10"
+            className="fixed inset-0 z-[10000] flex flex-col bg-white sm:absolute sm:inset-auto sm:right-0 sm:mt-3 sm:w-96 sm:max-w-[calc(100vw-2rem)] sm:rounded-2xl sm:border sm:border-slate-200 sm:shadow-xl sm:shadow-slate-500/10"
         >
             <div className="border-b border-slate-200 px-4 py-3 flex justify-between items-center">
                 <h3 className="text-sm font-semibold text-slate-900">Уведомления</h3>

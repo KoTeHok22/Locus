@@ -1,14 +1,27 @@
 from flask import Blueprint, jsonify, request, send_file
+from sqlalchemy.orm import joinedload
 from models import db, Checklist, ChecklistCompletion, ChecklistItem, ChecklistItemResponse, User, Project, ProjectUser
 from auth import token_required
-from datetime import datetime, date, timezone
+from datetime import datetime, date, timezone, timedelta
 from docx import Document
 from notification_service import create_notification
 from risk_calculator import recalculate_project_risk
 import io
 import os
+import json
+from werkzeug.utils import secure_filename
 
 checklist_bp = Blueprint('checklist', __name__)
+
+UPLOAD_FOLDER = '/app/uploads/checklist_photos'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 @checklist_bp.route('/api/checklists', methods=['GET'])
@@ -74,7 +87,7 @@ def get_checklist(checklist_id):
 @checklist_bp.route('/api/checklists/<int:checklist_id>/complete', methods=['POST'])
 @token_required
 def complete_checklist(checklist_id):
-    """Заполнение чек-листа"""
+    """Заполнение чек-листа с загрузкой файлов."""
     try:
         current_user_role = request.current_user.get('role')
         current_user_id = request.current_user.get('id')
@@ -82,52 +95,79 @@ def complete_checklist(checklist_id):
         if current_user_role != 'client':
             return jsonify({'error': 'Только клиент может заполнять чек-листы'}), 403
 
-        data = request.get_json()
         checklist = Checklist.query.get_or_404(checklist_id)
-        
+        project_id = request.form.get('project_id', type=int)
+        if not project_id:
+            return jsonify({'error': 'project_id is required'}), 400
+
         if checklist.type == 'daily':
-            project = Project.query.get(data.get('project_id'))
+            last_completion = ChecklistCompletion.query.filter_by(
+                project_id=project_id,
+                checklist_id=checklist_id
+            ).order_by(ChecklistCompletion.completion_date.desc()).first()
+
+            if last_completion:
+                completion_time = last_completion.completion_date.replace(tzinfo=timezone.utc)
+                if (datetime.now(timezone.utc) - completion_time) < timedelta(hours=12):
+                    return jsonify({'error': 'Ежедневный чек-лист можно создавать не чаще, чем раз в 12 часов'}), 429
+
+            project = Project.query.get(project_id)
             if not project:
                 return jsonify({'error': 'Проект не найден'}), 404
             if project.status != 'active':
                 return jsonify({'error': 'Объект должен быть активирован перед заполнением ежедневного чек-листа'}), 403
 
+        photo_paths = []
+        uploaded_files = request.files.getlist('photos')
+        for file in uploaded_files:
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                # Add timestamp and random chars to make filename unique
+                timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+                random_chars = os.urandom(4).hex()
+                unique_filename = f"{timestamp}_{random_chars}_{filename}"
+                file_path = os.path.join(UPLOAD_FOLDER, unique_filename)
+                file.save(file_path)
+                # Store a path relative to the /uploads directory
+                photo_paths.append(f'checklist_photos/{unique_filename}')
+
         completion = ChecklistCompletion(
             checklist_id=checklist_id,
-            project_id=data.get('project_id'),
+            project_id=project_id,
             completed_by_id=current_user_id,
             completion_date=datetime.now(timezone.utc),
-            items_data=data.get('items_data', {}),
-            photos=data.get('photos', []),
-            geolocation=data.get('geolocation'),
-            notes=data.get('notes'),
+            items_data=json.loads(request.form.get('items_data', '{}')),
+            photos=photo_paths,
+            geolocation=request.form.get('geolocation'),
+            notes=request.form.get('notes'),
             approval_status='not_required' if not checklist.requires_approval else 'pending',
             initialization_required=checklist.requires_initialization,
             initialized_at=datetime.now(timezone.utc) if checklist.requires_initialization else None,
-            initialization_geolocation=data.get('geolocation') if checklist.requires_initialization else None
+            initialization_geolocation=request.form.get('initialization_geolocation') if checklist.requires_initialization else None
         )
         db.session.add(completion)
         db.session.flush()
 
-        responses_data = data.get('responses', [])
+        responses_data = json.loads(request.form.get('responses', '[]'))
         for resp in responses_data:
+            # Note: photo handling for individual responses is not implemented here
             response = ChecklistItemResponse(
                 completion_id=completion.id,
                 item_id=resp['item_id'],
                 response=resp['response'],
                 photos=resp.get('photos', []),
                 comment=resp.get('comment'),
-                geolocation=resp.get('geolocation', data.get('geolocation')),
+                geolocation=resp.get('geolocation', request.form.get('geolocation')),
                 created_at=datetime.now(timezone.utc)
             )
             db.session.add(response)
 
         db.session.commit()
 
-        recalculate_project_risk(data.get('project_id'), triggering_user_id=request.current_user['id'])
+        recalculate_project_risk(project_id, triggering_user_id=request.current_user['id'])
         
         if checklist.requires_approval and checklist.type == 'opening':
-            project = db.session.get(Project, data.get('project_id'))
+            project = db.session.get(Project, project_id)
             inspector_users = db.session.query(User).filter_by(role='inspector', is_active=True).all()
             
             for inspector in inspector_users:
@@ -475,7 +515,9 @@ def approve_completion(completion_id):
         if current_user_role != 'inspector':
             return jsonify({'error': 'Только инспектор может согласовывать чек-листы'}), 403
 
-        completion = ChecklistCompletion.query.get_or_404(completion_id)
+        completion = ChecklistCompletion.query.options(
+            joinedload(ChecklistCompletion.checklist)
+        ).get_or_404(completion_id)
         
         completion.approval_status = 'approved'
         completion.approved_by_id = current_user_id
@@ -514,7 +556,9 @@ def reject_completion(completion_id):
         if current_user_role != 'inspector':
             return jsonify({'error': 'Только инспектор может отклонять чек-листы'}), 403
 
-        completion = ChecklistCompletion.query.get_or_404(completion_id)
+        completion = ChecklistCompletion.query.options(
+            joinedload(ChecklistCompletion.checklist)
+        ).get_or_404(completion_id)
         data = request.get_json()
         
         completion.approval_status = 'rejected'

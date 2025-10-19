@@ -447,6 +447,7 @@ class WorkPlan(db.Model):
     end_date = db.Column(db.Date, nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    editing_status = db.Column(db.String(50), nullable=False, default='original')
     
     project = db.relationship('Project', back_populates='work_plan')
     items = db.relationship('WorkPlanItem', back_populates='work_plan', cascade="all, delete-orphan", order_by='WorkPlanItem.order')
@@ -459,6 +460,7 @@ class WorkPlan(db.Model):
             'end_date': self.end_date.isoformat(),
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'editing_status': self.editing_status,
             'items': [item.to_dict() for item in self.items]
         }
 
@@ -476,6 +478,8 @@ class WorkPlanItem(db.Model):
     order = db.Column(db.Integer, default=0, nullable=False)
     status = db.Column(db.String(50), nullable=False, default='not_started')
     progress = db.Column(db.Float, nullable=False, default=0.0)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
     work_plan = db.relationship('WorkPlan', back_populates='items')
     required_materials = db.relationship('RequiredMaterial', back_populates='work_item', cascade="all, delete-orphan")
@@ -499,7 +503,9 @@ class WorkPlanItem(db.Model):
             'order': self.order,
             'status': self.status,
             'progress': self.progress,
-            'actual_quantity': actual_quantity
+            'actual_quantity': actual_quantity,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
         if include_materials:
             result['required_materials'] = [rm.to_dict() for rm in self.required_materials]

@@ -24,6 +24,9 @@ const ChecklistsList = () => {
     const [todayCompletions, setTodayCompletions] = useState({});
     const [editingCompletion, setEditingCompletion] = useState(null);
     const [activatingProject, setActivatingProject] = useState(null);
+    const [checklistToFill, setChecklistToFill] = useState(null);
+    const [projectForChecklist, setProjectForChecklist] = useState(null);
+    const [foremanEmail, setForemanEmail] = useState(null);
 
     useEffect(() => {
         const role = AuthService.getUserRole();
@@ -457,11 +460,59 @@ const ChecklistsList = () => {
                 <ActivateProjectModal
                     project={activatingProject}
                     onClose={() => setActivatingProject(null)}
-                    onSuccess={() => {
+                    onSuccess={async (projectId, email) => {
                         setActivatingProject(null);
+                        try {
+                            const data = await ApiService.getChecklists();
+                            const checklistsArray = Array.isArray(data) ? data : (data.checklists || []);
+                            const openingChecklist = checklistsArray.find(c => c.type === 'opening');
+                            
+                            if (openingChecklist) {
+                                setChecklistToFill(openingChecklist);
+                                setProjectForChecklist(projectId);
+                                setForemanEmail(email);
+                            } else {
+                                toast.error('Чек-лист открытия объекта не найден');
+                            }
+                        } catch (err) {
+                            toast.error('Не удалось загрузить чек-лист: ' + err.message);
+                        }
+                    }}
+                />
+            )}
+
+            {checklistToFill && projectForChecklist && (
+                <ChecklistCompletionModal
+                    checklist={checklistToFill}
+                    projectId={projectForChecklist}
+                    editingCompletion={null}
+                    onClose={() => {
+                        setChecklistToFill(null);
+                        setProjectForChecklist(null);
+                        setForemanEmail(null);
                         loadProjects();
-                        checkAccess();
-                        toast.success('Объект успешно активирован!');
+                    }}
+                    onComplete={async () => {
+                        const pId = projectForChecklist;
+                        const email = foremanEmail;
+                        
+                        setChecklistToFill(null);
+                        setProjectForChecklist(null);
+                        setForemanEmail(null);
+                        
+                        if (email) {
+                            try {
+                                await ApiService.addProjectMember(pId, email, 'foreman');
+                                await ApiService.activateProject(pId);
+                                toast.success('Чек-лист отправлен на согласование! Прораб назначен.');
+                            } catch (err) {
+                                toast.error('Чек-лист отправлен, но ошибка при назначении прораба: ' + err.message);
+                            }
+                        } else {
+                            toast.success('Чек-лист отправлен на согласование!');
+                        }
+                        
+                        loadProjects();
                     }}
                 />
             )}
