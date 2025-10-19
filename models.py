@@ -370,6 +370,7 @@ class Issue(db.Model):
             'description': self.description,
             'due_date': self.due_date.isoformat() if self.due_date else None,
             'resolution_comment': self.resolution_comment,
+            'resolution_photos': self.resolution_photos or [],
             'resolved_by_id': self.resolved_by_id,
             'resolved_at': self.resolved_at.isoformat() if self.resolved_at else None,
             'created_at': self.created_at.isoformat()
@@ -519,6 +520,7 @@ class RequiredMaterial(db.Model):
     work_item_id = db.Column(db.Integer, db.ForeignKey('work_plan_items.id'), nullable=False)
     material_id = db.Column(db.Integer, db.ForeignKey('materials.id'), nullable=False)
     planned_quantity = db.Column(db.Float, nullable=False)
+    delivered_quantity = db.Column(db.Float, nullable=False, default=0.0)
     
     work_item = db.relationship('WorkPlanItem', back_populates='required_materials')
     material = db.relationship('Material')
@@ -530,7 +532,8 @@ class RequiredMaterial(db.Model):
             'material_id': self.material_id,
             'material_name': self.material.name if self.material else None,
             'material_unit': self.material.unit if self.material else None,
-            'planned_quantity': self.planned_quantity
+            'planned_quantity': self.planned_quantity,
+            'delivered_quantity': self.delivered_quantity
         }
 
 

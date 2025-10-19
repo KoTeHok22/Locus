@@ -17,6 +17,20 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def _update_work_plan_item_progress(work_plan_item_id):
+    work_plan_item = WorkPlanItem.query.get(work_plan_item_id)
+    if work_plan_item:
+        total_tasks = Task.query.filter_by(work_plan_item_id=work_plan_item.id).count()
+        if total_tasks > 0:
+            completed_tasks = Task.query.filter(
+                Task.work_plan_item_id == work_plan_item.id,
+                Task.status.in_(['completed', 'verified'])
+            ).count()
+            work_plan_item.progress = (completed_tasks / total_tasks) * 100
+        else:
+            work_plan_item.progress = 0
+        db.session.commit()
+
 @task_bp.route('/api/tasks', methods=['GET'])
 @token_required
 def get_tasks():
@@ -202,6 +216,8 @@ def update_task_status(project_id, task_id):
 
         db.session.commit()
         db.session.refresh(task)
+
+        _update_work_plan_item_progress(task.work_plan_item_id)
         
         recalculate_project_risk(task.project_id, triggering_user_id=request.current_user['id'])
         
@@ -260,6 +276,8 @@ def verify_task(project_id, task_id):
         task.completed_at = None
 
     db.session.commit()
+
+    _update_work_plan_item_progress(task.work_plan_item_id)
     
     recalculate_project_risk(task.project_id, triggering_user_id=request.current_user['id'])
     

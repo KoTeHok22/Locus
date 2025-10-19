@@ -116,7 +116,6 @@ def update_work_plan(project_id):
         return jsonify({'message': 'Отсутствуют данные для обновления'}), 400
 
     try:
-        # Обновление дат плана работ
         if 'start_date' in data and 'end_date' in data:
             work_plan.start_date = datetime.fromisoformat(data['start_date'].replace('Z', '+00:00')).date()
             work_plan.end_date = datetime.fromisoformat(data['end_date'].replace('Z', '+00:00')).date()
@@ -124,12 +123,10 @@ def update_work_plan(project_id):
         existing_items = {item.id: item for item in work_plan.items}
         incoming_item_ids = {item['id'] for item in data['items'] if 'id' in item}
 
-        # Удаление элементов, которых нет во входящих данных
         for item_id, item in existing_items.items():
             if item_id not in incoming_item_ids:
                 db.session.delete(item)
 
-        # Обновление и добавление элементов
         for index, item_data in enumerate(data['items']):
             item_start = datetime.fromisoformat(item_data['start_date'].replace('Z', '+00:00')).date()
             item_end = datetime.fromisoformat(item_data['end_date'].replace('Z', '+00:00')).date()
@@ -138,7 +135,7 @@ def update_work_plan(project_id):
                 db.session.rollback()
                 return jsonify({'message': f'Элемент \'{item_data["name"]}\': дата начала должна быть раньше даты окончания'}), 400
 
-            if 'id' in item_data:  # Обновление существующего элемента
+            if 'id' in item_data: 
                 item = existing_items.get(item_data['id'])
                 if item:
                     item.name = item_data['name']
@@ -147,7 +144,7 @@ def update_work_plan(project_id):
                     item.start_date = item_start
                     item.end_date = item_end
                     item.order = index
-            else:  # Создание нового элемента
+            else: 
                 new_item = WorkPlanItem(
                     work_plan_id=work_plan.id,
                     name=item_data['name'],

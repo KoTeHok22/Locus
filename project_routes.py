@@ -144,7 +144,6 @@ def get_project_details(project_id):
     """Возвращает детальную информацию о проекте с проверкой доступа."""
     current_user = request.current_user
     
-    # Recalculate risk on project view
     recalculate_project_risk(project_id, triggering_user_id=current_user['id'])
     
     access_error = require_project_access(project_id, current_user['id'], current_user['role'])

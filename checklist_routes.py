@@ -122,13 +122,11 @@ def complete_checklist(checklist_id):
         for file in uploaded_files:
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
-                # Add timestamp and random chars to make filename unique
                 timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
                 random_chars = os.urandom(4).hex()
                 unique_filename = f"{timestamp}_{random_chars}_{filename}"
                 file_path = os.path.join(UPLOAD_FOLDER, unique_filename)
                 file.save(file_path)
-                # Store a path relative to the /uploads directory
                 photo_paths.append(f'checklist_photos/{unique_filename}')
 
         completion = ChecklistCompletion(
@@ -150,7 +148,6 @@ def complete_checklist(checklist_id):
 
         responses_data = json.loads(request.form.get('responses', '[]'))
         for resp in responses_data:
-            # Note: photo handling for individual responses is not implemented here
             response = ChecklistItemResponse(
                 completion_id=completion.id,
                 item_id=resp['item_id'],

@@ -199,6 +199,13 @@ def verify_and_process_ttn(document_id):
                 quantity=float(quantity)
             )
             db.session.add(delivery_item)
+
+            if project.work_plan:
+                for work_item in project.work_plan.items:
+                    for req_mat in work_item.required_materials:
+                        if req_mat.material_id == material.id:
+                            req_mat.delivered_quantity += float(quantity)
+                            break 
         
         db.session.commit()
 

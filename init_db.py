@@ -227,12 +227,10 @@ def create_fixtures():
             print(f"Пользователи привязаны к {len(projects)} проектам.")
 
             print("Создание планов работ из датасета...")
-            # Удаляем старые планы и элементы, чтобы избежать дублирования
             WorkPlanItem.query.delete()
             WorkPlan.query.delete()
             db.session.commit()
 
-            # Группируем работы по адресам из датасета
             works_by_address = {
                 "г. Москва, Флотская, 54,58к1": [],
                 "г. Москва, Некрасовка": [],
@@ -243,7 +241,6 @@ def create_fixtures():
                 "г. Москва, Челобитьевское шоссе, д14 к3,к4,к5": []
             }
 
-            # Данные из файла Перечень_работ_СОК_общий_ИТОГ_1_1.md
             all_work_items_data = [
                 {'address': 'г. Москва, Проспект Мира 194', 'name': 'Устройство садового бортового камня в рамках благоустройства территории', 'quantity': 895, 'unit': 'Погонный метр', 'start': date(2024, 4, 15), 'end': date(2024, 4, 27)},
                 {'address': 'г. Москва, Проспект Мира 194', 'name': 'Ремонт покрытия асфальтобетонного автопарковки в рамках благоустройства территории', 'quantity': 265, 'unit': 'Квадратный метр', 'start': date(2024, 4, 27), 'end': date(2024, 5, 15)},
@@ -303,7 +300,7 @@ def create_fixtures():
                 min_date = min(w['start'] for w in project_works)
                 max_date = max(w['end'] for w in project_works)
 
-                if i == 0:  # Для первого проекта сделаем план "отредактированным"
+                if i == 0:
                     work_plan = WorkPlan(
                         project_id=project.id, 
                         start_date=min_date, 
@@ -327,7 +324,6 @@ def create_fixtures():
                     item_created_at = datetime.now(timezone.utc) - timedelta(days=10 - j)
                     item_updated_at = item_created_at
 
-                    # Для первого элемента первого проекта имитируем редактирование
                     if i == 0 and j == 0:
                         item_updated_at = item_created_at + timedelta(days=3)
 
@@ -347,8 +343,6 @@ def create_fixtures():
             db.session.commit()
             print(f"Созданы планы работ для всех проектов на основе датасета.")
 
-            # Обновление демонстрационных задач для соответствия новым данным
-            # Получаем обновленные элементы планов работ
             work_plan_items_project0 = WorkPlan.query.filter_by(project_id=projects[0].id).first().items
             work_plan_items_project1 = WorkPlan.query.filter_by(project_id=projects[1].id).first().items
             work_plan_items_project2 = WorkPlan.query.filter_by(project_id=projects[2].id).first().items
@@ -357,10 +351,9 @@ def create_fixtures():
             db.session.flush()
             today = date.today()
             tasks = [
-                # Задача 1: Завершена и проверена (в прошлом)
                 Task(
                     project_id=projects[0].id,
-                    work_plan_item_id=work_plan_items_project0[1].id, # Ремонт люка
+                    work_plan_item_id=work_plan_items_project0[1].id,
                     name="Ремонт люка подземных коммуникаций (Завершено)", 
                     start_date=today - timedelta(days=30),
                     end_date=today - timedelta(days=15),
@@ -371,10 +364,9 @@ def create_fixtures():
                     actual_quantity=28,
                     completion_photos=[]
                 ),
-                # Задача 2: Частично выполнена прорабом (в прошлом)
                 Task(
                     project_id=projects[2].id,
-                    work_plan_item_id=work_plan_items_project2[1].id, # Устройство садового бортового камня
+                    work_plan_item_id=work_plan_items_project2[1].id,
                     name="Установка бордюрного камня (Частично)", 
                     start_date=today - timedelta(days=20),
                     end_date=today - timedelta(days=5),
@@ -384,28 +376,25 @@ def create_fixtures():
                     actual_quantity=500,
                     completion_photos=[]
                 ),
-                # Задача 3: В работе (текущий период)
                 Task(
                     project_id=projects[2].id,
-                    work_plan_item_id=work_plan_items_project2[2].id, # Ремонт газона
+                    work_plan_item_id=work_plan_items_project2[2].id,
                     name="Ремонт газона (В работе)", 
                     start_date=today - timedelta(days=5),
                     end_date=today + timedelta(days=10),
                     status='in_progress'
                 ),
-                # Задача 4: В работе (ранее Просрочена)
                 Task(
                     project_id=projects[1].id,
-                    work_plan_item_id=work_plan_items_project1[0].id, # Ремонт проезда
+                    work_plan_item_id=work_plan_items_project1[0].id,
                     name="Ремонт проезда (В работе)", 
                     start_date=today - timedelta(days=3),
                     end_date=today + timedelta(days=12),
                     status='in_progress'
                 ),
-                # Задача 5: Предстоящая (в будущем)
                 Task(
                     project_id=projects[1].id,
-                    work_plan_item_id=work_plan_items_project1[1].id, # Замена бордюрного камня
+                    work_plan_item_id=work_plan_items_project1[1].id,
                     name="Замена бордюрного камня (Предстоит)", 
                     start_date=today + timedelta(days=5),
                     end_date=today + timedelta(days=20),
@@ -656,7 +645,6 @@ def create_fixtures():
                 )
                 db.session.add(response)
 
-            # Создание и утверждение акта открытия для остальных проектов
             for project in projects[1:]:
                 completion = ChecklistCompletion(
                     checklist_id=opening_checklist.id,
@@ -686,7 +674,6 @@ def create_fixtures():
                     )
                     db.session.add(response)
 
-            # Создание ежедневных чек-листов для ВСЕХ проектов
             for project in projects:
                 daily_completion = ChecklistCompletion(
                     checklist_id=daily_checklist.id,
@@ -705,7 +692,6 @@ def create_fixtures():
                 db.session.add(daily_completion)
                 db.session.flush()
 
-                # Добавляем ответы для примера
                 sorted_items_daily = sorted(daily_checklist.items, key=lambda x: x.order)
                 for item in sorted_items_daily:
                     daily_completion.items_data[str(item.id)] = True

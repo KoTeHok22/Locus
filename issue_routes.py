@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app
-from models import db, Issue, Project, ProjectUser
+from models import db, Issue, Project, ProjectUser, User
 from auth import token_required, role_required
 from project_access import require_project_access
 from datetime import datetime, timezone
@@ -90,7 +90,7 @@ def resolve_issue(issue_id):
             filename = f"{uuid.uuid4()}.{ext}"
             filepath = os.path.join(UPLOAD_FOLDER, filename)
             photo.save(filepath)
-            photo_urls.append(f"/uploads/issue_photos/{filename}")
+            photo_urls.append(f"issue_photos/{filename}")
     
     if not photo_urls:
         return jsonify({'message': 'Не удалось загрузить фотографии. Проверьте формат файлов.'}), 400
@@ -101,6 +101,28 @@ def resolve_issue(issue_id):
     issue.resolution_comment = request.form.get('comment', '')
     issue.resolution_photos = photo_urls
     
+    db.session.commit()
+
+    project = Project.query.get(issue.project_id)
+
+    if issue.type == 'violation':
+        inspectors = User.query.join(ProjectUser).filter(
+            ProjectUser.project_id == issue.project_id,
+            User.role == 'inspector'
+        ).all()
+        for inspector in inspectors:
+            create_notification(
+                user_id=inspector.id,
+                message=f"Нарушение '{issue.description[:30]}...' в проекте '{project.name}' устранено и ожидает верификации.",
+                link=f"/projects/{issue.project_id}"
+            )
+    elif issue.type == 'remark':
+        create_notification(
+            user_id=issue.author_id,
+            message=f"Замечание '{issue.description[:30]}...' в проекте '{project.name}' устранено и ожидает верификации.",
+            link=f"/projects/{issue.project_id}"
+        )
+
     recalculate_project_risk(issue.project_id, triggering_user_id=request.current_user['id'])
     
     return jsonify({

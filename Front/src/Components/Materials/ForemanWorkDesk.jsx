@@ -240,7 +240,6 @@ const WorkItemCard = ({ item, index, onReport }) => {
 };
 
 const ReportProgressModal = ({ workItem, availableMaterials, onClose, onSuccess }) => {
-    const [progress, setProgress] = useState(workItem.progress);
     const [materialsUsed, setMaterialsUsed] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -281,7 +280,6 @@ const ReportProgressModal = ({ workItem, availableMaterials, onClose, onSuccess 
         try {
             await ApiService.reportWorkProgress(
                 workItem.id,
-                progress,
                 materialsUsed.filter(m => m.quantity_used > 0)
             );
             toast.success('Отчет сохранен');
@@ -310,40 +308,6 @@ const ReportProgressModal = ({ workItem, availableMaterials, onClose, onSuccess 
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-3">
-                            Прогресс выполнения
-                        </label>
-                        <div className="flex items-center gap-4">
-                            <input
-                                type="range"
-                                min="0"
-                                max="100"
-                                step="5"
-                                value={progress}
-                                onChange={(e) => setProgress(parseFloat(e.target.value))}
-                                className="flex-1"
-                            />
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    value={progress}
-                                    onChange={(e) => setProgress(parseFloat(e.target.value) || 0)}
-                                    className="w-20 rounded-lg border border-slate-300 px-3 py-2 text-sm text-right focus:border-blue-500 focus:outline-none"
-                                />
-                                <span className="text-sm font-semibold text-slate-600">%</span>
-                            </div>
-                        </div>
-                        <div className="mt-3 h-3 rounded-full bg-slate-100 overflow-hidden">
-                            <div
-                                className="h-full rounded-full bg-blue-600 transition-all duration-300"
-                                style={{ width: `${progress}%` }}
-                            />
-                        </div>
-                    </div>
-
                     {workItem.required_materials && workItem.required_materials.length > 0 && (
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-3">
@@ -362,7 +326,7 @@ const ReportProgressModal = ({ workItem, availableMaterials, onClose, onSuccess 
                                                         {mat.material_name}
                                                     </p>
                                                     <p className="text-xs text-slate-600 mt-1">
-                                                        План: {mat.planned_quantity} {mat.material_unit} • Доступно: <span className={available > 0 ? 'text-emerald-600 font-semibold' : 'text-red-600 font-semibold'}>{available} {mat.material_unit}</span>
+                                                        План: {mat.planned_quantity} {mat.material_unit} • Доставлено: {mat.delivered_quantity} {mat.material_unit} • Доступно: <span className={available > 0 ? 'text-emerald-600 font-semibold' : 'text-red-600 font-semibold'}>{available} {mat.material_unit}</span>
                                                     </p>
                                                 </div>
                                             </div>

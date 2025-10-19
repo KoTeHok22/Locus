@@ -151,19 +151,11 @@ def calculate_missed_checklists(project_id):
 
         return 0, "Проект не активен."
 
-
-
-    # Find the daily checklist template
-
     daily_checklist_template = db.session.query(Checklist).filter_by(type='daily').first()
 
     if not daily_checklist_template:
 
         return 0, "Шаблон ежедневного чек-листа не найден."
-
-
-
-    # Determine the date range to check
 
     project_start_date = project.created_at.date()
 
@@ -177,10 +169,6 @@ def calculate_missed_checklists(project_id):
 
     total_days = (today - project_start_date).days + 1
 
-
-
-    # Get all completion dates for this project's daily checklist
-
     completions = db.session.query(ChecklistCompletion.completion_date).filter(
 
         ChecklistCompletion.project_id == project_id,
@@ -189,15 +177,8 @@ def calculate_missed_checklists(project_id):
 
     ).all()
 
-
-
-    # Create a set of dates when a checklist was completed
-
     completion_dates = {comp.completion_date.date() for comp in completions}
 
-
-
-    # Count missed days
 
     missed_days_count = 0
 
@@ -215,9 +196,6 @@ def calculate_missed_checklists(project_id):
 
         return 0, "Ежедневные чек-листы заполняются регулярно."
 
-
-
-    # Calculate score (e.g., 10 points per missed day, cumulative)
 
     score = missed_days_count * 10
 

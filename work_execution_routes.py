@@ -65,19 +65,6 @@ def report_work_item_progress(item_id):
     if not data:
         return jsonify({'message': 'Отсутствуют данные для отчетности'}), 400
     
-    if 'progress' in data:
-        progress = float(data['progress'])
-        if progress < 0 or progress > 100:
-            return jsonify({'message': 'Прогресс должен быть в диапазоне 0-100'}), 400
-        item.progress = progress
-        
-        if progress == 0:
-            item.status = 'not_started'
-        elif progress == 100:
-            item.status = 'completed'
-        else:
-            item.status = 'in_progress'
-    
     if 'materials_used' in data:
         materials_used = data['materials_used']
         if not isinstance(materials_used, list):

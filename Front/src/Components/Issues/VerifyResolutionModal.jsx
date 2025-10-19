@@ -70,16 +70,15 @@ const VerifyResolutionModal = ({ issue, onClose, onUpdate }) => {
                             </label>
                             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                                 {issue.resolution_photos.map((photo, index) => (
-                                    <a
-                                        key={index}
-                                        href={`${import.meta.env.VITE_API_URL || 'http://localhost:8501'}${photo}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="block"
-                                    >
-                                        <img 
-                                            src={`${import.meta.env.VITE_API_URL || 'http://localhost:8501'}${photo}`}
-                                            alt={`Устранение ${index + 1}`}
+                                                                            <a
+                                                                            key={index}
+                                                                            href={`${import.meta.env.VITE_API_URL}/uploads/${photo}`}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="block"
+                                                                        >
+                                                                            <img 
+                                                                                src={`${import.meta.env.VITE_API_URL}/uploads/${photo}`}                                            alt={`Устранение ${index + 1}`}
                                             className="w-full h-32 object-cover rounded-lg hover:opacity-75 transition cursor-pointer"
                                         />
                                     </a>

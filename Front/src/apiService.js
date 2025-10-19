@@ -39,6 +39,10 @@ async function request(endpoint, options = {}) {
 
 class ApiService {
 
+    getBaseUrl() {
+        return API_BASE_URL.replace('/api', '');
+    }
+
     getProjects(options = {}) {
         return request('/projects', options);
     }
@@ -541,10 +545,10 @@ class ApiService {
         return request(url);
     }
 
-    reportWorkProgress(itemId, progress, materialsUsed) {
+    reportWorkProgress(itemId, materialsUsed) {
         return request(`/work-items/${itemId}/report-progress`, {
             method: 'POST',
-            body: JSON.stringify({ progress, materials_used: materialsUsed })
+            body: JSON.stringify({ materials_used: materialsUsed })
         });
     }
 

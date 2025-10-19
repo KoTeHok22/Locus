@@ -23,6 +23,7 @@ import IssueDetailsModal from '../Components/Issues/IssueDetailsModal';
 import WorkPlanView from '../Components/WorkPlan/WorkPlanView';
 import DailyReportBlock from '../Components/Reports/DailyReportBlock';
 import { translate } from '../utils/translation.js';
+import VerificationIssueCard from '../Components/Issues/VerificationIssueCard';
 
 function ProjectDetailsPage() {
     const { projectId } = useParams();
@@ -49,6 +50,7 @@ function ProjectDetailsPage() {
     const [checklistToFill, setChecklistToFill] = useState(null);
     const [projectForChecklist, setProjectForChecklist] = useState(null);
     const [foremanEmail, setForemanEmail] = useState(null);
+    const [issuesToVerify, setIssuesToVerify] = useState([]);
     const userRole = AuthService.getUserRole();
 
     const fetchData = useCallback(async (signal) => {
@@ -84,6 +86,9 @@ function ProjectDetailsPage() {
                 ]);
                 setTasksToVerify(tasksToVerifyData);
                 setAllTasks(allTasksData);
+
+                const issuesToVerifyData = await ApiService.getIssues({ project_id: projectId, status: 'pending_verification' }, { signal });
+                setIssuesToVerify(issuesToVerifyData);
             }
 
             const issuesData = await ApiService.getIssues({ project_id: projectId, status: 'open' }, { signal });
@@ -644,6 +649,27 @@ function ProjectDetailsPage() {
                                         <p className="text-sm text-slate-500">Задач на подтверждение нет</p>
                                     </div>
                                 )}
+                            </div>
+                        </div>
+                    )}
+
+                    {userRole === 'client' && issuesToVerify.length > 0 && (
+                        <div className="rounded-3xl border border-slate-100 bg-white shadow-sm">
+                            <div className="border-b border-slate-200 px-4 py-3 sm:px-6 sm:py-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h2 className="text-base font-semibold text-slate-900 sm:text-lg">Замечания на верификацию</h2>
+                                        <p className="text-xs text-slate-500 sm:text-sm">Требуют подтверждения устранения</p>
+                                    </div>
+                                    <span className="inline-flex h-7 items-center justify-center rounded-full bg-amber-50 px-3 text-[10px] font-semibold text-amber-600 sm:h-9 sm:px-4 sm:text-xs">
+                                        {issuesToVerify.length}
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="max-h-96 space-y-3 overflow-y-auto p-4 sm:space-y-4 sm:p-6">
+                                {issuesToVerify.map(issue => (
+                                    <VerificationIssueCard key={issue.id} issue={issue} onUpdate={fetchData} />
+                                ))}
                             </div>
                         </div>
                     )}
