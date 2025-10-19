@@ -25,7 +25,7 @@ function RoleSelector({ selectedRole, onRoleChange }) {
                 }`}
             >
                 <i className="fas fa-users mr-2"></i>
-                <span className="hidden sm:inline">Заказчик</span>
+                <span className="hidden sm:inline">Служба строительного контроля (заказчик)</span>
             </button>
             
             <button 

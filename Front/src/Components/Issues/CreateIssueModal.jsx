@@ -66,15 +66,15 @@ const CreateIssueModal = ({ projects, classifiers, onClose, onUpdate, issueType 
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg">
-                <h2 className="text-xl font-semibold mb-4">{isViolation ? 'Зафиксировать нарушение' : 'Добавить замечание'}</h2>
-                {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-[10000] px-4">
+            <div className="bg-white rounded-2xl shadow-xl p-4 w-full max-w-lg max-h-[90vh] overflow-y-auto sm:p-6 sm:rounded-3xl">
+                <h2 className="text-lg font-semibold mb-3 sm:text-xl sm:mb-4">{isViolation ? 'Зафиксировать нарушение' : 'Добавить замечание'}</h2>
+                {error && <p className="text-red-500 text-xs mb-3 sm:text-sm sm:mb-4">{error}</p>}
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {!preselectedProjectId && projects && (
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Проект</label>
-                            <select value={selectedProject} onChange={e => setSelectedProject(e.target.value)} className="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                            <label className="block text-xs font-medium text-gray-700 sm:text-sm">Проект</label>
+                            <select value={selectedProject} onChange={e => setSelectedProject(e.target.value)} className="mt-1 block w-full p-2 border border-gray-300 rounded-lg text-sm sm:text-base">
                                 <option value="" disabled>Выберите проект</option>
                                 {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                             </select>
@@ -82,22 +82,22 @@ const CreateIssueModal = ({ projects, classifiers, onClose, onUpdate, issueType 
                     )}
                     {isViolation && classifiers && (
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Тип нарушения (Классификатор)</label>
-                            <select value={classifierId} onChange={e => setClassifierId(e.target.value)} className="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                            <label className="block text-xs font-medium text-gray-700 sm:text-sm">Тип нарушения (Классификатор)</label>
+                            <select value={classifierId} onChange={e => setClassifierId(e.target.value)} className="mt-1 block w-full p-2 border border-gray-300 rounded-lg text-sm sm:text-base">
                                 <option value="" disabled>Выберите тип</option>
                                 {classifiers.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
                             </select>
                         </div>
                     )}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Описание</label>
-                        <textarea value={description} onChange={e => setDescription(e.target.value)} rows="3" className="mt-1 block w-full p-2 border border-gray-300 rounded-md"></textarea>
+                        <label className="block text-xs font-medium text-gray-700 sm:text-sm">Описание</label>
+                        <textarea value={description} onChange={e => setDescription(e.target.value)} rows="3" className="mt-1 block w-full p-2 border border-gray-300 rounded-lg text-sm sm:text-base"></textarea>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Срок устранения</label>
-                        <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} min={today} className="mt-1 block w-full p-2 border border-gray-300 rounded-md" />
+                        <label className="block text-xs font-medium text-gray-700 sm:text-sm">Срок устранения</label>
+                        <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} min={today} className="mt-1 block w-full p-2 border border-gray-300 rounded-lg text-sm sm:text-base" />
                     </div>
-                    <div className="flex justify-end gap-4 pt-4">
+                    <div className="flex flex-col-reverse gap-2 pt-3 sm:flex-row sm:justify-end sm:gap-4 sm:pt-4">
                         <button type="button" onClick={onClose} className="bg-gray-200 px-4 py-2 rounded-lg text-sm font-medium">Отмена</button>
                         <button type="submit" disabled={isSubmitting} className={`text-white px-4 py-2 rounded-lg text-sm font-medium ${isViolation ? 'bg-red-600' : 'bg-blue-600'} disabled:bg-gray-400`}>
                             {isSubmitting ? 'Сохранение...' : (isViolation ? 'Сохранить нарушение' : 'Сохранить замечание')}

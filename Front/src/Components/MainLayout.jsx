@@ -1,22 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, List, Map, FileText, Menu, Bell } from 'lucide-react';
+import { Home, List, Map, FileText, Menu, Bell, ClipboardCheck } from 'lucide-react';
 import AuthService from "../authService.js";
+import ApiService from "../apiService.js";
 import logo from '../logo/logo-mini.ico';
 import { translate } from '../utils/translation.js';
+import NotificationDropdown from './Notification/NotificationDropdown';
 
 const navigationItems = [
     { key: '/', label: 'Дашборд', icon: Home },
     { key: '/projects', label: 'Объекты', icon: List },
     { key: '/map', label: 'Карта', icon: Map },
     { key: '/reports', label: 'Отчёты', icon: FileText, roles: ['client', 'foreman'] },
+    { key: '/checklists', label: 'Чек-листы', icon: ClipboardCheck, roles: ['client', 'foreman', 'inspector'] },
 ];
 
 const UserMenu = ({ user, onLogout }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const menuRef = React.useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (menuRef.current && !menuRef.current.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+
+        if (isOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isOpen]);
 
     return (
-        <div className="relative">
+        <div className="relative" ref={menuRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="flex items-center gap-3 rounded-full bg-slate-100/70 hover:bg-slate-100 px-2.5 py-1.5 transition-colors"
@@ -48,6 +68,8 @@ const MainLayout = ({ children }) => {
     const navigate = useNavigate();
     const [userInfo, setUserInfo] = useState({ initials: '', name: '', role: '' });
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -70,6 +92,22 @@ const MainLayout = ({ children }) => {
         fetchProfile();
     }, []);
 
+    useEffect(() => {
+        const fetchUnreadCount = async () => {
+            try {
+                const data = await ApiService.getUnreadNotificationCount();
+                setUnreadCount(data.count);
+            } catch (error) {
+                console.error("Failed to fetch notification count", error);
+            }
+        };
+
+        fetchUnreadCount();
+        const interval = setInterval(fetchUnreadCount, 30000);
+
+        return () => clearInterval(interval);
+    }, []);
+
     const handleLogout = () => {
         AuthService.logout();
         navigate('/login');
@@ -79,16 +117,16 @@ const MainLayout = ({ children }) => {
     const currentNav = availableNavigation.find(item => item.key === location.pathname);
 
     return (
-        <div className={`h-screen bg-slate-50 flex relative ${isSidebarOpen ? 'sidebar-open' : ''}`}>
+        <div className={`h-screen bg-slate-50 flex relative overflow-x-hidden ${isSidebarOpen ? 'sidebar-open' : ''}`}>
             {isSidebarOpen && (
                 <div
-                    className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 lg:hidden"
+                    className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[9998] lg:hidden"
                     onClick={() => setIsSidebarOpen(false)}
                 />
             )}
 
             <aside
-                className={`mobile-sidebar fixed inset-y-0 left-0 z-50 w-72 max-w-full bg-white border-r border-slate-200 shadow-xl shadow-slate-600/10 transform transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 lg:shadow-none lg:flex lg:flex-col ${
+                className={`mobile-sidebar fixed inset-y-0 left-0 z-[9999] w-72 max-w-full bg-white border-r border-slate-200 shadow-xl shadow-slate-600/10 transform transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 lg:shadow-none lg:flex lg:flex-col ${
                     isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
                 }`}
             >
@@ -149,7 +187,7 @@ const MainLayout = ({ children }) => {
                 </div>
             </aside>
 
-            <div className="flex-1 flex flex-col lg:pl-0">
+            <div className="flex-1 flex flex-col lg:pl-0 min-w-0">
                 <header className="bg-white border-b border-slate-200 px-4 py-3 shadow-sm md:px-6">
                     <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
@@ -175,21 +213,32 @@ const MainLayout = ({ children }) => {
                         </div>
 
                         <div className="flex items-center gap-3">
-                            <button
-                                className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition-colors hover:border-blue-200 hover:text-blue-600"
-                                aria-label="Уведомления"
-                            >
-                                <Bell size={18} />
-                                <span className="absolute -top-1 -right-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
-                                    3
-                                </span>
-                            </button>
+                            <div className="relative">
+                                <button
+                                    onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                                    className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition-colors hover:border-blue-200 hover:text-blue-600"
+                                    aria-label="Уведомления"
+                                >
+                                    <Bell size={18} />
+                                    {unreadCount > 0 && (
+                                        <span className="absolute -top-1 -right-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
+                                            {unreadCount > 99 ? '99+' : unreadCount}
+                                        </span>
+                                    )}
+                                </button>
+                                {isNotificationOpen && (
+                                    <NotificationDropdown
+                                        onClose={() => setIsNotificationOpen(false)}
+                                        onUnreadCountChange={setUnreadCount}
+                                    />
+                                )}
+                            </div>
                             <UserMenu user={userInfo} onLogout={handleLogout} />
                         </div>
                     </div>
                 </header>
 
-                <main className="flex-1 overflow-y-auto px-4 pb-4 pt-4 md:px-6 md:pb-8 md:pt-6 lg:pb-6">
+                <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-4 pt-4 md:px-6 md:pb-8 md:pt-6 lg:pb-6">
                     {children}
                 </main>
             </div>

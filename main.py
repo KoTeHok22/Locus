@@ -1,11 +1,9 @@
 
 import os
-import time
 from flask import Flask, send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from dotenv import load_dotenv
-from sqlalchemy.exc import OperationalError
 
 load_dotenv()
 
@@ -27,15 +25,33 @@ from map_routes import map_bp
 from schedule_routes import schedule_bp
 from ttn_routes import recognition_bp
 from delivery_routes import delivery_bp
+from checklist_routes import checklist_bp
+from risk_routes import risk_bp
+from workplan_routes import workplan_bp
+from delivery_material_routes import delivery_material_bp
+from work_execution_routes import work_execution_bp
+from analytics_material_routes import analytics_material_bp
+from notification_routes import notification_bp
 
 
 def create_app(test_config=None):
     """Создание и настройка Flask приложения."""
     app = Flask(__name__)
-    CORS(app, origins="*", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"], allow_headers=["Authorization", "Content-Type", "X-User-Geolocation"])
+    CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 
     if test_config is None:
-        app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///app.db')
+        db_url = os.environ.get('DATABASE_URL')
+        if not db_url:
+            pg_user = os.environ.get('POSTGRES_USER')
+            pg_pass = os.environ.get('POSTGRES_PASSWORD')
+            pg_host = os.environ.get('POSTGRES_HOST')
+            pg_port = os.environ.get('POSTGRES_PORT')
+            pg_db = os.environ.get('POSTGRES_DATABASE')
+            if all([pg_user, pg_pass, pg_host, pg_port, pg_db]):
+                db_url = f"postgresql://{pg_user}:{pg_pass}@{pg_host}:{pg_port}/{pg_db}"
+            else:
+                db_url = 'sqlite:///app.db'
+        app.config['SQLALCHEMY_DATABASE_URI'] = db_url
         app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
         app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'fallback-secret-key-change-me')
         app.config['CELERY_BROKER_URL'] = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
@@ -49,24 +65,6 @@ def create_app(test_config=None):
     db.init_app(app)
     jwt = JWTManager(app)
     celery = make_celery(app)
-
-    def create_tables_with_retry(max_retries=5, delay=2):
-        for attempt in range(max_retries):
-            try:
-                with app.app_context():
-                    db.create_all()
-                print("Таблицы базы данных успешно созданы.")
-                return
-            except OperationalError as e:
-                if attempt < max_retries - 1:
-                    print(f"Не удалось подключиться к БД (попытка {attempt + 1}/{max_retries}): {e}. Повтор через {delay} сек...")
-                    time.sleep(delay)
-                else:
-                    print(f"Не удалось подключиться к БД после {max_retries} попыток.")
-                    raise
-    
-    if test_config is None:
-        create_tables_with_retry()
 
     app.register_blueprint(project_bp_v2)
     app.register_blueprint(daily_report_bp_v2)
@@ -83,6 +81,13 @@ def create_app(test_config=None):
     app.register_blueprint(map_bp)
     app.register_blueprint(recognition_bp)
     app.register_blueprint(delivery_bp)
+    app.register_blueprint(checklist_bp)
+    app.register_blueprint(risk_bp)
+    app.register_blueprint(workplan_bp)
+    app.register_blueprint(delivery_material_bp)
+    app.register_blueprint(work_execution_bp)
+    app.register_blueprint(analytics_material_bp)
+    app.register_blueprint(notification_bp)
 
     @app.route('/uploads/<path:filename>')
     def serve_upload(filename):

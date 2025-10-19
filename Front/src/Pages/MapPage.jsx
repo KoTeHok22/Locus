@@ -8,21 +8,25 @@ const MapPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const fetchProjects = useCallback(async () => {
+    const fetchProjects = useCallback(async (signal) => {
         setLoading(true);
         try {
-            const data = await ApiService.getProjects();
+            const data = await ApiService.getProjects({ signal });
             console.log('Проекты, полученные от API:', data);
             setProjects(data);
         } catch (err) {
-            setError(err.message);
+            if (err.name !== 'AbortError') {
+                setError(err.message);
+            }
         } finally {
             setLoading(false);
         }
     }, []);
 
     useEffect(() => {
-        fetchProjects();
+        const controller = new AbortController();
+        fetchProjects(controller.signal);
+        return () => controller.abort();
     }, [fetchProjects]);
 
     return (

@@ -14,7 +14,7 @@ function Magazine({ onLogout, userRole }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const mockNotifications = [
-        { id: 1, title: 'Новое сообщение', text: 'У вас новое сообщение от заказчика', time: '5 мин назад', unread: true },
+        { id: 1, title: 'Новое сообщение', text: 'У вас новое сообщение от службы строительного контроля (заказчика)', time: '5 мин назад', unread: true },
         { id: 2, title: 'Обновление системы', text: 'Система была обновлена до версии 2.1', time: '1 час назад', unread: true },
         { id: 3, title: 'Напоминание', text: 'Не забудьте проверить отчёты', time: '2 часа назад', unread: false },
     ];
@@ -42,7 +42,7 @@ function Magazine({ onLogout, userRole }) {
 
     const getRoleInfo = (role) => {
         const roleInfo = {
-            'client': { title: 'Дашборд Заказчика', subtitle: 'Система управления объектами' },
+            'client': { title: 'Дашборд Службы строительного контроля', subtitle: 'Система управления объектами' },
             'foreman': { title: 'Боевой пост', subtitle: 'Управление объектом' },
             'inspector': { title: 'Карта нарушений', subtitle: 'Контроль соответствия нормам' }
         };
@@ -81,7 +81,6 @@ function Magazine({ onLogout, userRole }) {
         { key: 'dashboard', label: 'Дашборд', icon: 'fa-home' },
         { key: 'objectList', label: 'Список объектов', icon: 'fa-list' },
         { key: 'map', label: 'Карта', icon: 'fa-map-marked-alt' },
-        { key: 'reports', label: 'Отчёты', icon: 'fa-file-alt' },
         { key: 'analytics', label: 'Аналитика', icon: 'fa-chart-bar' },
         { key: 'settings', label: 'Настройки', icon: 'fa-cog' }
     ];

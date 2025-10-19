@@ -176,7 +176,7 @@ function RegistrationForm() {
                                 required
                             >
                                 <option value="" disabled>-- Выберите роль --</option>
-                                <option value="client">Заказчик</option>
+                                <option value="client">Служба строительного контроля (заказчик)</option>
                                 <option value="foreman">Прораб</option>
                                 <option value="inspector">Инспектор</option>
                             </select>
@@ -322,7 +322,7 @@ function RegistrationForm() {
                                 required
                             >
                                 <option value="" disabled>-- Выберите роль --</option>
-                                <option value="client">Заказчик</option>
+                                <option value="client">Служба строительного контроля (заказчик)</option>
                                 <option value="foreman">Прораб</option>
                                 <option value="inspector">Инспектор</option>
                             </select>

@@ -1,10 +1,12 @@
-FROM node:latest
+FROM node:24
 
 WORKDIR /app
 
-COPY package.json ./
+COPY package*.json ./
 
-RUN npm install --legacy-peer-deps
+RUN npm cache clean --force && \
+    rm -rf node_modules package-lock.json && \
+    npm install --include=optional
 
 COPY . .
 

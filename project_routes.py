@@ -1,28 +1,23 @@
 from flask import Blueprint, request, jsonify
 from sqlalchemy import func
 from sqlalchemy.orm import aliased
-import os
-from dotenv import load_dotenv
-from geopy.geocoders import Yandex
+from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderQueryError, GeocoderTimedOut, GeocoderUnavailable
 
 from models import db, Project, User, ProjectUser, Task, Issue
 from auth import token_required, role_required
+from project_access import require_project_access
+from risk_calculator import recalculate_project_risk
 
 project_bp_v2 = Blueprint('project_bp_v2', __name__)
 
-load_dotenv()
-api_key = os.getenv('YANDEX_GEOCODER_API_KEY') or os.getenv('VITE_YANDEX_MAPS_API_KEY')
-geolocator = Yandex(api_key=api_key) if api_key else None
+geolocator = Nominatim(user_agent="shutdown-team-app")
 
 @project_bp_v2.route('/api/projects', methods=['GET'])
 @token_required
 def get_projects():
-    """
-    Возвращает список проектов с агрегированными данными (кол-во задач и нарушений).
-    - Инспекторы видят все проекты.
-    - Остальные роли видят только те проекты, в которых они состоят.
-    """
+    from models import ChecklistCompletion
+    
     current_user = request.current_user
     
     tasks_count_query = db.session.query(Task.project_id, func.count(Task.id).label('tasks_count')) \
@@ -46,6 +41,15 @@ def get_projects():
 
     projects_list = []
     for project, tasks_count, issues_count in results:
+        pending_checklist = ChecklistCompletion.query.filter_by(
+            project_id=project.id,
+            approval_status='pending'
+        ).first()
+        
+        has_pending = False
+        if pending_checklist:
+            has_pending = bool(pending_checklist.items_data and len(pending_checklist.items_data) > 0)
+        
         project_dict = {
             'id': project.id,
             'name': project.name,
@@ -56,7 +60,10 @@ def get_projects():
             'polygon': project.polygon,
             'created_at': project.created_at.isoformat(),
             'tasks_count': tasks_count,
-            'issues_count': issues_count
+            'issues_count': issues_count,
+            'has_pending_checklist': has_pending,
+            'risk_score': project.risk_score,
+            'risk_level': project.risk_level
         }
         projects_list.append(project_dict)
 
@@ -82,11 +89,10 @@ def create_project():
         return jsonify({'message': f"Проект с адресом '{data['address']}' уже существует."}), 409
 
     address = data.get('address')
-    latitude, longitude = None, None
+    latitude = data.get('latitude')
+    longitude = data.get('longitude')
 
-    if address:
-        if not geolocator:
-            return jsonify({'message': 'Сервис геокодирования не настроен. Проверьте API-ключ на сервере.'}), 503
+    if address and not latitude and not longitude:
         try:
             location = geolocator.geocode(address, timeout=10)
             if location:
@@ -115,6 +121,8 @@ def create_project():
     db.session.add(new_project)
     db.session.add(project_user_link)
     db.session.commit()
+
+    recalculate_project_risk(new_project.id)
     
     return jsonify({
         'id': new_project.id,
@@ -132,8 +140,15 @@ def create_project():
 @project_bp_v2.route('/api/projects/<int:project_id>', methods=['GET'])
 @token_required
 def get_project_details(project_id):
-    """Возвращает детальную информацию о проекте (пока без изменений)."""
+    """Возвращает детальную информацию о проекте с проверкой доступа."""
+    current_user = request.current_user
+    
+    access_error = require_project_access(project_id, current_user['id'], current_user['role'])
+    if access_error:
+        return access_error
+    
     project = db.get_or_404(Project, project_id)
+    
     project_dict = {
         'id': project.id,
         'name': project.name,
@@ -142,7 +157,9 @@ def get_project_details(project_id):
         'longitude': project.longitude,
         'status': project.status,
         'polygon': project.polygon,
-        'created_at': project.created_at.isoformat()
+        'created_at': project.created_at.isoformat(),
+        'risk_score': project.risk_score,
+        'risk_level': project.risk_level
     }
     return jsonify(project_dict), 200
 
@@ -159,10 +176,19 @@ def add_project_member(project_id):
         return jsonify({'message': 'Требуются email и role'}), 400
 
     email = data['email']
+    role = data['role']
 
     user_to_add = User.query.filter_by(email=email).first()
     if not user_to_add:
         return jsonify({'message': f'Пользователь с email {email} не найден.'}), 404
+
+    if role == 'foreman':
+        existing_foreman = db.session.query(ProjectUser).join(User).filter(
+            ProjectUser.project_id == project.id,
+            User.role == 'foreman'
+        ).first()
+        if existing_foreman:
+            return jsonify({'message': 'На этом проекте уже назначен прораб'}), 409
 
     existing_link = ProjectUser.query.filter_by(project_id=project.id, user_id=user_to_add.id).first()
     if existing_link:
@@ -173,3 +199,18 @@ def add_project_member(project_id):
     db.session.commit()
 
     return jsonify({'message': f'Пользователь {email} успешно добавлен в проект.'}), 201
+
+
+@project_bp_v2.route('/api/projects/<int:project_id>/activate', methods=['POST'])
+@token_required
+@role_required('client')
+def activate_project(project_id):
+    project = db.get_or_404(Project, project_id)
+    
+    if project.status == 'active':
+        return jsonify({'message': 'Проект уже активирован'}), 400
+    
+    return jsonify({
+        'message': 'Проект готов к заполнению чек-листа.',
+        'project_status': project.status
+    }), 200

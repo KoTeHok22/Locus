@@ -13,3 +13,5 @@ pytest
 celery
 redis
 geopy
+python-docx
+openpyxl

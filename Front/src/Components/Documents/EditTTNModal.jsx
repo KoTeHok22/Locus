@@ -76,7 +76,7 @@ const EditTTNModal = ({ document, onClose, onUpdate }) => {
     );
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-[10000] p-4">
             <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
                 <div className="flex items-center justify-between mb-4 flex-shrink-0">
                     <h2 className="text-xl font-bold">

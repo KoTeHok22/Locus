@@ -31,7 +31,7 @@ const VerificationTaskCard = ({ task, onUpdate }) => {
         <>
             {selectedPhoto && (
                 <div 
-                    className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[9999] p-4"
+                    className="fixed inset-0 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center z-[10000] p-4"
                     onClick={() => setSelectedPhoto(null)}
                 >
                     <img 

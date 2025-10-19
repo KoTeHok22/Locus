@@ -6,6 +6,13 @@ export default defineConfig({
   server: {
     allowedHosts: ['shutdown-team.ru'],
     host: true,
+    watch: {
+      usePolling: true,
+      interval: 100,
+    },
+    hmr: {
+      overlay: true,
+    },
   },
   css: {
     transformer: 'postcss'

@@ -36,11 +36,11 @@ const VerifyResolutionModal = ({ issue, onClose, onUpdate }) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="p-6">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-[10000] p-4">
+            <div className="bg-white rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto sm:rounded-3xl">
+                <div className="p-4 sm:p-6">
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-xl font-bold text-gray-900">
+                        <h2 className="text-lg font-bold text-gray-900 sm:text-xl">
                             Верификация устранения нарушения
                         </h2>
                         <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
@@ -50,25 +50,25 @@ const VerifyResolutionModal = ({ issue, onClose, onUpdate }) => {
                     
                     {}
                     <div className="mb-4 p-3 bg-slate-50 rounded-lg">
-                        <p className="text-sm font-medium text-gray-700">Описание нарушения:</p>
-                        <p className="text-sm text-gray-600 mt-1">{issue.description}</p>
+                        <p className="text-xs font-medium text-gray-700 sm:text-sm">Описание нарушения:</p>
+                        <p className="text-xs text-gray-600 mt-1 sm:text-sm">{issue.description}</p>
                     </div>
 
                     {}
                     {issue.resolution_comment && (
                         <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                            <p className="text-sm font-medium text-blue-900">Комментарий прораба:</p>
-                            <p className="text-sm text-blue-700 mt-1">{issue.resolution_comment}</p>
+                            <p className="text-xs font-medium text-blue-900 sm:text-sm">Комментарий прораба:</p>
+                            <p className="text-xs text-blue-700 mt-1 sm:text-sm">{issue.resolution_comment}</p>
                         </div>
                     )}
 
                     {}
                     {issue.resolution_photos && issue.resolution_photos.length > 0 && (
                         <div className="mb-6">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-xs font-medium text-gray-700 mb-2 sm:text-sm">
                                 Фотографии устранения:
                             </label>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                                 {issue.resolution_photos.map((photo, index) => (
                                     <a
                                         key={index}
@@ -91,7 +91,7 @@ const VerifyResolutionModal = ({ issue, onClose, onUpdate }) => {
 
                     {}
                     <div className="mb-6">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-xs font-medium text-gray-700 mb-2 sm:text-sm">
                             Комментарий {selectedStatus === 'rejected' && <span className="text-red-500">*</span>}
                         </label>
                         <textarea
@@ -102,13 +102,13 @@ const VerifyResolutionModal = ({ issue, onClose, onUpdate }) => {
                                     ? "Укажите причину отклонения..."
                                     : "Дополнительные замечания (необязательно)..."
                             }
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:p-3 sm:text-base"
                             rows="3"
                         />
                     </div>
 
                     {}
-                    <div className="flex gap-3">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
                         <button
                             onClick={() => {
                                 setSelectedStatus('verified');

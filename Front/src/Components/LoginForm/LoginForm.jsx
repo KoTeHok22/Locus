@@ -4,6 +4,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import authService from '../../authService';
 import logo from '../../logo/logo.png';
 import '../../index.css';
+import '../../App.css';
 
 function LoginForm() {
   const navigate = useNavigate();

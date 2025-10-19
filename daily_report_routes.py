@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify
 from models import db, DailyReport, User, Project
 from auth import token_required, role_required
-from datetime import datetime
+from datetime import datetime, timedelta
+from risk_calculator import recalculate_project_risk
 
 daily_report_bp_v2 = Blueprint('daily_report_bp_v2', __name__)
 
@@ -18,10 +19,13 @@ def get_daily_reports():
     for report, author_first_name, author_last_name, project_name in results:
         reports_list.append({
             'id': report.id,
+            'project_id': report.project_id,
             'report_date': report.report_date.isoformat(),
             'notes': report.notes,
+            'equipment': report.equipment,
             'weather_conditions': report.weather_conditions,
             'workers_count': report.workers_count,
+            'geolocation': report.geolocation,
             'project_name': project_name,
             'author_name': f'{author_first_name} {author_last_name}'.strip()
         })
@@ -34,24 +38,48 @@ def get_daily_reports():
 def create_daily_report():
     """Создает новый ежедневный отчет. Доступно только для прораба."""
     data = request.get_json()
-    required_fields = ['project_id', 'report_date', 'notes']
+    required_fields = ['project_id', 'workers_count', 'weather_conditions']
     if not all(field in data for field in required_fields):
-        return jsonify({'message': 'Требуются поля project_id, report_date, notes'}), 400
+        return jsonify({'message': 'Требуются поля project_id, workers_count, weather_conditions'}), 400
+
+    project_id = data['project_id']
+    author_id = request.current_user['id']
+
+    last_report = DailyReport.query.filter_by(
+        project_id=project_id,
+        author_id=author_id
+    ).order_by(DailyReport.report_date.desc()).first()
+
+    if last_report:
+        time_since_last = datetime.utcnow() - last_report.report_date
+        if time_since_last < timedelta(hours=12):
+            hours_left = 12 - (time_since_last.total_seconds() / 3600)
+            return jsonify({
+                'message': f'Можно создать отчёт только через {int(hours_left)} часов',
+                'next_available_at': (last_report.report_date + timedelta(hours=12)).isoformat()
+            }), 429
 
     try:
         new_report = DailyReport(
-            project_id=data['project_id'],
-            author_id=request.current_user['id'],
-            report_date=datetime.strptime(data['report_date'], '%Y-%m-%d').date(),
+            project_id=project_id,
+            author_id=author_id,
+            report_date=datetime.utcnow(),
             workers_count=data.get('workers_count'),
             equipment=data.get('equipment'),
             weather_conditions=data.get('weather_conditions'),
-            notes=data['notes'],
+            notes=data.get('notes', ''),
             geolocation=data.get('geolocation')
         )
         db.session.add(new_report)
         db.session.commit()
-        return jsonify({'message': 'Ежедневный отчет успешно создан', 'id': new_report.id}), 201
+        
+        recalculate_project_risk(project_id, triggering_user_id=request.current_user['id'])
+        
+        return jsonify({
+            'message': 'Ежедневный отчет успешно создан', 
+            'id': new_report.id,
+            'report_date': new_report.report_date.isoformat()
+        }), 201
     except Exception as e:
         db.session.rollback()
         return jsonify({'message': 'Ошибка создания отчета', 'error': str(e)}), 500

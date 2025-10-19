@@ -11,55 +11,143 @@ L.Icon.Default.mergeOptions({
 });
 
 const polygonOptions = {
-    active: {
-        fillColor: '#10B981',
-        color: '#059669',
+    critical: {
+        fillColor: '#991B1B',
+        color: '#7F1D1D',
+        weight: 3,
+        fillOpacity: 0.45,
+    },
+    high: {
+        fillColor: '#DC2626',
+        color: '#B91C1C',
+        weight: 3,
+        fillOpacity: 0.40,
+    },
+    medium: {
+        fillColor: '#F59E0B',
+        color: '#D97706',
         weight: 2,
         fillOpacity: 0.35,
     },
-    issue: {
-        fillColor: '#EF4444',
-        color: '#DC2626',
+    low: {
+        fillColor: '#10B981',
+        color: '#059669',
         weight: 2,
-        fillOpacity: 0.35,
+        fillOpacity: 0.30,
     },
     default: {
         fillColor: '#6B7280',
         color: '#4B5563',
         weight: 2,
-        fillOpacity: 0.35,
+        fillOpacity: 0.25,
     }
 };
 
 const MapObject = ({ project }) => {
+    const getRiskColor = (level) => {
+        switch(level) {
+            case 'CRITICAL': return '#991B1B';
+            case 'HIGH': return '#DC2626';
+            case 'MEDIUM': return '#F59E0B';
+            case 'LOW': return '#10B981';
+            default: return '#6B7280';
+        }
+    };
+
+    const getRiskLabel = (level) => {
+        switch(level) {
+            case 'CRITICAL': return 'Критический';
+            case 'HIGH': return 'Высокий';
+            case 'MEDIUM': return 'Средний';
+            case 'LOW': return 'Низкий';
+            default: return 'Неизвестен';
+        }
+    };
+
     const getPopupContent = () => (
-        <div style={{ fontFamily: 'sans-serif', fontSize: '14px', minWidth: '200px' }}>
-            <h3 style={{ fontWeight: 600, fontSize: '16px', margin: '0 0 8px' }}>{project.name}</h3>
+        <div style={{ fontFamily: 'sans-serif', fontSize: '14px', minWidth: '250px' }}>
+            <h3 style={{ fontWeight: 600, fontSize: '16px', margin: '0 0 4px' }}>{project.name}</h3>
             <p style={{ fontSize: '12px', color: '#6B7280', margin: '0 0 12px' }}>{project.address}</p>
-            <div style={{ display: 'flex', gap: '16px', borderTop: '1px solid #eee', paddingTop: '10px' }}>
-                <div>
-                    <div style={{ fontSize: '12px', color: '#6B7280' }}>Задачи</div>
-                    <div style={{ fontWeight: 600 }}>{project.tasks_count || 0}</div>
+            
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '12px' }}>
+                <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '11px', color: '#6B7280', marginBottom: '4px' }}>Задачи</div>
+                    <div style={{ fontWeight: 600, fontSize: '18px' }}>{project.tasks_count || 0}</div>
                 </div>
-                <div>
-                    <div style={{ fontSize: '12px', color: '#6B7280' }}>Нарушения</div>
-                    <div style={{ fontWeight: 600, color: project.issues_count > 0 ? '#EF4444' : '#10B981' }}>
+                <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '11px', color: '#6B7280', marginBottom: '4px' }}>Нарушения</div>
+                    <div style={{ fontWeight: 600, fontSize: '18px', color: project.issues_count > 0 ? '#EF4444' : '#10B981' }}>
                         {project.issues_count || 0}
                     </div>
                 </div>
             </div>
+
+            {project.risk_level && (
+                <div style={{ 
+                    marginBottom: '12px', 
+                    padding: '8px 12px', 
+                    backgroundColor: getRiskColor(project.risk_level) + '15',
+                    borderLeft: `3px solid ${getRiskColor(project.risk_level)}`,
+                    borderRadius: '4px'
+                }}>
+                    <div style={{ fontSize: '11px', color: '#6B7280', marginBottom: '2px' }}>Уровень риска</div>
+                    <div style={{ 
+                        fontWeight: 600, 
+                        fontSize: '14px',
+                        color: getRiskColor(project.risk_level)
+                    }}>
+                        {getRiskLabel(project.risk_level)}
+                        <span style={{ fontSize: '12px', marginLeft: '6px', opacity: 0.8 }}>
+                            ({project.risk_score || 0} баллов)
+                        </span>
+                    </div>
+                </div>
+            )}
+
+            <a 
+                href={`/projects/${project.id}`} 
+                style={{ 
+                    display: 'block',
+                    width: '100%',
+                    padding: '8px 12px',
+                    backgroundColor: '#3B82F6',
+                    color: 'white',
+                    textAlign: 'center',
+                    borderRadius: '6px',
+                    textDecoration: 'none',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    marginTop: '8px',
+                    transition: 'background-color 0.2s'
+                }}
+                onMouseOver={(e) => e.target.style.backgroundColor = '#2563EB'}
+                onMouseOut={(e) => e.target.style.backgroundColor = '#3B82F6'}
+            >
+                Подробнее →
+            </a>
         </div>
     );
 
-    if (project.polygon?.geometry?.coordinates) {
-        const positions = project.polygon.geometry.coordinates[0].map(coord => [coord[1], coord[0]]);
+    const coordinates = project.polygon?.coordinates || project.polygon?.geometry?.coordinates;
+    
+    if (coordinates && coordinates[0]) {
+        const positions = coordinates[0].map(coord => [coord[1], coord[0]]);
         
-        const options = project.issues_count > 0
-            ? polygonOptions.issue
-            : (project.status === 'active' ? polygonOptions.active : polygonOptions.default);
+        const getPolygonOptions = () => {
+            if (project.risk_level) {
+                switch(project.risk_level) {
+                    case 'CRITICAL': return polygonOptions.critical;
+                    case 'HIGH': return polygonOptions.high;
+                    case 'MEDIUM': return polygonOptions.medium;
+                    case 'LOW': return polygonOptions.low;
+                    default: return polygonOptions.default;
+                }
+            }
+            return project.status === 'active' ? polygonOptions.low : polygonOptions.default;
+        };
 
         return (
-            <Polygon positions={positions} pathOptions={options}>
+            <Polygon positions={positions} pathOptions={getPolygonOptions()}>
                 <Popup>{getPopupContent()}</Popup>
             </Polygon>
         );
@@ -85,8 +173,10 @@ const AutoBounds = ({ projects }) => {
         const bounds = [];
 
         projects.forEach(project => {
-            if (project.polygon?.geometry?.coordinates) {
-                project.polygon.geometry.coordinates[0].forEach(coord => {
+            const coordinates = project.polygon?.coordinates || project.polygon?.geometry?.coordinates;
+            
+            if (coordinates && coordinates[0]) {
+                coordinates[0].forEach(coord => {
                     bounds.push([coord[1], coord[0]]);
                 });
             } else if (project.latitude && project.longitude) {
@@ -113,8 +203,10 @@ const OSMMap = ({ projects }) => {
         if (firstProject.latitude && firstProject.longitude) {
             return [firstProject.latitude, firstProject.longitude];
         }
-        if (firstProject.polygon?.geometry?.coordinates) {
-            const coords = firstProject.polygon.geometry.coordinates[0][0];
+        
+        const coordinates = firstProject.polygon?.coordinates || firstProject.polygon?.geometry?.coordinates;
+        if (coordinates && coordinates[0] && coordinates[0][0]) {
+            const coords = coordinates[0][0];
             return [coords[1], coords[0]];
         }
         return defaultCenter;

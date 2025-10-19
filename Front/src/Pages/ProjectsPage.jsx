@@ -5,109 +5,45 @@ import toast from 'react-hot-toast';
 import ApiService from '../apiService';
 import { translate } from '../utils/translation';
 import ActivateProjectModal from '../Components/Projects/ActivateProjectModal';
+import ChecklistCompletionModal from '../Components/Checklists/ChecklistCompletionModal';
+import CreateProjectFormOSM from '../Components/ObjectList/CreateProjectFormOSM';
 import AuthService from '../authService';
+import ProjectRiskIndicator from '../Components/Risk/ProjectRiskIndicator';
 
 const CreateProjectModal = ({ onCancel, onUpdate }) => {
-    const [name, setName] = useState('');
-    const [address, setAddress] = useState('');
     const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
+    const handleSubmit = async (projectData) => {
         setError('');
         try {
-            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`);
-            const data = await response.json();
-            if (data.length === 0) {
-                throw new Error('Адрес не найден. Проверьте правильность ввода.');
-            }
-            const location = data[0];
-            const lat = parseFloat(location.lat);
-            const lon = parseFloat(location.lon);
-            
-            const offset = 0.001;
-            const polygonCoordinates = [[ 
-                [lon - offset, lat - offset], 
-                [lon + offset, lat - offset], 
-                [lon + offset, lat + offset], 
-                [lon - offset, lat + offset], 
-                [lon - offset, lat - offset] 
-            ]];
-            
-            const projectData = {
-                name,
-                address,
-                polygon: { type: 'Feature', geometry: { type: 'Polygon', coordinates: polygonCoordinates } }
-            };
-
             await ApiService.createProject(projectData);
             toast.success('Проект успешно создан!');
             onUpdate();
             onCancel();
         } catch (err) {
-            toast.error(err.message);
-        } finally {
-            setLoading(false);
+            setError(err.message || 'Не удалось создать проект');
         }
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm px-4">
-            <div className="w-full max-w-md rounded-3xl border border-slate-100 bg-white p-6 shadow-xl">
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm px-4">
+            <div className="w-full max-w-2xl rounded-3xl border border-slate-100 bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
                 <h2 className="text-2xl font-semibold text-slate-900">Создать новый проект</h2>
-                <p className="mt-1 text-sm text-slate-500">Введите основные данные для нового объекта</p>
-                {error && (
-                    <div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">
-                        {error}
-                    </div>
-                )}
-                <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-700">Название объекта*</label>
-                        <input
-                            type="text"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-700">Адрес*</label>
-                        <input
-                            type="text"
-                            value={address}
-                            onChange={(e) => setAddress(e.target.value)}
-                            className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                            placeholder="Город, улица, дом"
-                            required
-                        />
-                    </div>
-                    <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row">
-                        <button
-                            type="button"
-                            onClick={onCancel}
-                            className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 transition-colors hover:border-slate-300"
-                        >
-                            Отмена
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="flex-1 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-                        >
-                            {loading ? 'Создание...' : 'Создать'}
-                        </button>
-                    </div>
-                </form>
+                <p className="mt-1 text-sm text-slate-500 mb-4">Выберите местоположение на карте или введите адрес</p>
+                <CreateProjectFormOSM 
+                    onSubmit={handleSubmit}
+                    onCancel={onCancel}
+                    apiError={error}
+                />
             </div>
         </div>
     );
 };
 
 const ProjectCard = ({ project, userRole, onNavigate, onActivate }) => {
+    const showActivateButton = userRole === 'client' && project.status === 'pending' && !project.has_pending_checklist;
+    const showPendingButton = userRole === 'client' && project.status === 'pending' && project.has_pending_checklist;
+
     return (
         <div className="group flex flex-col rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition-all hover:border-blue-200 hover:shadow-lg">
             <div className="flex items-start justify-between gap-3">
@@ -143,6 +79,15 @@ const ProjectCard = ({ project, userRole, onNavigate, onActivate }) => {
                     />
                     {translate(project.status)}
                 </span>
+                {project.status === 'active' && project.risk_level && (
+                    <ProjectRiskIndicator 
+                        riskLevel={project.risk_level} 
+                        riskScore={project.risk_score}
+                        size="sm"
+                        showLabel={false}
+                        showScore={true}
+                    />
+                )}
             </div>
 
             <div className="mt-4 flex flex-col gap-2 sm:flex-row">
@@ -152,12 +97,20 @@ const ProjectCard = ({ project, userRole, onNavigate, onActivate }) => {
                 >
                     Подробнее
                 </button>
-                {userRole === 'client' && project.status === 'pending' && (
+                {showActivateButton && (
                     <button
                         onClick={() => onActivate(project)}
                         className="flex-1 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 sm:flex-initial"
                     >
                         Активировать
+                    </button>
+                )}
+                {showPendingButton && (
+                    <button
+                        disabled
+                        className="flex-1 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm font-semibold text-amber-700 cursor-not-allowed sm:flex-initial"
+                    >
+                        Ожидаем одобрения
                     </button>
                 )}
             </div>
@@ -172,27 +125,52 @@ const ProjectsPage = () => {
     const [error, setError] = useState(null);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [activatingProject, setActivatingProject] = useState(null);
+    const [checklistToFill, setChecklistToFill] = useState(null);
+    const [projectForChecklist, setProjectForChecklist] = useState(null);
+    const [foremanEmail, setForemanEmail] = useState(null);
     const userRole = AuthService.getUserRole();
 
-    const fetchProjects = useCallback(async () => {
+    const fetchProjects = useCallback(async (signal) => {
         setLoading(true);
         try {
-            const data = await ApiService.getProjects();
+            const data = await ApiService.getProjects({ signal });
             setProjects(data);
         } catch (err) {
-            setError(err.message);
+            if (err.name !== 'AbortError') {
+                setError(err.message);
+            }
         } finally {
             setLoading(false);
         }
     }, []);
 
     useEffect(() => {
-        fetchProjects();
+        const controller = new AbortController();
+        fetchProjects(controller.signal);
+        return () => controller.abort();
     }, [fetchProjects]);
 
-    const handleActivationSuccess = () => {
-        fetchProjects();
+    const handleActivationSuccess = async (projectId, email) => {
         setActivatingProject(null);
+        
+        try {
+            const data = await ApiService.getChecklists();
+            const checklistsArray = Array.isArray(data) ? data : (data.checklists || []);
+            const openingChecklist = checklistsArray.find(c => c.type === 'opening');
+            
+            if (openingChecklist) {
+                setChecklistToFill(openingChecklist);
+                setProjectForChecklist(projectId);
+                setForemanEmail(email);
+            } else {
+                toast.error('Чек-лист открытия объекта не найден');
+            }
+            
+            fetchProjects();
+        } catch (err) {
+            toast.error('Не удалось загрузить чек-лист: ' + err.message);
+            fetchProjects();
+        }
     };
 
     if (error) {
@@ -214,6 +192,41 @@ const ProjectsPage = () => {
                     project={activatingProject}
                     onClose={() => setActivatingProject(null)}
                     onSuccess={handleActivationSuccess}
+                />
+            )}
+            {checklistToFill && projectForChecklist && (
+                <ChecklistCompletionModal
+                    checklist={checklistToFill}
+                    projectId={projectForChecklist}
+                    editingCompletion={null}
+                    onClose={() => {
+                        setChecklistToFill(null);
+                        setProjectForChecklist(null);
+                        setForemanEmail(null);
+                        fetchProjects();
+                    }}
+                    onComplete={async () => {
+                        const projectId = projectForChecklist;
+                        const email = foremanEmail;
+                        
+                        setChecklistToFill(null);
+                        setProjectForChecklist(null);
+                        setForemanEmail(null);
+                        
+                        if (email) {
+                            try {
+                                await ApiService.addProjectMember(projectId, email, 'foreman');
+                                await ApiService.activateProject(projectId);
+                                toast.success('Чек-лист отправлен на согласование! Прораб назначен.');
+                            } catch (err) {
+                                toast.error('Чек-лист отправлен, но ошибка при назначении прораба: ' + err.message);
+                            }
+                        } else {
+                            toast.success('Чек-лист отправлен на согласование!');
+                        }
+                        
+                        fetchProjects();
+                    }}
                 />
             )}
             

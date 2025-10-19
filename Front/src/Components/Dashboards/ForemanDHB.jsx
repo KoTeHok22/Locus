@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { CheckCircle, AlertTriangle, PackageCheck, Camera, UploadCloud, ClipboardList, Clock, Loader2, XCircle } from 'lucide-react';
+import { CheckCircle, AlertTriangle, PackageCheck, Camera, UploadCloud, ClipboardList, Clock, Loader2, XCircle, FileText } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ApiService from '../../apiService';
 import { translate } from '../../utils/translation.js';
 import TaskCompletionModal from '../Tasks/TaskCompletionModal';
 import ResolveIssueModal from '../Issues/ResolveIssueModal';
+import ResolvedIssueItem from '../Issues/ResolvedIssueItem';
+import CreateDailyReportModal from '../Reports/CreateDailyReportModal';
 import '../../index.css';
 
 const taskStatusStyles = {
@@ -158,23 +160,15 @@ const MaterialDeliveryFlow = ({ projects, onUpdate }) => {
         setIsRecognizing(true);
         const toastId = toast.loading('Запущено распознавание ТТН...');
         try {
-            const { document_id } = await ApiService.recognizeDocument(selectedProject, file);
-            setDocumentId(document_id);
-
-            let status = 'processing';
-            while (status === 'processing' || status === 'pending') {
-                await new Promise(resolve => setTimeout(resolve, 5000));
-                const res = await ApiService.getRecognitionStatus(document_id);
-                status = res.recognition_status;
-                if (status === 'completed') {
-                    toast.success('Документ успешно распознан!', { id: toastId });
-                    setRecognizedData(res.recognized_data);
-                    break;
-                }
-                 if (status === 'failed') {
-                    throw new Error('Не удалось распознать документ.');
-                }
+            const response = await ApiService.recognizeDocument(selectedProject, file);
+            console.log('recognizeDocument response:', response);
+            
+            if (!response || !response.document_id) {
+                throw new Error('Не удалось получить ID документа после начала распознавания.');
             }
+            
+            toast.success(`Документ ${response.document_id} отправлен на распознавание.`, { id: toastId });
+
         } catch (error) {
             toast.error(error.message, { id: toastId });
         } finally {
@@ -317,21 +311,35 @@ const MaterialDeliveryFlow = ({ projects, onUpdate }) => {
 }
 
 function ForemanDHB(){
-    const [data, setData] = useState({ projects: [], tasks: [], issues: [] });
+    const [data, setData] = useState({ projects: [], tasks: [], openIssues: [], resolvedIssues: [] });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [completingTask, setCompletingTask] = useState(null);
     const [resolvingIssue, setResolvingIssue] = useState(null);
+    const [creatingReport, setCreatingReport] = useState(null);
+    const [lastReportTimes, setLastReportTimes] = useState({});
 
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            const [projects, tasks, issues] = await Promise.all([
+            const [projects, tasks, issues, reports] = await Promise.all([
                 ApiService.getProjects(),
                 ApiService.getTasks(),
                 ApiService.getIssues(),
+                ApiService.getDailyReports(),
             ]);
-            setData({ projects, tasks, issues });
+            
+            const openIssues = issues.filter(i => i.status === 'open');
+            const resolvedIssues = issues.filter(i => i.status === 'resolved');
+            setData({ projects, tasks, openIssues, resolvedIssues });
+            
+            const reportTimes = {};
+            reports.forEach(report => {
+                if (report.project_id && report.report_date) {
+                    reportTimes[report.project_id] = new Date(report.report_date);
+                }
+            });
+            setLastReportTimes(reportTimes);
         } catch (err) {
             setError(err.message);
             console.error("Ошибка при загрузке данных для прораба:", err);
@@ -343,6 +351,23 @@ function ForemanDHB(){
     useEffect(() => {
         fetchData();
     }, [fetchData]);
+
+    const canCreateReport = (projectId) => {
+        const lastReportTime = lastReportTimes[projectId];
+        if (!lastReportTime) return true;
+        
+        const now = new Date();
+        const hoursSinceLastReport = (now - lastReportTime) / (1000 * 60 * 60);
+        return hoursSinceLastReport >= 12;
+    };
+
+    const getNextReportTime = (projectId) => {
+        const lastReportTime = lastReportTimes[projectId];
+        if (!lastReportTime) return null;
+        
+        const nextTime = new Date(lastReportTime.getTime() + 12 * 60 * 60 * 1000);
+        return nextTime;
+    };
 
     if (loading) {
         return (
@@ -359,6 +384,8 @@ function ForemanDHB(){
             </div>
         );
     }
+
+    const activeProjects = data.projects.filter(p => p.status === 'active');
 
     return(
         <>
@@ -409,26 +436,91 @@ function ForemanDHB(){
                         <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:rounded-3xl sm:p-6">
                             <MaterialDeliveryFlow projects={data.projects} onUpdate={fetchData} />
                         </div>
+
+                        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:rounded-3xl sm:p-6">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="rounded-xl bg-emerald-100 p-2.5">
+                                    <FileText size={18} className="text-emerald-600" />
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-semibold text-slate-900">Ежедневный отчёт</h3>
+                                    <p className="text-xs text-slate-500">Отчёт о работе на объекте</p>
+                                </div>
+                            </div>
+
+                            {activeProjects.length > 0 ? (
+                                <div className="space-y-3">
+                                    {activeProjects.map(project => {
+                                        const canCreate = canCreateReport(project.id);
+                                        const nextTime = getNextReportTime(project.id);
+                                        
+                                        return (
+                                            <div key={project.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                                                <p className="text-sm font-semibold text-slate-900">{project.name}</p>
+                                                {!canCreate && nextTime && (
+                                                    <p className="mt-1 text-xs text-amber-600">
+                                                        Доступно через: {Math.ceil((nextTime - new Date()) / (1000 * 60 * 60))} ч
+                                                    </p>
+                                                )}
+                                                <button
+                                                    onClick={() => setCreatingReport(project)}
+                                                    disabled={!canCreate}
+                                                    className="mt-2 w-full rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed"
+                                                >
+                                                    {canCreate ? 'Создать отчёт' : '⏱️ Недоступно'}
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="rounded-xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+                                    Нет активных объектов
+                                </div>
+                            )}
+                        </div>
+
                         <div className="flex max-h-[300px] flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm sm:max-h-[400px] sm:rounded-3xl md:flex-1">
                             <div className="flex flex-col gap-1 border-b border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
                                 <div>
                                     <div className="flex items-center gap-1.5 text-red-500 sm:gap-2">
                                         <AlertTriangle size={14} className="sm:hidden" />
                                         <AlertTriangle size={16} className="hidden sm:block" />
-                                        <span className="text-xs font-semibold sm:text-sm">Замечания</span>
+                                        <span className="text-xs font-semibold sm:text-sm">Открытые Замечания</span>
                                     </div>
-                                    <h2 className="mt-1 text-base font-semibold text-slate-900 sm:text-lg">{data.issues.length} открыто</h2>
+                                    <h2 className="mt-1 text-base font-semibold text-slate-900 sm:text-lg">{data.openIssues.length} открыто</h2>
                                 </div>
                                 <span className="mt-2 inline-flex h-7 w-fit items-center justify-center rounded-full bg-red-50 px-3 text-[10px] font-semibold text-red-600 sm:mt-0 sm:h-9 sm:px-4 sm:text-xs">
                                     Срочно
                                 </span>
                             </div>
                             <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4 sm:space-y-4 sm:px-6 sm:py-5">
-                                {data.issues.length > 0 ? (
-                                    data.issues.map(issue => <IssueCard key={issue.id} issue={issue} onResolve={setResolvingIssue} />)
+                                {data.openIssues.length > 0 ? (
+                                    data.openIssues.map(issue => <IssueCard key={issue.id} issue={issue} onResolve={setResolvingIssue} />)
                                 ) : (
                                     <div className="flex h-full flex-col items-center justify-center rounded-xl bg-slate-50 py-8 text-center text-xs text-slate-500 sm:rounded-2xl sm:py-10 sm:text-sm">
                                         Нарушений не обнаружено
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        <div className="flex max-h-[300px] flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm sm:max-h-[400px] sm:rounded-3xl md:flex-1">
+                            <div className="flex flex-col gap-1 border-b border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
+                                <div>
+                                    <div className="flex items-center gap-1.5 text-green-500 sm:gap-2">
+                                        <CheckCircle size={14} className="sm:hidden" />
+                                        <CheckCircle size={16} className="hidden sm:block" />
+                                        <span className="text-xs font-semibold sm:text-sm">Устраненные Замечания</span>
+                                    </div>
+                                    <h2 className="mt-1 text-base font-semibold text-slate-900 sm:text-lg">{data.resolvedIssues.length} устранено</h2>
+                                </div>
+                            </div>
+                            <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4 sm:space-y-4 sm:px-6 sm:py-5">
+                                {data.resolvedIssues.length > 0 ? (
+                                    data.resolvedIssues.map(issue => <ResolvedIssueItem key={issue.id} issue={issue} />)
+                                ) : (
+                                    <div className="flex h-full flex-col items-center justify-center rounded-xl bg-slate-50 py-8 text-center text-xs text-slate-500 sm:rounded-2xl sm:py-10 sm:text-sm">
+                                        Нет устраненных нарушений
                                     </div>
                                 )}
                             </div>
@@ -450,6 +542,17 @@ function ForemanDHB(){
                     issue={resolvingIssue}
                     onClose={() => setResolvingIssue(null)}
                     onUpdate={fetchData}
+                />
+            )}
+
+            {creatingReport && (
+                <CreateDailyReportModal
+                    project={creatingReport}
+                    onClose={() => setCreatingReport(null)}
+                    onSuccess={() => {
+                        setCreatingReport(null);
+                        fetchData();
+                    }}
                 />
             )}
         </>

@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from models import db, Document, Project
 from auth import token_required, role_required
+from project_access import require_project_access
 import uuid
 
 document_bp = Blueprint('document', __name__)
@@ -9,6 +10,12 @@ document_bp = Blueprint('document', __name__)
 @token_required
 def get_project_documents(project_id):
     """Возвращает все документы, связанные с проектом."""
+    current_user = request.current_user
+    
+    access_error = require_project_access(project_id, current_user['id'], current_user['role'])
+    if access_error:
+        return access_error
+    
     db.get_or_404(Project, project_id)
 
     documents = Document.query.filter_by(project_id=project_id).order_by(Document.created_at.desc()).all()

@@ -12,8 +12,6 @@ function useNavigation() {
                 return <ObjectListContent />;
             case 'map':
                 return <MapContent />;
-            case 'reports':
-                return <ReportsContent />;
             case 'analytics':
                 return <AnalyticsContent />;
             case 'settings':

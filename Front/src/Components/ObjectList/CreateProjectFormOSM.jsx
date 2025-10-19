@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polygon, Polyline, CircleMarker, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -10,11 +10,16 @@ L.Icon.Default.mergeOptions({
     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-function MapClickHandler({ onMapClick }) {
+function MapClickHandler({ onMapClick, onRightClick }) {
     useMapEvents({
         click: (e) => {
             onMapClick(e.latlng);
         },
+        contextmenu: (e) => {
+            if (onRightClick) {
+                onRightClick(e.latlng);
+            }
+        }
     });
     return null;
 }
@@ -22,7 +27,9 @@ function MapClickHandler({ onMapClick }) {
 function CreateProjectFormOSM({ onSubmit, onCancel, apiError }) {
     const [name, setName] = useState('');
     const [address, setAddress] = useState('');
+    const [mapMode, setMapMode] = useState('address');
     const [placemarkCoords, setPlacemarkCoords] = useState(null);
+    const [polygonPoints, setPolygonPoints] = useState([]);
     const [mapCenter, setMapCenter] = useState([55.751574, 37.573856]);
     const [polygon, setPolygon] = useState(null);
     const [geocodingError, setGeocodingError] = useState('');
@@ -47,15 +54,6 @@ function CreateProjectFormOSM({ onSubmit, onCancel, apiError }) {
                 setMapCenter([lat, lon]);
                 setPlacemarkCoords([lat, lon]);
                 setIsGeocoded(true);
-                
-                const offset = 0.001;
-                setPolygon([[
-                    [lon - offset, lat - offset],
-                    [lon + offset, lat - offset],
-                    [lon + offset, lat + offset],
-                    [lon - offset, lat + offset],
-                    [lon - offset, lat - offset]
-                ]]);
             } else {
                 setGeocodingError('Адрес не найден.');
                 setIsGeocoded(false);
@@ -67,62 +65,155 @@ function CreateProjectFormOSM({ onSubmit, onCancel, apiError }) {
         }
     };
 
-    const handleMapClick = async (latlng) => {
-        const coords = [latlng.lat, latlng.lng];
-        setPlacemarkCoords(coords);
-        setIsGeocoding(true);
-        setGeocodingError('');
-
-        try {
-            const response = await fetch(
-                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}`
-            );
-            const data = await response.json();
-            
-            if (data.display_name) {
-                setAddress(data.display_name);
-                setIsGeocoded(true);
-                
-                const offset = 0.001;
-                setPolygon([[
-                    [latlng.lng - offset, latlng.lat - offset],
-                    [latlng.lng + offset, latlng.lat - offset],
-                    [latlng.lng + offset, latlng.lat + offset],
-                    [latlng.lng - offset, latlng.lat + offset],
-                    [latlng.lng - offset, latlng.lat - offset]
-                ]]);
-            } else {
-                setGeocodingError('Не удалось определить адрес.');
-            }
-        } catch (error) {
-            setGeocodingError('Ошибка обратного геокодирования.');
-        } finally {
-            setIsGeocoding(false);
+    const formatAddress = (addressData) => {
+        const parts = [];
+        
+        const city = addressData.city || addressData.town || addressData.village || addressData.municipality;
+        if (city) {
+            parts.push(`г. ${city}`);
         }
+        
+        if (addressData.road) {
+            parts.push(`${addressData.road}`);
+        }
+        
+        if (addressData.house_number) {
+            parts.push(`д.${addressData.house_number}`);
+        }
+        
+        return parts.length > 0 ? parts.join(', ') : null;
+    };
+
+    const handleMapClick = async (latlng) => {
+        if (mapMode === 'address') {
+            setIsGeocoding(true);
+            setGeocodingError('');
+
+            try {
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}&addressdetails=1`
+                );
+                const data = await response.json();
+                
+                if (data.address) {
+                    const formattedAddress = formatAddress(data.address);
+                    if (formattedAddress) {
+                        setAddress(formattedAddress);
+                    } else {
+                        setAddress(data.display_name);
+                    }
+                    setMapCenter([latlng.lat, latlng.lng]);
+                    setPlacemarkCoords([latlng.lat, latlng.lng]);
+                    setIsGeocoded(true);
+                } else {
+                    setGeocodingError('Не удалось определить адрес.');
+                }
+            } catch (error) {
+                setGeocodingError('Ошибка обратного геокодирования.');
+            } finally {
+                setIsGeocoding(false);
+            }
+        } else {
+            if (!isGeocoded) {
+                setGeocodingError('Сначала укажите адрес.');
+                return;
+            }
+
+            const newPoint = [latlng.lat, latlng.lng];
+            const updatedPoints = [...polygonPoints, newPoint];
+            setPolygonPoints(updatedPoints);
+            
+            if (updatedPoints.length >= 3) {
+                const polygonCoords = updatedPoints.map(p => [p[1], p[0]]);
+                polygonCoords.push(polygonCoords[0]);
+                setPolygon([[...polygonCoords]]);
+            }
+        }
+    };
+
+    const handleRightClick = (latlng) => {
+        if (mapMode !== 'polygon' || polygonPoints.length === 0) return;
+
+        const clickedPoint = [latlng.lat, latlng.lng];
+        const threshold = 0.0001;
+
+        const pointIndex = polygonPoints.findIndex(p => 
+            Math.abs(p[0] - clickedPoint[0]) < threshold && 
+            Math.abs(p[1] - clickedPoint[1]) < threshold
+        );
+
+        if (pointIndex !== -1) {
+            const updatedPoints = polygonPoints.filter((_, i) => i !== pointIndex);
+            setPolygonPoints(updatedPoints);
+            
+            if (updatedPoints.length >= 3) {
+                const polygonCoords = updatedPoints.map(p => [p[1], p[0]]);
+                polygonCoords.push(polygonCoords[0]);
+                setPolygon([[...polygonCoords]]);
+            } else {
+                setPolygon(null);
+            }
+        }
+    };
+
+    const handleRemoveLastPoint = () => {
+        if (polygonPoints.length === 0) return;
+        
+        const updatedPoints = polygonPoints.slice(0, -1);
+        setPolygonPoints(updatedPoints);
+        
+        if (updatedPoints.length >= 3) {
+            const polygonCoords = updatedPoints.map(p => [p[1], p[0]]);
+            polygonCoords.push(polygonCoords[0]);
+            setPolygon([[...polygonCoords]]);
+        } else {
+            setPolygon(null);
+        }
+    };
+
+    const handleClearPolygon = () => {
+        setPolygonPoints([]);
+        setPolygon(null);
     };
 
     const handleFormSubmit = (e) => {
         e.preventDefault();
+        
         if (!placemarkCoords) {
-            setGeocodingError('Выберите местоположение на карте.');
+            setGeocodingError('Укажите адрес на карте или в поле ввода.');
             return;
         }
-        
-        const projectData = {
-            name,
-            address,
-            latitude: placemarkCoords[0],
-            longitude: placemarkCoords[1],
-            polygon: polygon ? { 
-                type: 'Feature', 
-                geometry: { 
-                    type: 'Polygon', 
-                    coordinates: polygon 
-                } 
-            } : null
-        };
-        
-        onSubmit(projectData);
+
+        if (polygon && polygonPoints.length >= 3) {
+            const centerLat = polygonPoints.reduce((sum, p) => sum + p[0], 0) / polygonPoints.length;
+            const centerLng = polygonPoints.reduce((sum, p) => sum + p[1], 0) / polygonPoints.length;
+            
+            const projectData = {
+                name,
+                address,
+                latitude: centerLat,
+                longitude: centerLng,
+                polygon: { 
+                    type: 'Feature', 
+                    geometry: { 
+                        type: 'Polygon', 
+                        coordinates: polygon 
+                    } 
+                }
+            };
+            
+            onSubmit(projectData);
+        } else {
+            const projectData = {
+                name,
+                address,
+                latitude: placemarkCoords[0],
+                longitude: placemarkCoords[1],
+                polygon: null
+            };
+            
+            onSubmit(projectData);
+        }
     };
 
     return (
@@ -154,9 +245,64 @@ function CreateProjectFormOSM({ onSubmit, onCancel, apiError }) {
             </div>
 
             <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Режим работы с картой</label>
+                <div className="flex gap-4">
+                    <label className="flex items-center">
+                        <input
+                            type="radio"
+                            value="address"
+                            checked={mapMode === 'address'}
+                            onChange={(e) => setMapMode(e.target.value)}
+                            className="mr-2"
+                        />
+                        <span className="text-sm">Указать адрес</span>
+                    </label>
+                    <label className="flex items-center">
+                        <input
+                            type="radio"
+                            value="polygon"
+                            checked={mapMode === 'polygon'}
+                            onChange={(e) => setMapMode(e.target.value)}
+                            disabled={!isGeocoded}
+                            className="mr-2"
+                        />
+                        <span className={`text-sm ${!isGeocoded ? 'text-gray-400' : ''}`}>Указать полигон</span>
+                    </label>
+                </div>
+                {!isGeocoded && (
+                    <p className="mt-1 text-xs text-gray-500">
+                        Сначала укажите адрес, чтобы создать полигон
+                    </p>
+                )}
+            </div>
+
+            <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Карта (кликните для указания точного расположения)
+                    {mapMode === 'address' 
+                        ? 'Карта (кликните на карту для выбора адреса)' 
+                        : 'Карта (кликайте для создания полигона, минимум 3 точки)'}
                 </label>
+                {mapMode === 'polygon' && polygonPoints.length > 0 && (
+                    <div className="mb-2 flex gap-2">
+                        <button
+                            type="button"
+                            onClick={handleRemoveLastPoint}
+                            className="text-xs px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                        >
+                            Удалить последнюю точку
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleClearPolygon}
+                            className="text-xs px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                        >
+                            Очистить все
+                        </button>
+                        <span className="text-xs text-gray-600 self-center">
+                            Точек: {polygonPoints.length}
+                        </span>
+                    </div>
+                )}
                 <div style={{ height: '300px', width: '100%' }} className="rounded-lg overflow-hidden">
                     <MapContainer
                         center={mapCenter}
@@ -167,8 +313,37 @@ function CreateProjectFormOSM({ onSubmit, onCancel, apiError }) {
                             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                         />
-                        <MapClickHandler onMapClick={handleMapClick} />
-                        {placemarkCoords && <Marker position={placemarkCoords} />}
+                        <MapClickHandler onMapClick={handleMapClick} onRightClick={handleRightClick} />
+                        {mapMode === 'address' && placemarkCoords && <Marker position={placemarkCoords} />}
+                        {mapMode === 'polygon' && polygonPoints.length > 0 && polygonPoints.map((point, index) => (
+                            <CircleMarker
+                                key={index}
+                                center={point}
+                                radius={6}
+                                pathOptions={{ 
+                                    color: 'blue', 
+                                    fillColor: 'blue', 
+                                    fillOpacity: 0.6 
+                                }}
+                            />
+                        ))}
+                        {mapMode === 'polygon' && polygonPoints.length > 1 && (
+                            <Polyline 
+                                positions={polygonPoints}
+                                pathOptions={{ color: 'blue', weight: 2, dashArray: '5, 5' }}
+                            />
+                        )}
+                        {mapMode === 'polygon' && polygon && polygonPoints.length >= 3 && (
+                            <Polygon
+                                positions={polygonPoints}
+                                pathOptions={{
+                                    color: 'blue',
+                                    fillColor: 'blue',
+                                    fillOpacity: 0.2,
+                                    weight: 2
+                                }}
+                            />
+                        )}
                     </MapContainer>
                 </div>
             </div>
@@ -189,7 +364,7 @@ function CreateProjectFormOSM({ onSubmit, onCancel, apiError }) {
                 </button>
                 <button
                     type="submit"
-                    disabled={!isGeocoded}
+                    disabled={!isGeocoded || !placemarkCoords}
                     className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
                     Создать проект

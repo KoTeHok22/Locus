@@ -1,7 +1,10 @@
 from flask import Blueprint, request, jsonify, current_app
 from models import db, Issue, Project, ProjectUser
 from auth import token_required, role_required
+from project_access import require_project_access
 from datetime import datetime, timezone
+from risk_calculator import recalculate_project_risk
+from notification_service import create_notification
 import os
 import uuid
 
@@ -43,6 +46,9 @@ def get_issues():
     
     project_id = request.args.get('project_id')
     if project_id:
+        access_error = require_project_access(int(project_id), user_id, user_role)
+        if access_error:
+            return access_error
         query = query.filter(Issue.project_id == project_id)
 
     results = query.order_by(Issue.due_date).all()
@@ -95,7 +101,7 @@ def resolve_issue(issue_id):
     issue.resolution_comment = request.form.get('comment', '')
     issue.resolution_photos = photo_urls
     
-    db.session.commit()
+    recalculate_project_risk(issue.project_id, triggering_user_id=request.current_user['id'])
     
     return jsonify({
         'message': 'Нарушение отмечено как устраненное и ожидает верификации',
@@ -105,16 +111,26 @@ def resolve_issue(issue_id):
 
 @issue_bp.route('/api/issues/<int:issue_id>/verify', methods=['POST'])
 @token_required
-@role_required('inspector')
 def verify_resolution(issue_id):
     """
-    Верификация устранения нарушения инспектором.
-    Может подтвердить (verified) или отклонить (rejected).
+    Верификация устранения нарушения.
+    - Inspector может верифицировать violations
+    - Client может верифицировать remarks
     """
+    user_role = request.current_user.get('role')
     issue = db.session.get(Issue, issue_id)
     
     if not issue:
         return jsonify({'message': 'Нарушение не найдено'}), 404
+    
+    if user_role == 'inspector' and issue.type != 'violation':
+        return jsonify({'message': 'Инспектор может верифицировать только нарушения (violation)'}), 403
+    
+    if user_role == 'client' and issue.type != 'remark':
+        return jsonify({'message': 'Служба контроля может верифицировать только замечания (remark)'}), 403
+    
+    if user_role == 'foreman':
+        return jsonify({'message': 'Прораб не может верифицировать нарушения'}), 403
     
     if issue.status != 'pending_verification':
         return jsonify({'message': 'Нарушение не ожидает верификации'}), 400
@@ -136,6 +152,17 @@ def verify_resolution(issue_id):
         issue.status = 'open'
     
     db.session.commit()
+    
+    recalculate_project_risk(issue.project_id, triggering_user_id=request.current_user['id'])
+    
+    project = db.session.get(Project, issue.project_id)
+    if issue.resolved_by_id:
+        status_text = 'принято' if verification_status == 'verified' else 'отклонено'
+        create_notification(
+            user_id=issue.resolved_by_id,
+            message=f"Устранение замечания по проекту '{project.name}' {status_text}",
+            link=f"/projects/{issue.project_id}"
+        )
     
     message_text = 'подтверждено' if verification_status == 'verified' else 'отклонено'
     return jsonify({
@@ -161,5 +188,16 @@ def get_issue_details(issue_id):
     issue_dict['verified_at'] = issue.verified_at.isoformat() if issue.verified_at else None
     issue_dict['verification_status'] = issue.verification_status
     issue_dict['verification_comment'] = issue.verification_comment
+    issue_dict['geolocation'] = issue.geolocation
+    
+    if issue.author:
+        author_name = f"{issue.author.first_name} {issue.author.last_name}".strip()
+        if not author_name:
+            author_name = issue.author.email
+        issue_dict['created_by_username'] = author_name
+        issue_dict['created_by_role'] = issue.author.role
+    
+    if issue.classifier:
+        issue_dict['classifier_name'] = issue.classifier.title
     
     return jsonify(issue_dict), 200

@@ -1,60 +1,44 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
-import ApiService from '../../apiService';
 
 const ActivateProjectModal = ({ project, onClose, onSuccess }) => {
     const [foremanEmail, setForemanEmail] = useState('');
-    const [loading, setLoading] = useState(false);
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
         if (!foremanEmail) {
             toast.error('Введите email прораба.');
             return;
         }
-        setLoading(true);
-        const toastId = toast.loading('Активация проекта...');
 
-        try {
-            await ApiService.addProjectMember(project.id, foremanEmail, 'foreman');
-            toast.success('Прораб успешно назначен.', { id: toastId });
-
-            await ApiService.activateProject(project.id);
-            toast.success('Проект активирован и ожидает согласования инспектора.', { id: toastId });
-
-            onSuccess();
-        } catch (err) {
-            toast.error(`Ошибка: ${err.message}`, { id: toastId });
-        } finally {
-            setLoading(false);
-            onClose();
-        }
+        onSuccess(project.id, foremanEmail);
+        onClose();
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
-            <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
-                <h2 className="text-xl font-bold mb-4">Активация проекта: {project.name}</h2>
-                <p className="text-sm text-gray-600 mb-6">Чтобы активировать проект, назначьте ответственного прораба. Ему будет отправлено приглашение.</p>
-                <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-[10000] px-4">
+            <div className="bg-white p-4 rounded-2xl shadow-xl w-full max-w-md sm:p-6 sm:rounded-3xl">
+                <h2 className="text-lg font-bold mb-3 sm:text-xl sm:mb-4">Активация проекта: {project.name}</h2>
+                <p className="text-xs text-gray-600 mb-4 sm:text-sm sm:mb-6">Чтобы активировать проект, назначьте ответственного прораба. Ему будет отправлено приглашение.</p>
+                <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
                     <div>
-                        <label htmlFor="foremanEmail" className="block text-sm font-medium text-gray-700">Email прораба*</label>
+                        <label htmlFor="foremanEmail" className="block text-xs font-medium text-gray-700 sm:text-sm">Email прораба*</label>
                         <input
                             id="foremanEmail"
                             type="email"
                             value={foremanEmail}
                             onChange={(e) => setForemanEmail(e.target.value)}
-                            className="mt-1 w-full p-2 border border-gray-300 rounded-md"
+                            className="mt-1 w-full p-2 border border-gray-300 rounded-lg text-sm sm:text-base"
                             placeholder="foreman@example.com"
                             required
                         />
                     </div>
-                    <div className="flex justify-end gap-4 pt-4">
+                    <div className="flex flex-col-reverse gap-2 pt-3 sm:flex-row sm:justify-end sm:gap-4 sm:pt-4">
                         <button type="button" onClick={onClose} className="bg-gray-200 px-4 py-2 rounded-lg text-sm font-medium">
                             Отмена
                         </button>
-                        <button type="submit" disabled={loading} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:bg-gray-400">
-                            {loading ? 'Активация...' : 'Активировать и назначить'}
+                        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                            Продолжить
                         </button>
                     </div>
                 </form>

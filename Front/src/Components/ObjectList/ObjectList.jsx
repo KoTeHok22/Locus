@@ -5,7 +5,7 @@ import ApiService from '../../apiService';
 import AuthService from '../../authService';
 import { translate } from '../../utils/translation';
 import '../../index.css';
-import CreateProjectForm from './CreateProjectForm';
+import CreateProjectFormOSM from './CreateProjectFormOSM';
 
 function ObjectList({ onSwitchToPage }) {
     const navigate = useNavigate();
@@ -153,7 +153,7 @@ function ObjectList({ onSwitchToPage }) {
                 </div>
             </div>
             {showCreateForm && (
-                <CreateProjectForm 
+                <CreateProjectFormOSM 
                     onSubmit={handleCreateProject}
                     onCancel={() => setShowCreateForm(false)}
                     apiError={formError}

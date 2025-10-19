@@ -71,11 +71,11 @@ const ResolveIssueModal = ({ issue, onClose, onUpdate }) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="p-6">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-[10000] p-4">
+            <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto sm:rounded-3xl">
+                <div className="p-4 sm:p-6">
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-xl font-bold text-gray-900">
+                        <h2 className="text-lg font-bold text-gray-900 sm:text-xl">
                             Устранить нарушение
                         </h2>
                         <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
@@ -90,28 +90,28 @@ const ResolveIssueModal = ({ issue, onClose, onUpdate }) => {
 
                     {}
                     <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-xs font-medium text-gray-700 mb-2 sm:text-sm">
                             Комментарий об устранении (необязательно)
                         </label>
                         <textarea
                             value={comment}
                             onChange={(e) => setComment(e.target.value)}
                             placeholder="Опишите, как было устранено нарушение..."
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm sm:p-3 sm:text-base"
                             rows="3"
                         />
                     </div>
 
                     {}
                     <div className="mb-6">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-xs font-medium text-gray-700 mb-2 sm:text-sm">
                             Фотографии устранения <span className="text-red-500">*</span>
                             <span className="text-xs text-gray-500 ml-2">(минимум 1 фото)</span>
                         </label>
                         
                         {}
                         {photoPreviews.length > 0 && (
-                            <div className="grid grid-cols-3 gap-2 mb-3">
+                            <div className="grid grid-cols-2 gap-2 mb-3 sm:grid-cols-3">
                                 {photoPreviews.map((preview, index) => (
                                     <div key={index} className="relative group">
                                         <img 
@@ -136,21 +136,35 @@ const ResolveIssueModal = ({ issue, onClose, onUpdate }) => {
                             <input
                                 ref={fileInputRef}
                                 type="file"
-                                accept="image}
-                    <div className="flex gap-3">
-                        <button
-                            onClick={handleSubmit}
-                            disabled={isSubmitting || photos.length === 0}
-                            className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition font-medium"
-                        >
-                            {isSubmitting ? 'Отправка...' : 'Отметить как устраненное'}
-                        </button>
+                                accept="image/*"
+                                multiple
+                                onChange={handlePhotoSelect}
+                                className="hidden"
+                            />
+                            <button
+                                type="button"
+                                onClick={handleCapture}
+                                className="flex-1 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition font-medium"
+                            >
+                                Выбрать фото
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:gap-3">
                         <button
                             onClick={onClose}
                             disabled={isSubmitting}
                             className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
                         >
                             Отмена
+                        </button>
+                        <button
+                            onClick={handleSubmit}
+                            disabled={isSubmitting || photos.length === 0}
+                            className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition font-medium"
+                        >
+                            {isSubmitting ? 'Отправка...' : 'Отметить как устраненное'}
                         </button>
                     </div>
                 </div>

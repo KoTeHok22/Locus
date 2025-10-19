@@ -1,7 +1,9 @@
 from flask import Blueprint, request, jsonify
-from models import db, Project, Issue, User
+from models import db, Project, Issue, User, ProjectUser
 from auth import token_required, role_required, geolocation_required
 from datetime import datetime, timezone, date
+from notification_service import create_notification
+from risk_calculator import recalculate_project_risk
 
 workflow_bp = Blueprint('workflow', __name__)
 
@@ -84,6 +86,22 @@ def create_issue(project_id):
     )
     db.session.add(new_issue)
     db.session.commit()
+
+    recalculate_project_risk(project_id, triggering_user_id=request.current_user['id'])
+
+    project = db.session.get(Project, project_id)
+    foreman_assignment = db.session.query(ProjectUser).filter_by(
+        project_id=project_id,
+        role='foreman'
+    ).first()
+    
+    if foreman_assignment:
+        issue_type_text = 'замечание' if data['type'] == 'remark' else 'нарушение'
+        create_notification(
+            user_id=foreman_assignment.user_id,
+            message=f"Вам добавлено новое {issue_type_text} по проекту '{project.name}'",
+            link=f"/projects/{project_id}"
+        )
 
     return jsonify(new_issue.to_dict()), 201
 
