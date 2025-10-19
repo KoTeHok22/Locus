@@ -3,7 +3,7 @@ from datetime import datetime
 from werkzeug.utils import secure_filename
 import os
 import uuid
-from models import db, Task, WorkPlanItem, TaskMaterialUsage, Material, Project, ProjectUser
+from models import db, Task, WorkPlanItem, TaskMaterialUsage, Material, Project, ProjectUser, User
 from auth import token_required, role_required
 from project_access import require_project_access
 from risk_calculator import recalculate_project_risk
@@ -17,8 +17,7 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def _update_work_plan_item_progress(work_plan_item_id):
-    work_plan_item = WorkPlanItem.query.get(work_plan_item_id)
+def _update_work_plan_item_progress(work_plan_item):
     if work_plan_item:
         total_tasks = Task.query.filter_by(work_plan_item_id=work_plan_item.id).count()
         if total_tasks > 0:
@@ -29,7 +28,6 @@ def _update_work_plan_item_progress(work_plan_item_id):
             work_plan_item.progress = (completed_tasks / total_tasks) * 100
         else:
             work_plan_item.progress = 0
-        db.session.commit()
 
 @task_bp.route('/api/tasks', methods=['GET'])
 @token_required
@@ -214,18 +212,17 @@ def update_task_status(project_id, task_id):
         else:
             task.status = new_status
 
-        db.session.commit()
-        db.session.refresh(task)
+        _update_work_plan_item_progress(task.work_plan_item)
 
-        _update_work_plan_item_progress(task.work_plan_item_id)
+        db.session.commit()
         
         recalculate_project_risk(task.project_id, triggering_user_id=request.current_user['id'])
         
         if new_status == 'completed':
             project = db.session.get(Project, task.project_id)
-            client_assignment = db.session.query(ProjectUser).filter_by(
-                project_id=task.project_id,
-                role='client'
+            client_assignment = db.session.query(ProjectUser).join(User).filter(
+                ProjectUser.project_id == task.project_id,
+                User.role == 'client'
             ).first()
             
             if client_assignment:
@@ -275,9 +272,9 @@ def verify_task(project_id, task_id):
         task.completed_by_id = None
         task.completed_at = None
 
-    db.session.commit()
+    _update_work_plan_item_progress(task.work_plan_item)
 
-    _update_work_plan_item_progress(task.work_plan_item_id)
+    db.session.commit()
     
     recalculate_project_risk(task.project_id, triggering_user_id=request.current_user['id'])
     
@@ -285,9 +282,9 @@ def verify_task(project_id, task_id):
         project = db.session.get(Project, task.project_id)
         status_text = 'принята' if new_status == 'verified' else 'отклонена'
         
-        foreman_assignment = db.session.query(ProjectUser).filter_by(
-            project_id=task.project_id,
-            role='foreman'
+        foreman_assignment = db.session.query(ProjectUser).join(User).filter(
+            ProjectUser.project_id == task.project_id,
+            User.role == 'foreman'
         ).first()
         
         if foreman_assignment:
